@@ -1,0 +1,23 @@
+
+modLoader="javafml" #mandatory
+loaderVersion="[40,)"
+license="MIT License"
+issueTrackerURL="https://github.com/eerussianguy/Better-Foliage/issues" #optional
+[[mods]] #mandatory
+modId="blazemap" #mandatory
+version="${file.jarVersion}" #mandatory
+displayName="Blaze Map" #mandatory
+displayURL="https://github.com/eerussianguy/Better-Foliage" #optional
+logoFile="examplemod.png" #optional
+credits=" " #optional
+authors="EERussianguy, LordFokas" #optional
+description='''
+A slim minimap mod.
+
+'''
+[[dependencies.blazemap]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.18.2,1.19)"
+    ordering="NONE"
+    side="BOTH"
