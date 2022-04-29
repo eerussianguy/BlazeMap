@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.waypoint;
+package com.eerussianguy.blazemap.api.waypoint;
 
 import java.util.Random;
 

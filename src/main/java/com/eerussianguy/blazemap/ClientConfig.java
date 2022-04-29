@@ -11,6 +11,8 @@ import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
 public class ClientConfig
 {
+    /*
+
     public final IntValue particleAttempts;
     public final IntValue particleDistance;
 
@@ -32,4 +34,6 @@ public class ClientConfig
 
         innerBuilder.pop();
     }
+
+    */
 }

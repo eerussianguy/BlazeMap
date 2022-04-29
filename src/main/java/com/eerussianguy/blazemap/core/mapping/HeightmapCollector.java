@@ -1,14 +1,13 @@
-package com.eerussianguy.blazemap.collector;
+package com.eerussianguy.blazemap.core.mapping;
 
+import com.eerussianguy.blazemap.api.mapping.Collector;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Heightmap;
 
-import com.eerussianguy.blazemap.data.BlockStateDataReader;
-
-public class HeightmapCollector extends Collector<BlockStateDataReader>
+public class HeightmapCollector extends Collector<BlockStateMD>
 {
     private final Heightmap.Types type;
 
@@ -18,7 +17,7 @@ public class HeightmapCollector extends Collector<BlockStateDataReader>
     }
 
     @Override
-    public BlockStateDataReader collect(Level level, ChunkAccess chunk, int minX, int minZ, int maxX, int maxZ)
+    public BlockStateMD collect(Level level, ChunkAccess chunk, int minX, int minZ, int maxX, int maxZ)
     {
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         BlockState[] states = new BlockState[16 * 16];
@@ -30,6 +29,6 @@ public class HeightmapCollector extends Collector<BlockStateDataReader>
                 states[x + 16 * z] = level.getBlockState(mutable);
             }
         }
-        return new BlockStateDataReader(states);
+        return new BlockStateMD(states);
     }
 }
