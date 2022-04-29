@@ -2,12 +2,12 @@
 modLoader="javafml" #mandatory
 loaderVersion="[40,)"
 license="MIT License"
-issueTrackerURL="https://github.com/eerussianguy/Better-Foliage/issues" #optional
+issueTrackerURL="https://github.com/eerussianguy/BlazeMap/issues" #optional
 [[mods]] #mandatory
 modId="blazemap" #mandatory
 version="${file.jarVersion}" #mandatory
 displayName="Blaze Map" #mandatory
-displayURL="https://github.com/eerussianguy/Better-Foliage" #optional
+displayURL="https://github.com/eerussianguy/BlazeMap" #optional
 logoFile="examplemod.png" #optional
 credits=" " #optional
 authors="EERussianguy, LordFokas" #optional
