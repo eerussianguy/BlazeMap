@@ -12,58 +12,24 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '3.0.3'
-group = 'com.eerussianguy.betterfoliage' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'betterfoliage'
+version = '0.1.0-dev'
+group = 'com.eerussianguy.blazemap' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "BlazeMap-${minecraft_version}"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println("Java: ${System.getProperty("java.version")} JVM: ${System.getProperty("java.vm.version")} (${System.getProperty("java.vendor")}) Arch: ${System.getProperty("os.arch")}")
 minecraft {
-    mappings channel: 'official', version: '1.18.2'
+    mappings channel: "${mappings_channel}", version: "${mappings_version}"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     runs {
         client {
             workingDirectory project.file('run')
-
             property 'forge.logging.markers', 'REGISTRIES'
-
             property 'forge.logging.console.level', 'debug'
-
             mods {
-                betterfoliage {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        server {
-            workingDirectory project.file('run')
-
-            property 'forge.logging.markers', 'REGISTRIES'
-
-            property 'forge.logging.console.level', 'debug'
-
-            mods {
-                betterfoliage {
-                    source sourceSets.main
-                }
-            }
-        }
-
-        data {
-            workingDirectory project.file('run')
-
-            property 'forge.logging.markers', 'REGISTRIES'
-
-            property 'forge.logging.console.level', 'debug'
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', 'betterfoliage', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-
-            mods {
-                betterfoliage {
+                blazemap {
                     source sourceSets.main
                 }
             }
@@ -75,15 +41,15 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.0.1'
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
 jar {
     manifest {
         attributes([
-            "Specification-Title": "betterfoliage",
-            "Specification-Vendor": "eerussianguy",
+            "Specification-Title": "blazemap",
+            "Specification-Vendor": "lordfokas",
             "Specification-Version": "1", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
