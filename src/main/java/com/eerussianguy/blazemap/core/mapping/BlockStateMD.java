@@ -1,19 +1,19 @@
-package com.eerussianguy.blazemap.data;
+package com.eerussianguy.blazemap.core.mapping;
 
+import com.eerussianguy.blazemap.api.mapping.MasterData;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class BlockStateDataReader extends DataReader
+public class BlockStateMD implements MasterData
 {
     private final BlockState[] states;
 
-    public BlockStateDataReader(BlockState[] states)
+    public BlockStateMD(BlockState[] states)
     {
         this.states = states;
     }
 
-    @Override
     public int colorFor(int x, int z)
     {
         return states[x + 16 * z].getMaterial().getColor().col;
@@ -35,7 +35,7 @@ public class BlockStateDataReader extends DataReader
     }
 
     @Override
-    public BlockStateDataReader deserialize(CompoundTag tag)
+    public BlockStateMD deserialize(CompoundTag tag)
     {
         final BlockState[] states = new BlockState[16 * 16];
         for (int x = 0; x < 16; x++)
@@ -46,6 +46,6 @@ public class BlockStateDataReader extends DataReader
                 states[idx] = NbtUtils.readBlockState(tag.getCompound("state" + idx));
             }
         }
-        return new BlockStateDataReader(states);
+        return new BlockStateMD(states);
     }
 }

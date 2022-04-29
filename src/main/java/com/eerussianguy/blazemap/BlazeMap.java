@@ -1,5 +1,7 @@
 package com.eerussianguy.blazemap;
 
+import com.eerussianguy.blazemap.core.BlazeMapCore;
+import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.IExtensionPoint;
@@ -9,9 +11,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
-import com.eerussianguy.blazemap.collector.Collectors;
-import com.eerussianguy.blazemap.layer.Layers;
-import com.eerussianguy.blazemap.maptype.MapTypes;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
@@ -42,9 +41,8 @@ public class BlazeMap
 
     public void setup(FMLCommonSetupEvent event)
     {
-        Collectors.init();
-        Layers.init();
-        MapTypes.init();
+        BlazeMapCore.init();
+        BlazeMapEngine.init();
     }
 
 }

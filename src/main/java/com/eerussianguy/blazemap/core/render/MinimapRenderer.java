@@ -1,10 +1,10 @@
-package com.eerussianguy.blazemap.render;
+package com.eerussianguy.blazemap.core.render;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 
 import com.eerussianguy.blazemap.Helpers;
-import com.eerussianguy.blazemap.maptype.MapType;
+import com.eerussianguy.blazemap.api.mapping.MapType;
 
 public class MinimapRenderer implements AutoCloseable
 {
