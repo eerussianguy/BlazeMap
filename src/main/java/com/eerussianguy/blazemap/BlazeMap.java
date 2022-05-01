@@ -27,16 +27,14 @@ public class BlazeMap
     {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> "Nothing", (remote, isServer) -> true));
 
-        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-        bus.addListener(this::setup);
-
         if (FMLEnvironment.dist == Dist.CLIENT)
         {
+            final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+            bus.addListener(this::setup);
+
             EventHandler.init();
             ForgeEventHandler.init();
         }
-
-        BConfig.init();
     }
 
     public void setup(FMLCommonSetupEvent event)

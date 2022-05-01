@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.eventbus.api.Cancelable;
 import net.minecraftforge.eventbus.api.Event;
 
@@ -27,6 +29,10 @@ public class MapType
     public List<Layer<?>> getLayers()
     {
         return layers;
+    }
+
+    public boolean shouldRenderForWorld(ResourceKey<Level> world){
+        return true;
     }
 
     @Cancelable
