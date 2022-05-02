@@ -12,36 +12,50 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 
+// TODO: use concurrent debouncing sets to mitigate repeated changes to the same objects
 public class CartographyPipeline {
     private final MasterDataCache mdCache = new MasterDataCache();
+    private final ResourceKey<Level> world;
     private final File levelDir;
 
-    private final Set<MapType> maptypes = new HashSet<>();
-    private final Set<Layer<?>> layers = new HashSet<>();
-    private final Set<Collector<?>> collectors = new HashSet<>();
-    private final Map<Layer<?>, List<MapType>> mapTriggers = new HashMap<>();
-    private final Map<Collector<?>, List<Layer<?>>> layerTriggers = new HashMap<>();
+    private final Map<ResourceLocation, Collector<?>> collectors = new HashMap<>();
+    private final Map<ResourceLocation, List<MapType>> mapTriggers = new HashMap<>();
+    private final Map<ResourceLocation, List<Layer<?>>> layerTriggers = new HashMap<>();
 
     public CartographyPipeline(File serverDir, ResourceKey<Level> world) {
         this.levelDir = new File(serverDir, world.getRegistryName().toString().replace(':', '+'));
         this.levelDir.mkdirs();
+        this.world = world;
 
+        // Trim dependencies:
+        // - Check what map types render on this world
+        // - Check what layers those map types use
+        // - Discard layers that don't render for this world
+        // - List all needed MD collectors for those layers.
+        // Build dependents tree:
+        // - What layers depend on each MD collector?
+        // - What maps depend on each layer?
+        final Set<Layer<?>> layers = new HashSet<>();
         for (ResourceLocation key : BlazeMapAPI.MAPTYPES.keys()) {
             MapType maptype = BlazeMapAPI.MAPTYPES.get(key);
             if(!maptype.shouldRenderForWorld(world)) continue;
-            maptypes.add(maptype);
-            for(Layer<?> layer : maptype.getLayers()){
+            for(ResourceLocation layerID : maptype.getLayers()){
+                Layer<?> layer = BlazeMapAPI.LAYERS.get(layerID);
+                // TODO: check ids match
                 if(!layer.shouldRenderForWorld(world)) continue;
-                mapTriggers.computeIfAbsent(layer, $ -> new ArrayList<>(8)).add(maptype);
+                mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
                 if(layers.contains(layer)) continue;
                 layers.add(layer);
-                for(Collector<?> collector : layer.getCollectors()){
-                    layerTriggers.computeIfAbsent(collector, $ -> new ArrayList<>(8)).add(layer);
-                    if(collectors.contains(collector)) continue;
-                    collectors.add(collector);
+                for(ResourceLocation collectorID : layer.getCollectors()){
+                    Collector<?> collector = BlazeMapAPI.COLLECTORS.get(collectorID);
+                    // TODO: check ids match
+                    layerTriggers.computeIfAbsent(collectorID, $ -> new ArrayList<>(8)).add(layer);
+                    if(collectors.containsKey(collectorID)) continue;
+                    collectors.put(collectorID, collector);
                 }
             }
         }
@@ -51,7 +65,7 @@ public class CartographyPipeline {
     public void markChunkDirty(ChunkPos pos) {
         BlazeMapEngine.threading()
             .startOnGameThread($ -> this.collectFromChunk(pos))
-            .thenOnDataThread(this::processMasterData)
+            .thenOnDataThread(md -> this.processMasterData(md, pos))
             .thenOnGameThread(this::sendMapUpdates)
             .start();
     }
@@ -62,18 +76,50 @@ public class CartographyPipeline {
         int x1 = pos.getMaxBlockX();
         int z0 = pos.getMinBlockZ();
         int z1 = pos.getMaxBlockZ();
-        for(Collector<?> collector : collectors){
+        for(Collector<?> collector : collectors.values()){
             data.put(collector.getID(), collector.collect(null, null, x0, z0, x1, z1));
         }
         return data;
     }
 
-    private List<Event> processMasterData(Map<ResourceLocation, MasterData> data){
-        List<Event> updateEvents = new LinkedList<>();
+    // Redraw tiles based on MD changes
+    // Check what MDs changed, mark dependent layers for redraw
+    // Ask layers to redraw tiles, if applicable:
+    // - if tile was redrawn:
+    // -  - mark dependent map types as changed
+    // -  - update map files with new tile
+    // Generate update events for changed map types
+    private List<Event> processMasterData(Map<ResourceLocation, MasterData> data, ChunkPos pos){
         Set<Layer<?>> dirtyLayers = new HashSet<>();
+        for(Map.Entry<ResourceLocation, MasterData> entry : data.entrySet()){
+            if(entry.getValue() != null){
+                // TODO: more advanced diffing
+                dirtyLayers.addAll(layerTriggers.get(entry.getKey()));
+            }
+        }
+
         Set<MapType> dirtyMaps = new HashSet<>();
+        MapView<ResourceLocation, MasterData> view = new MapView<>(data);
+        for(Layer<?> layer : dirtyLayers){
+            BufferedImage tile = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            view.setFilter(layer.getCollectors());
+            if(layer.renderTile(tile, view)) {
+                ResourceLocation layerID = layer.getID();
+                this.updateTile(tile, layerID, pos);
+                dirtyMaps.addAll(mapTriggers.get(layerID));
+            }
+        }
+
+        List<Event> updateEvents = new LinkedList<>();
+        for(MapType mapType : dirtyMaps){
+            // TODO: create map changed events
+        }
 
         return updateEvents;
+    }
+
+    private void updateTile(BufferedImage tile, ResourceLocation layerID, ChunkPos pos){
+
     }
 
     // TODO: figure out why void gives generic errors but null Void is OK. Does it have to be an Object?
@@ -85,6 +131,6 @@ public class CartographyPipeline {
     }
 
     public void shutdown() {
-
+        // TODO: Release all memory dedicated to caches and such. Close resources. Flush to disk.
     }
 }

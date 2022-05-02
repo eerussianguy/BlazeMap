@@ -1,7 +1,11 @@
 package com.eerussianguy.blazemap.core.mapping;
 
+import com.eerussianguy.blazemap.api.IMapView;
 import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.mapping.MasterData;
 import net.minecraft.resources.ResourceLocation;
+
+import java.awt.image.BufferedImage;
 
 public class DaytimeLayer extends Layer<BlockStateMD>
 {
@@ -11,8 +15,7 @@ public class DaytimeLayer extends Layer<BlockStateMD>
     }
 
     @Override
-    public int compositePosition(BlockStateMD data, int x, int z)
-    {
-        return data.colorFor(x, z);
+    public boolean renderTile(BufferedImage tile, IMapView<ResourceLocation, MasterData> data) {
+        return true;
     }
 }
