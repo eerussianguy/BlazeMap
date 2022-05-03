@@ -1,65 +1,34 @@
 package com.eerussianguy.blazemap.api.mapping;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.minecraft.world.level.Level;
 
-import org.jetbrains.annotations.Nullable;
-
-public class MapType
+public abstract class MapType
 {
-    private final List<Layer<?>> layers;
+    private final Set<ResourceLocation> layers;
 
-    public MapType(Layer<?>... layers)
+    public MapType(ResourceLocation... layers)
     {
-        this.layers = Arrays.stream(layers).collect(Collectors.toList());
+        this.layers = Arrays.stream(layers).collect(Collectors.toUnmodifiableSet());
     }
 
-    public MapType(List<Layer<?>> layers)
+    public MapType(Set<ResourceLocation> layers)
     {
-        this.layers = layers;
+        this.layers = Collections.unmodifiableSet(layers);
     }
 
-    public List<Layer<?>> getLayers()
+    public Set<ResourceLocation> getLayers()
     {
         return layers;
     }
 
-    @Cancelable
-    public static class CreationEvent extends Event
-    {
-        private List<Layer<?>> layers;
-
-        public CreationEvent(List<Layer<?>> layers)
-        {
-            this.layers = layers;
-        }
-
-        public void replaceAllLayers(List<Layer<?>> layers)
-        {
-            this.layers = layers;
-        }
-
-        public List<Layer<?>> getLayers()
-        {
-            return layers;
-        }
-
-        @Nullable
-        public Layer<?> removeLayer(ResourceLocation id)
-        {
-            for (Layer<?> layer : layers)
-            {
-                if (layer.getID().equals(id))
-                {
-                    return layer;
-                }
-            }
-            return null;
-        }
+    public boolean shouldRenderForWorld(ResourceKey<Level> world){
+        return true;
     }
 }

@@ -2,10 +2,12 @@ package com.eerussianguy.blazemap.core;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
-import com.eerussianguy.blazemap.core.mapping.DaytimeLayer;
-import com.eerussianguy.blazemap.core.mapping.HeightmapCollector;
+import com.eerussianguy.blazemap.core.mapping.TerrainHeightCollector;
+import com.eerussianguy.blazemap.core.mapping.TerrainHeightLayer;
+import com.eerussianguy.blazemap.core.mapping.TopographyMapType;
 
 public class BlazeMapCore {
+    /*
     public static void init(){
         // We initialize the mapping components through our own API because it is so modular
         // and flexible that we can build these features on top of it.
@@ -24,5 +26,13 @@ public class BlazeMapCore {
         // Map Types
         BlazeMapAPI.MAPTYPES.set(BlazeMapReferences.MAP_AERIAL_VIEW, null);
         BlazeMapAPI.MAPTYPES.set(BlazeMapReferences.MAP_TOPOGRAPHY, null);
+    }
+    */
+
+    // TODO: remove debug
+    public static void init(){
+        BlazeMapAPI.COLLECTORS.set(BlazeMapReferences.MD_TERRAIN_HEIGHT, new TerrainHeightCollector());
+        BlazeMapAPI.LAYERS.set(BlazeMapReferences.LAYER_TERRAIN_HEIGHT, new TerrainHeightLayer());
+        BlazeMapAPI.MAPTYPES.set(BlazeMapReferences.MAP_TOPOGRAPHY, new TopographyMapType());
     }
 }

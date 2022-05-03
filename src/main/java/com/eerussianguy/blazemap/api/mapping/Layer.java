@@ -1,14 +1,24 @@
 package com.eerussianguy.blazemap.api.mapping;
 
+import com.eerussianguy.blazemap.api.IMapView;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
 
-public abstract class Layer<T extends MasterData>
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public abstract class Layer
 {
     private final ResourceLocation id;
+    private final Set<ResourceLocation> collectors;
 
-    public Layer(ResourceLocation id)
+    public Layer(ResourceLocation id, ResourceLocation... collectors)
     {
         this.id = id;
+        this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 
     public ResourceLocation getID()
@@ -16,5 +26,16 @@ public abstract class Layer<T extends MasterData>
         return id;
     }
 
-    protected abstract int compositePosition(T data, int x, int z);
+    public Set<ResourceLocation> getCollectors()
+    {
+        return collectors;
+    }
+
+
+
+    public boolean shouldRenderForWorld(ResourceKey<Level> world){
+        return true;
+    }
+
+    public abstract boolean renderTile(BufferedImage tile, IMapView<ResourceLocation, MasterData> data);
 }

@@ -2,6 +2,7 @@ package com.eerussianguy.blazemap.api;
 
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
