@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public abstract class Layer<T extends MasterData>
+public abstract class Layer
 {
     private final ResourceLocation id;
     private final Set<ResourceLocation> collectors;

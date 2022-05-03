@@ -10,7 +10,7 @@ public class ClientUtils {
 
     public static String getServerID(){
         if(MC.hasSingleplayerServer()){
-            return "SP@"+MC.getSingleplayerServer().getSingleplayerName();
+            return "SP@"+MC.getSingleplayerServer().getWorldData().getLevelName();
         }else{
             return "MP@"+MC.getCurrentServer().ip.replace(':', '+');
         }
@@ -19,5 +19,9 @@ public class ClientUtils {
     public static File getBaseDir(){
         if(baseDir == null) baseDir = new File(MC.gameDirectory, BlazeMap.MOD_ID);
         return baseDir;
+    }
+
+    public static void runOnMainThread(Runnable r){
+        MC.tell(r);
     }
 }

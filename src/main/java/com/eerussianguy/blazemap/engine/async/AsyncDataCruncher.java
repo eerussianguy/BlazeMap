@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.engine.threading;
+package com.eerussianguy.blazemap.engine.async;
 
 import com.eerussianguy.blazemap.BlazeMap;
 

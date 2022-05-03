@@ -5,6 +5,9 @@ import com.eerussianguy.blazemap.api.mapping.Collector;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.mapping.MasterData;
+import com.eerussianguy.blazemap.engine.async.DebouncingDomain;
+import com.eerussianguy.blazemap.engine.async.DebouncingThread;
+import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
@@ -19,15 +22,20 @@ import java.util.*;
 // TODO: use concurrent debouncing sets to mitigate repeated changes to the same objects
 public class CartographyPipeline {
     private final MasterDataCache mdCache = new MasterDataCache();
-    private final ResourceKey<Level> world;
     private final File levelDir;
+    public final ResourceKey<Level> world;
 
     private final Map<ResourceLocation, Collector<?>> collectors = new HashMap<>();
     private final Map<ResourceLocation, List<MapType>> mapTriggers = new HashMap<>();
-    private final Map<ResourceLocation, List<Layer<?>>> layerTriggers = new HashMap<>();
+    private final Map<ResourceLocation, List<Layer>> layerTriggers = new HashMap<>();
+
+    private final Map<ResourceLocation, Map<RegionPos, MapLayerRegion>> regions = new HashMap<>();
+    private final DebouncingDomain<MapLayerRegion> dirtyRegions;
+    private final DebouncingDomain<ChunkPos> dirtyChunks;
+
 
     public CartographyPipeline(File serverDir, ResourceKey<Level> world) {
-        this.levelDir = new File(serverDir, world.getRegistryName().toString().replace(':', '+'));
+        this.levelDir = new File(serverDir, world.location().toString().replace(':', '+'));
         this.levelDir.mkdirs();
         this.world = world;
 
@@ -39,35 +47,47 @@ public class CartographyPipeline {
         // Build dependents tree:
         // - What layers depend on each MD collector?
         // - What maps depend on each layer?
-        final Set<Layer<?>> layers = new HashSet<>();
+        final Set<Layer> layers = new HashSet<>();
         for (ResourceLocation key : BlazeMapAPI.MAPTYPES.keys()) {
             MapType maptype = BlazeMapAPI.MAPTYPES.get(key);
             if(!maptype.shouldRenderForWorld(world)) continue;
             for(ResourceLocation layerID : maptype.getLayers()){
-                Layer<?> layer = BlazeMapAPI.LAYERS.get(layerID);
-                // TODO: check ids match
+                Layer layer = BlazeMapAPI.LAYERS.get(layerID);
+                if(layer == null) throw new IllegalArgumentException("Layer "+layerID+" was not registered.");
                 if(!layer.shouldRenderForWorld(world)) continue;
                 mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
                 if(layers.contains(layer)) continue;
                 layers.add(layer);
                 for(ResourceLocation collectorID : layer.getCollectors()){
                     Collector<?> collector = BlazeMapAPI.COLLECTORS.get(collectorID);
-                    // TODO: check ids match
+                    if(collector == null) throw new IllegalArgumentException("Layer "+collectorID+" was not registered.");
                     layerTriggers.computeIfAbsent(collectorID, $ -> new ArrayList<>(8)).add(layer);
                     if(collectors.containsKey(collectorID)) continue;
                     collectors.put(collectorID, collector);
                 }
             }
         }
+
+        // Set up debouncing mechanisms
+        AsyncChain.Root async = BlazeMapEngine.async();
+        DebouncingThread thread = BlazeMapEngine.debouncer();
+        this.dirtyRegions = new DebouncingDomain<MapLayerRegion>(region -> async.runOnDataThread(region::save), 1000, 30000);
+        this.dirtyChunks = new DebouncingDomain<ChunkPos>(this::queueDirtyChunk, 1000, 10000);
+        thread.add(dirtyRegions);
+        thread.add(dirtyChunks);
     }
 
     // TODO: make chunk update orders wait for a few ms in a queue and start processing when timed out.
     public void markChunkDirty(ChunkPos pos) {
-        BlazeMapEngine.threading()
-            .startOnGameThread($ -> this.collectFromChunk(pos))
-            .thenOnDataThread(md -> this.processMasterData(md, pos))
-            .thenOnGameThread(this::sendMapUpdates)
-            .start();
+        dirtyChunks.push(pos);
+    }
+
+    public void queueDirtyChunk(ChunkPos pos) {
+        BlazeMapEngine.async()
+                .startOnGameThread($ -> this.collectFromChunk(pos))
+                .thenOnDataThread(md -> this.processMasterData(md, pos))
+                .thenOnGameThread(this::sendMapUpdates)
+                .start();
     }
 
     private Map<ResourceLocation, MasterData> collectFromChunk(ChunkPos pos) {
@@ -90,7 +110,7 @@ public class CartographyPipeline {
     // -  - update map files with new tile
     // Generate update events for changed map types
     private List<Event> processMasterData(Map<ResourceLocation, MasterData> data, ChunkPos pos){
-        Set<Layer<?>> dirtyLayers = new HashSet<>();
+        Set<Layer> dirtyLayers = new HashSet<>();
         for(Map.Entry<ResourceLocation, MasterData> entry : data.entrySet()){
             if(entry.getValue() != null){
                 // TODO: more advanced diffing
@@ -100,7 +120,7 @@ public class CartographyPipeline {
 
         Set<MapType> dirtyMaps = new HashSet<>();
         MapView<ResourceLocation, MasterData> view = new MapView<>(data);
-        for(Layer<?> layer : dirtyLayers){
+        for(Layer layer : dirtyLayers){
             BufferedImage tile = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
             view.setFilter(layer.getCollectors());
             if(layer.renderTile(tile, view)) {
@@ -118,8 +138,19 @@ public class CartographyPipeline {
         return updateEvents;
     }
 
-    private void updateTile(BufferedImage tile, ResourceLocation layerID, ChunkPos pos){
+    private void updateTile(BufferedImage tile, ResourceLocation layerID, ChunkPos chunkPos){
+        RegionPos regionPos = new RegionPos(chunkPos);
+        MapLayerRegion region = regions
+                .computeIfAbsent(layerID, $ -> new HashMap<>())
+                .computeIfAbsent(regionPos, $ -> makePage(layerID, regionPos));
+        region.updateTile(tile, chunkPos);
+        dirtyRegions.push(region);
+    }
 
+    private MapLayerRegion makePage(ResourceLocation layer, RegionPos region){
+        MapLayerRegion mapLayerRegion = new MapLayerRegion(layer, region, levelDir);
+        mapLayerRegion.tryLoad();
+        return mapLayerRegion;
     }
 
     // TODO: figure out why void gives generic errors but null Void is OK. Does it have to be an Object?

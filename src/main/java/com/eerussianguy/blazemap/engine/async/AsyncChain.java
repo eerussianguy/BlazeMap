@@ -1,10 +1,8 @@
-package com.eerussianguy.blazemap.engine.threading;
-
-import net.minecraftforge.eventbus.api.IEventBus;
+package com.eerussianguy.blazemap.engine.async;
 
 import java.util.function.Function;
 
-public final class ThreadHandler<I, O> {
+public final class AsyncChain<I, O> {
 
     public static class Root {
         private final AsyncDataCruncher asyncDataCruncher;
@@ -17,12 +15,12 @@ public final class ThreadHandler<I, O> {
             this.gameThreadQueue = gameThreadQueue;
         }
 
-        public <O> ThreadHandler<Void, O> startOnGameThread(Function<Void, O> fn){
-            return new ThreadHandler<>(null, fn, gameThreadQueue, this);
+        public <O> AsyncChain<Void, O> startOnGameThread(Function<Void, O> fn){
+            return new AsyncChain<>(null, fn, gameThreadQueue, this);
         }
 
-        public <O> ThreadHandler<Void, O> startOnDataThread(Function<Void, O> fn){
-            return new ThreadHandler<>(null, fn, dataThreadQueue, this);
+        public <O> AsyncChain<Void, O> startOnDataThread(Function<Void, O> fn){
+            return new AsyncChain<>(null, fn, dataThreadQueue, this);
         }
 
         public void runOnGameThread(Runnable r){
@@ -63,13 +61,13 @@ public final class ThreadHandler<I, O> {
     }
 
     private final Root initiator;
-    private final ThreadHandler<?,?> root;
+    private final AsyncChain<?,?> root;
     private final Function<I, O> fn;
     private final IThreadQueue threadQueue;
-    private ThreadHandler<O, ?> next;
+    private AsyncChain<O, ?> next;
     private boolean closed = false;
 
-    private ThreadHandler(ThreadHandler<?,?> parent, Function<I, O> fn, IThreadQueue threadQueue, Root initiator){
+    private AsyncChain(AsyncChain<?,?> parent, Function<I, O> fn, IThreadQueue threadQueue, Root initiator){
         if(parent == null) this.root = null;
         else if(parent.root == null) this.root = parent;
         else this.root = parent.root;
@@ -78,18 +76,18 @@ public final class ThreadHandler<I, O> {
         this.initiator = initiator;
     }
 
-    public <N> ThreadHandler<O, N> thenOnGameThread(Function<O, N> fn){
+    public <N> AsyncChain<O, N> thenOnGameThread(Function<O, N> fn){
         return thenOnThread(fn, initiator.gameThreadQueue);
     }
 
-    public <N> ThreadHandler<O, N> thenOnDataThread(Function<O, N> fn){
+    public <N> AsyncChain<O, N> thenOnDataThread(Function<O, N> fn){
         return thenOnThread(fn, initiator.dataThreadQueue);
     }
 
-    private <N> ThreadHandler<O, N> thenOnThread(Function<O, N> fn, IThreadQueue threadQueue){
-        if(closed) throw new IllegalStateException("ThreadHandler is already closed");
+    private <N> AsyncChain<O, N> thenOnThread(Function<O, N> fn, IThreadQueue threadQueue){
+        if(closed) throw new IllegalStateException("AsyncChain is already closed");
         closed = true;
-        ThreadHandler<O, N> next = new ThreadHandler<>(this, fn, threadQueue, initiator);
+        AsyncChain<O, N> next = new AsyncChain<>(this, fn, threadQueue, initiator);
         this.next = next;
         return next;
     }

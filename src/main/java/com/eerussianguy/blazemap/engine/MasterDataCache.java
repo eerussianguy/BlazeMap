@@ -26,5 +26,5 @@ public class MasterDataCache
 
     }
 
-    private record Entry<T extends MasterData>(Layer<T> layer, T data) {}
+    private record Entry<T extends MasterData>(Layer layer, T data) {}
 }
