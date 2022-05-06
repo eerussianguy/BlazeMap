@@ -1,0 +1,10 @@
+{
+  "required": true,
+  "package": "com.eerussianguy.blazemap.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "blazemap.refmap.json",
+  "mixins": [
+    "RenderChunkRegionMixin"
+  ],
+  "minVersion": "0.8"
+}

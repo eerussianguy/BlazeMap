@@ -6,15 +6,15 @@ public class RegionPos {
     public final int x;
     public final int z;
 
-    public RegionPos(ChunkPos pos){
+    public RegionPos(ChunkPos pos) {
         this.x = pos.getRegionX();
         this.z = pos.getRegionZ();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
         RegionPos regionPos = (RegionPos) o;
         return x == regionPos.x && z == regionPos.z;
     }

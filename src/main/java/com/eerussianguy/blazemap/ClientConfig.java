@@ -1,16 +1,6 @@
 package com.eerussianguy.blazemap;
 
-import java.util.function.Function;
-
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.Builder;
-import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
-
-import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
-
-public class ClientConfig
-{
+public class ClientConfig {
     /*
 
     public final IntValue particleAttempts;

@@ -1,15 +1,13 @@
 package com.eerussianguy.blazemap.engine;
 
-import com.eerussianguy.blazemap.ClientUtils;
-import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
-import com.eerussianguy.blazemap.engine.async.DebouncingThread;
-import com.eerussianguy.blazemap.engine.async.AsyncChain;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.*;
+import java.util.function.Consumer;
+
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -17,11 +15,11 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.eerussianguy.blazemap.BlazeMap;
+import com.eerussianguy.blazemap.ClientUtils;
+import com.eerussianguy.blazemap.engine.async.AsyncChain;
+import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
+import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 
 public class BlazeMapEngine {
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
@@ -29,41 +27,37 @@ public class BlazeMapEngine {
     private static AsyncChain.Root async;
     private static AsyncDataCruncher dataCruncher;
     private static CartographyPipeline activePipeline;
-    private static PacketListener listener;
     private static String serverID;
     private static File serverDir;
 
-    public static void init(){
+    public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
         dataCruncher = new AsyncDataCruncher("Blaze Map");
         async = new AsyncChain.Root(dataCruncher, ClientUtils::runOnMainThread);
-        debouncer = new DebouncingThread("BlazeMap Engine");
+        debouncer = new DebouncingThread("Blaze Map Engine");
     }
 
-    public static AsyncChain.Root async(){
+    public static AsyncChain.Root async() {
         return async;
     }
 
-    public static DebouncingThread debouncer(){
+    public static DebouncingThread debouncer() {
         return debouncer;
     }
 
     @SubscribeEvent
-    public static void onJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event){
-        if(event.getPlayer() == null) return;
+    public static void onJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
+        LocalPlayer player = event.getPlayer();
+        if(player == null) return;
         serverID = ClientUtils.getServerID();
         serverDir = new File(ClientUtils.getBaseDir(), serverID);
-        LocalPlayer player = event.getPlayer();
-        player.connection.getConnection().channel().pipeline().addFirst(listener = new PacketListener());
         switchToPipeline(player.level.dimension());
     }
 
     @SubscribeEvent
-    public static void onLeaveServer(ClientPlayerNetworkEvent.LoggedOutEvent event){
-        if(event.getPlayer() == null) return;
-        event.getPlayer().connection.getConnection().channel().pipeline().remove(listener);
+    public static void onLeaveServer(ClientPlayerNetworkEvent.LoggedOutEvent event) {
         PIPELINES.clear();
-        if(activePipeline != null){
+        if(activePipeline != null) {
             activePipeline.shutdown();
             activePipeline = null;
         }
@@ -72,42 +66,84 @@ public class BlazeMapEngine {
     }
 
     @SubscribeEvent
-    public static void onChangeWorld(PlayerEvent.PlayerChangedDimensionEvent event){
+    public static void onChangeWorld(PlayerEvent.PlayerChangedDimensionEvent event) {
         switchToPipeline(event.getTo());
     }
 
-    private static void switchToPipeline(ResourceKey<Level> level){
-        if(activePipeline != null){
-            if(activePipeline.world.equals(level)) return;
+    private static void switchToPipeline(ResourceKey<Level> dimension) {
+        if(activePipeline != null) {
+            if(activePipeline.world.equals(dimension)) return;
             activePipeline.shutdown();
         }
-        activePipeline = PIPELINES.computeIfAbsent(level, l -> new CartographyPipeline(serverDir, l));
+        activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
+        Hooks.notifyDimensionChange(dimension);
     }
 
-    public static void onChunkLoaded(){
-        // activePipeline.markChunkDirty(pos);
-    }
-
-    public static void onChunkChanged(ChunkPos pos){
-        if(activePipeline == null) return;
+    public static void onChunkChanged(ChunkPos pos) {
+        if(activePipeline == null) {
+            BlazeMap.LOGGER.warn("Ignoring chunk update for {}", pos);
+            return;
+        }
         activePipeline.markChunkDirty(pos);
     }
 
-    private static void onClientBoundPacket(Object packet){
-        if(packet instanceof ClientboundBlockUpdatePacket){
-            onChunkChanged(new ChunkPos(((ClientboundBlockUpdatePacket) packet).getPos()));
-        }else if(packet instanceof ClientboundSectionBlocksUpdatePacket){
-            Set<ChunkPos> chunks = new HashSet<>();
-            ((ClientboundSectionBlocksUpdatePacket) packet).runUpdates((blockPos, blockState) -> chunks.add(new ChunkPos(blockPos)));
-            for(ChunkPos pos : chunks) onChunkChanged(pos);
+    public static class Hooks {
+        private static final Set<Consumer<ResourceKey<Level>>> DIMENSION_CHANGE_LISTENERS = new HashSet<>();
+        private static final Set<Consumer<LayerRegion>> LAYER_REGION_CHANGE_LISTENERS = new HashSet<>();
+
+        public File getCurrentDimensionDir() {
+            if(activePipeline == null) return null;
+            return activePipeline.dimensionDir;
+        }
+
+        public File getCurrentServerDir() {
+            return serverDir;
+        }
+
+        public static void addDimensionChangeListener(Consumer<ResourceKey<Level>> listener) {
+            DIMENSION_CHANGE_LISTENERS.add(listener);
+        }
+
+        public static void removeDimensionChangeListener(Consumer<ResourceKey<Level>> listener) {
+            DIMENSION_CHANGE_LISTENERS.remove(listener);
+        }
+
+        private static void notifyDimensionChange(ResourceKey<Level> dimension) {
+            for(Consumer<ResourceKey<Level>> listener : DIMENSION_CHANGE_LISTENERS) {
+                listener.accept(dimension);
+            }
+        }
+
+        public static void addLayerRegionChangeListener(Consumer<LayerRegion> listener) {
+            LAYER_REGION_CHANGE_LISTENERS.add(listener);
+        }
+
+        public static void removeLayerRegionChangeListener(Consumer<LayerRegion> listener) {
+            LAYER_REGION_CHANGE_LISTENERS.remove(listener);
+        }
+
+        static void notifyLayerRegionChange(LayerRegion layerRegion) {
+            for(Consumer<LayerRegion> listener : LAYER_REGION_CHANGE_LISTENERS) {
+                listener.accept(layerRegion);
+            }
+        }
+
+        public static void consumeTile(LayerRegion layerRegion, Consumer<BufferedImage> consumer) {
+            activePipeline.consumeTile(layerRegion.layer, layerRegion.region, consumer);
+        }
+
+        public static void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer) {
+            activePipeline.consumeTile(layer, region, consumer);
+        }
+
+        public static Set<ResourceLocation> getAvailableLayers() {
+            if(activePipeline == null) return Collections.EMPTY_SET;
+            else return activePipeline.availableLayers;
+        }
+
+        public static Set<ResourceLocation> getAvailableMapTypes() {
+            if(activePipeline == null) return Collections.EMPTY_SET;
+            else return activePipeline.availableMapTypes;
         }
     }
-
-    private static class PacketListener extends ChannelInboundHandlerAdapter{
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object packet) throws Exception {
-            dataCruncher.submit(() -> BlazeMapEngine.onClientBoundPacket(packet));
-            super.channelRead(ctx, packet);
-        }
-    };
 }

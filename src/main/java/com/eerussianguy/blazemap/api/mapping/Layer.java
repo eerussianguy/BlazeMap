@@ -1,39 +1,35 @@
 package com.eerussianguy.blazemap.api.mapping;
 
-import com.eerussianguy.blazemap.api.IMapView;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
-
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public abstract class Layer
-{
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+
+import com.eerussianguy.blazemap.api.IMapView;
+
+public abstract class Layer {
     private final ResourceLocation id;
     private final Set<ResourceLocation> collectors;
 
-    public Layer(ResourceLocation id, ResourceLocation... collectors)
-    {
+    public Layer(ResourceLocation id, ResourceLocation... collectors) {
         this.id = id;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 
-    public ResourceLocation getID()
-    {
+    public ResourceLocation getID() {
         return id;
     }
 
-    public Set<ResourceLocation> getCollectors()
-    {
+    public Set<ResourceLocation> getCollectors() {
         return collectors;
     }
 
 
-
-    public boolean shouldRenderForWorld(ResourceKey<Level> world){
+    public boolean shouldRenderForWorld(ResourceKey<Level> world) {
         return true;
     }
 
