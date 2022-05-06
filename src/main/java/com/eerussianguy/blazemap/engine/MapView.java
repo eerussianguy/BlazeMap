@@ -1,19 +1,19 @@
 package com.eerussianguy.blazemap.engine;
 
-import com.eerussianguy.blazemap.api.IMapView;
-
 import java.util.Map;
 import java.util.Set;
+
+import com.eerussianguy.blazemap.api.IMapView;
 
 public class MapView<K, V> implements IMapView<K, V> {
     private final Map<K, V> source;
     private Set<K> filter;
 
-    public MapView(Map<K, V> source){
+    public MapView(Map<K, V> source) {
         this.source = source;
     }
 
-    public void setFilter(Set<K> filter){
+    public void setFilter(Set<K> filter) {
         this.filter = filter;
     }
 
