@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.feature.render;
+package com.eerussianguy.blazemap.feature.maps;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;

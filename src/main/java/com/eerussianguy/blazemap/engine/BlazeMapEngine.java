@@ -1,13 +1,14 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -17,11 +18,15 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.ClientUtils;
+import com.eerussianguy.blazemap.api.util.LayerRegion;
+import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
+import com.eerussianguy.blazemap.api.event.ServerChangedEvent;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 
 public class BlazeMapEngine {
+    private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
     private static DebouncingThread debouncer;
     private static AsyncChain.Root async;
@@ -51,6 +56,8 @@ public class BlazeMapEngine {
         if(player == null) return;
         serverID = ClientUtils.getServerID();
         serverDir = new File(ClientUtils.getBaseDir(), serverID);
+        serverDir.mkdirs();
+        MinecraftForge.EVENT_BUS.post(new ServerChangedEvent(serverID, serverDir));
         switchToPipeline(player.level.dimension());
     }
 
@@ -72,11 +79,21 @@ public class BlazeMapEngine {
 
     private static void switchToPipeline(ResourceKey<Level> dimension) {
         if(activePipeline != null) {
-            if(activePipeline.world.equals(dimension)) return;
+            if(activePipeline.dimension.equals(dimension)) return;
             activePipeline.shutdown();
         }
         activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
-        Hooks.notifyDimensionChange(dimension);
+
+        TILE_CHANGE_LISTENERS.clear();
+        DimensionChangedEvent event = new DimensionChangedEvent(
+            dimension,
+            activePipeline.availableMapTypes,
+            activePipeline.availableLayers,
+            TILE_CHANGE_LISTENERS::add,
+            activePipeline::consumeTile,
+            activePipeline.dimensionDir
+        );
+        MinecraftForge.EVENT_BUS.post(event);
     }
 
     public static void onChunkChanged(ChunkPos pos) {
@@ -87,63 +104,9 @@ public class BlazeMapEngine {
         activePipeline.markChunkDirty(pos);
     }
 
-    public static class Hooks {
-        private static final Set<Consumer<ResourceKey<Level>>> DIMENSION_CHANGE_LISTENERS = new HashSet<>();
-        private static final Set<Consumer<LayerRegion>> LAYER_REGION_CHANGE_LISTENERS = new HashSet<>();
-
-        public File getCurrentDimensionDir() {
-            if(activePipeline == null) return null;
-            return activePipeline.dimensionDir;
-        }
-
-        public File getCurrentServerDir() {
-            return serverDir;
-        }
-
-        public static void addDimensionChangeListener(Consumer<ResourceKey<Level>> listener) {
-            DIMENSION_CHANGE_LISTENERS.add(listener);
-        }
-
-        public static void removeDimensionChangeListener(Consumer<ResourceKey<Level>> listener) {
-            DIMENSION_CHANGE_LISTENERS.remove(listener);
-        }
-
-        private static void notifyDimensionChange(ResourceKey<Level> dimension) {
-            for(Consumer<ResourceKey<Level>> listener : DIMENSION_CHANGE_LISTENERS) {
-                listener.accept(dimension);
-            }
-        }
-
-        public static void addLayerRegionChangeListener(Consumer<LayerRegion> listener) {
-            LAYER_REGION_CHANGE_LISTENERS.add(listener);
-        }
-
-        public static void removeLayerRegionChangeListener(Consumer<LayerRegion> listener) {
-            LAYER_REGION_CHANGE_LISTENERS.remove(listener);
-        }
-
-        static void notifyLayerRegionChange(LayerRegion layerRegion) {
-            for(Consumer<LayerRegion> listener : LAYER_REGION_CHANGE_LISTENERS) {
-                listener.accept(layerRegion);
-            }
-        }
-
-        public static void consumeTile(LayerRegion layerRegion, Consumer<BufferedImage> consumer) {
-            activePipeline.consumeTile(layerRegion.layer, layerRegion.region, consumer);
-        }
-
-        public static void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer) {
-            activePipeline.consumeTile(layer, region, consumer);
-        }
-
-        public static Set<ResourceLocation> getAvailableLayers() {
-            if(activePipeline == null) return Collections.EMPTY_SET;
-            else return activePipeline.availableLayers;
-        }
-
-        public static Set<ResourceLocation> getAvailableMapTypes() {
-            if(activePipeline == null) return Collections.EMPTY_SET;
-            else return activePipeline.availableMapTypes;
+    static void notifyLayerRegionChange(LayerRegion layerRegion) {
+        for(Consumer<LayerRegion> listener : TILE_CHANGE_LISTENERS) {
+            listener.accept(layerRegion);
         }
     }
 }

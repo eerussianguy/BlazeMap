@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
+import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 
 public class LayerRegionTile {

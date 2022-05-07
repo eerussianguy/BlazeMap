@@ -1,10 +1,13 @@
 package com.eerussianguy.blazemap.feature;
 
+import net.minecraftforge.common.MinecraftForge;
+
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.feature.mapping.TerrainHeightCollector;
 import com.eerussianguy.blazemap.feature.mapping.TerrainHeightLayer;
 import com.eerussianguy.blazemap.feature.mapping.TopographyMapType;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
 
 public class BlazeMapFeatures {
     public static void initMapping() {
@@ -22,6 +25,6 @@ public class BlazeMapFeatures {
     }
 
     public static void initWaypoints() {
-
+        MinecraftForge.EVENT_BUS.register(WaypointManager.class);
     }
 }

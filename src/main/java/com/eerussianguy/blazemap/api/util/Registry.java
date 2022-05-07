@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api;
+package com.eerussianguy.blazemap.api.util;
 
 import java.util.HashMap;
 import java.util.Map;

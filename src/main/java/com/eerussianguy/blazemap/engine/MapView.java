@@ -3,7 +3,7 @@ package com.eerussianguy.blazemap.engine;
 import java.util.Map;
 import java.util.Set;
 
-import com.eerussianguy.blazemap.api.IMapView;
+import com.eerussianguy.blazemap.api.util.IMapView;
 
 public class MapView<K, V> implements IMapView<K, V> {
     private final Map<K, V> source;
