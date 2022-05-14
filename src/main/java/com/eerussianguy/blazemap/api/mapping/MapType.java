@@ -28,7 +28,7 @@ public abstract class MapType
         return layers;
     }
 
-    public boolean shouldRenderForWorld(ResourceKey<Level> world)
+    public boolean shouldRenderInDimension(ResourceKey<Level> dimension)
     {
         return true;
     }

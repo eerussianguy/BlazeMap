@@ -59,7 +59,7 @@ public class CartographyPipeline
         for (ResourceLocation key : BlazeMapAPI.MAPTYPES.keys())
         {
             MapType maptype = BlazeMapAPI.MAPTYPES.get(key);
-            if (!maptype.shouldRenderForWorld(dimension)) continue;
+            if (!maptype.shouldRenderInDimension(dimension)) continue;
             maps.add(key);
             for (ResourceLocation layerID : maptype.getLayers())
             {

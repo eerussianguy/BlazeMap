@@ -7,12 +7,14 @@ import java.util.Random;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 
 import com.mojang.serialization.Codec;
+import org.jetbrains.annotations.Nullable;
 
 import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
@@ -34,6 +36,12 @@ public class Helpers
     public static ClientLevel levelOrThrow()
     {
         return Objects.requireNonNull(Minecraft.getInstance().level);
+    }
+
+    @Nullable
+    public static LocalPlayer getPlayer()
+    {
+        return Minecraft.getInstance().player;
     }
 
     public static String getServerID()

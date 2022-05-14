@@ -6,16 +6,16 @@ import java.util.Set;
 
 import net.minecraft.resources.ResourceLocation;
 
-public class Registry<T>
+public class BlazeRegistry<T>
 {
     private final Map<ResourceLocation, T> objects;
 
-    public Registry(Map<ResourceLocation, T> objects)
+    public BlazeRegistry(Map<ResourceLocation, T> objects)
     {
         this.objects = objects;
     }
 
-    public Registry()
+    public BlazeRegistry()
     {
         this(new HashMap<>());
     }

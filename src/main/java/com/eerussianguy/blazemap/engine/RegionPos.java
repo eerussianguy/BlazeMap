@@ -1,16 +1,34 @@
 package com.eerussianguy.blazemap.engine;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 
 public class RegionPos
 {
+    public static final RegionPos ORIGIN = new RegionPos(BlockPos.ZERO);
+
     public final int x;
     public final int z;
 
+    public RegionPos(BlockPos pos)
+    {
+        this(new ChunkPos(pos));
+    }
+
     public RegionPos(ChunkPos pos)
     {
-        this.x = pos.getRegionX();
-        this.z = pos.getRegionZ();
+        this(pos.getRegionX(), pos.getRegionZ());
+    }
+
+    public RegionPos(int x, int z)
+    {
+        this.x = x;
+        this.z = z;
+    }
+
+    public RegionPos offset(int x, int z)
+    {
+        return new RegionPos(this.x + x, this.z + z);
     }
 
     @Override

@@ -9,7 +9,7 @@ import net.minecraftforge.fml.config.ModConfig;
 
 public class BConfig
 {
-    // public static final ClientConfig CLIENT = register(ClientConfig::new);
+    public static final ClientConfig CLIENT = register(ClientConfig::new);
 
     public static void init() {}
 

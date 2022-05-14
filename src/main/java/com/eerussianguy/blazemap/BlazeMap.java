@@ -22,6 +22,7 @@ public class BlazeMap
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public static final String MOD_ID = "blazemap";
+    public static final String MOD_NAME = "Blaze Map";
 
     public BlazeMap()
     {
@@ -34,6 +35,7 @@ public class BlazeMap
 
             EventHandler.init();
             ForgeEventHandler.init();
+            BConfig.init();
         }
     }
 
@@ -42,8 +44,5 @@ public class BlazeMap
         BlazeMapEngine.init();
 
         BlazeMapFeatures.initMapping();
-        BlazeMapFeatures.initMiniMap();
-        BlazeMapFeatures.initFullMap();
-        BlazeMapFeatures.initWaypoints();
     }
 }
