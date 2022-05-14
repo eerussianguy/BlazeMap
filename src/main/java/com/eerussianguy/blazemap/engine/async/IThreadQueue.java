@@ -1,7 +1,8 @@
 package com.eerussianguy.blazemap.engine.async;
 
 @FunctionalInterface
-public interface IThreadQueue {
+public interface IThreadQueue
+{
     void submit(Runnable r);
 }
 

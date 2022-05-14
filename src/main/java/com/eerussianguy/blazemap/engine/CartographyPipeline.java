@@ -22,7 +22,8 @@ import com.eerussianguy.blazemap.engine.async.DebouncingDomain;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 
-public class CartographyPipeline {
+public class CartographyPipeline
+{
     public final File dimensionDir;
     public final ResourceKey<Level> world;
     private boolean active;
@@ -39,7 +40,8 @@ public class CartographyPipeline {
     private final PriorityLock lock = new PriorityLock();
 
 
-    public CartographyPipeline(File serverDir, ResourceKey<Level> dimension) {
+    public CartographyPipeline(File serverDir, ResourceKey<Level> dimension)
+    {
         this.dimensionDir = new File(serverDir, dimension.location().toString().replace(':', '+'));
         this.dimensionDir.mkdirs();
         this.world = dimension;
@@ -54,23 +56,26 @@ public class CartographyPipeline {
         // - What maps depend on each layer?
         final Set<ResourceLocation> maps = new HashSet<>();
         final Set<ResourceLocation> layers = new HashSet<>();
-        for(ResourceLocation key : BlazeMapAPI.MAPTYPES.keys()) {
+        for (ResourceLocation key : BlazeMapAPI.MAPTYPES.keys())
+        {
             MapType maptype = BlazeMapAPI.MAPTYPES.get(key);
-            if(!maptype.shouldRenderForWorld(dimension)) continue;
+            if (!maptype.shouldRenderForWorld(dimension)) continue;
             maps.add(key);
-            for(ResourceLocation layerID : maptype.getLayers()) {
+            for (ResourceLocation layerID : maptype.getLayers())
+            {
                 Layer layer = BlazeMapAPI.LAYERS.get(layerID);
-                if(layer == null) throw new IllegalArgumentException("Layer " + layerID + " was not registered.");
-                if(!layer.shouldRenderForWorld(dimension)) continue;
+                if (layer == null) throw new IllegalArgumentException("Layer " + layerID + " was not registered.");
+                if (!layer.shouldRenderForWorld(dimension)) continue;
                 mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
-                if(layers.contains(layerID)) continue;
+                if (layers.contains(layerID)) continue;
                 layers.add(layerID);
-                for(ResourceLocation collectorID : layer.getCollectors()) {
+                for (ResourceLocation collectorID : layer.getCollectors())
+                {
                     Collector<?> collector = BlazeMapAPI.COLLECTORS.get(collectorID);
-                    if(collector == null)
+                    if (collector == null)
                         throw new IllegalArgumentException("Layer " + collectorID + " was not registered.");
                     layerTriggers.computeIfAbsent(collectorID, $ -> new ArrayList<>(8)).add(layer);
-                    if(collectors.containsKey(collectorID)) continue;
+                    if (collectors.containsKey(collectorID)) continue;
                     collectors.put(collectorID, collector);
                 }
             }
@@ -89,11 +94,13 @@ public class CartographyPipeline {
         thread.add(dirtyChunks);
     }
 
-    public void markChunkDirty(ChunkPos pos) {
+    public void markChunkDirty(ChunkPos pos)
+    {
         dirtyChunks.push(pos);
     }
 
-    private void processDirtyChunk(ChunkPos pos) {
+    private void processDirtyChunk(ChunkPos pos)
+    {
         BlazeMapEngine.async()
             .startOnGameThread($ -> this.collectFromChunk(pos))
             .thenOnDataThread(md -> this.processMasterData(md, pos))
@@ -101,14 +108,16 @@ public class CartographyPipeline {
             .start();
     }
 
-    private Map<ResourceLocation, MasterData> collectFromChunk(ChunkPos pos) {
+    private Map<ResourceLocation, MasterData> collectFromChunk(ChunkPos pos)
+    {
         Map<ResourceLocation, MasterData> data = new HashMap<>();
         Level level = Helpers.levelOrThrow();
 
         // Do not collect data (thus skipping through the rest of the pipeline)
         // if this chunk is not currently in client cache, as that will return an empty chunk
         // which causes the map tiles to render wrongly
-        if(!level.getChunkSource().hasChunk(pos.x, pos.z)) {
+        if (!level.getChunkSource().hasChunk(pos.x, pos.z))
+        {
             return data;
         }
 
@@ -118,7 +127,8 @@ public class CartographyPipeline {
         int z1 = pos.getMaxBlockZ();
 
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        for(Collector<?> collector : collectors.values()) {
+        for (Collector<?> collector : collectors.values())
+        {
             data.put(collector.getID(), collector.collect(level, mutable, x0, z0, x1, z1));
         }
         return data;
@@ -131,10 +141,13 @@ public class CartographyPipeline {
     // -  - mark dependent map types as changed
     // -  - update map files with new tile
     // -  - add LayerRegion to the list of updated images to return
-    private List<LayerRegion> processMasterData(Map<ResourceLocation, MasterData> data, ChunkPos chunkPos) {
+    private List<LayerRegion> processMasterData(Map<ResourceLocation, MasterData> data, ChunkPos chunkPos)
+    {
         Set<Layer> dirtyLayers = new HashSet<>();
-        for(Map.Entry<ResourceLocation, MasterData> entry : data.entrySet()) {
-            if(entry.getValue() != null) {
+        for (Map.Entry<ResourceLocation, MasterData> entry : data.entrySet())
+        {
+            if (entry.getValue() != null)
+            {
                 // TODO: more advanced diffing
                 dirtyLayers.addAll(layerTriggers.get(entry.getKey()));
             }
@@ -143,13 +156,15 @@ public class CartographyPipeline {
         List<LayerRegion> updates = new LinkedList<>();
         RegionPos regionPos = new RegionPos(chunkPos);
         MapView<ResourceLocation, MasterData> view = new MapView<>(data);
-        for(Layer layer : dirtyLayers) {
+        for (Layer layer : dirtyLayers)
+        {
             BufferedImage layerChunkTile = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
             view.setFilter(layer.getCollectors()); // the layer should only access declared collectors
 
             // only generate updates if the renderer populates the tile
             // this is determined by the return value of renderTile being true
-            if(layer.renderTile(layerChunkTile, view)) {
+            if (layer.renderTile(layerChunkTile, view))
+            {
                 ResourceLocation layerID = layer.getID();
 
                 // update this chunk of the region
@@ -163,9 +178,11 @@ public class CartographyPipeline {
         return updates;
     }
 
-    private LayerRegionTile getLayerRegionTile(ResourceLocation layer, RegionPos region, boolean priority) {
-        try {
-            if(priority) lock.lockPriority();
+    private LayerRegionTile getLayerRegionTile(ResourceLocation layer, RegionPos region, boolean priority)
+    {
+        try
+        {
+            if (priority) lock.lockPriority();
             else lock.lock();
             return regions
                 .computeIfAbsent(layer, $ -> new HashMap<>())
@@ -175,34 +192,41 @@ public class CartographyPipeline {
                     return layerRegionTile;
                 });
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }
 
     // TODO: figure out why void gives generic errors but null Void is OK. Does it have to be an Object?
-    private Void sendMapUpdates(List<LayerRegion> updates) {
-        if(active) {
-            for(LayerRegion update : updates) {
+    private Void sendMapUpdates(List<LayerRegion> updates)
+    {
+        if (active)
+        {
+            for (LayerRegion update : updates)
+            {
                 BlazeMapEngine.Hooks.notifyLayerRegionChange(update);
             }
         }
         return null;
     }
 
-    public void shutdown() {
+    public void shutdown()
+    {
         active = false;
         // TODO: Release all memory dedicated to caches and such. Close resources. Flush to disk.
         // TODO: Drop all LayerRegionTiles from the map. Easier said than done.
     }
 
-    public CartographyPipeline activate() {
+    public CartographyPipeline activate()
+    {
         active = true;
         return this;
     }
 
-    public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer) {
-        if(!mapTriggers.containsKey(layer))
+    public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer)
+    {
+        if (!mapTriggers.containsKey(layer))
             throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + world);
         getLayerRegionTile(layer, region, false).consume(consumer);
     }

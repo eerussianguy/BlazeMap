@@ -11,25 +11,30 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.IMapView;
 
-public abstract class Layer {
+public abstract class Layer
+{
     private final ResourceLocation id;
     private final Set<ResourceLocation> collectors;
 
-    public Layer(ResourceLocation id, ResourceLocation... collectors) {
+    public Layer(ResourceLocation id, ResourceLocation... collectors)
+    {
         this.id = id;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 
-    public ResourceLocation getID() {
+    public ResourceLocation getID()
+    {
         return id;
     }
 
-    public Set<ResourceLocation> getCollectors() {
+    public Set<ResourceLocation> getCollectors()
+    {
         return collectors;
     }
 
 
-    public boolean shouldRenderForWorld(ResourceKey<Level> world) {
+    public boolean shouldRenderForWorld(ResourceKey<Level> world)
+    {
         return true;
     }
 

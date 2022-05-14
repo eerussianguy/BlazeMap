@@ -11,77 +11,97 @@ import net.minecraft.world.level.ChunkPos;
 
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 
-public class LayerRegionTile {
+public class LayerRegionTile
+{
     private final PriorityLock lock = new PriorityLock();
     private final File file;
     private BufferedImage image;
 
-    public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir) {
+    public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir)
+    {
         File layerDir = new File(worldDir, layer.toString().replace(':', '+'));
         this.file = new File(layerDir, region.toString() + ".png");
         image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
     }
 
-    public void tryLoad() {
-        if(file.exists()) {
-            try {
+    public void tryLoad()
+    {
+        if (file.exists())
+        {
+            try
+            {
                 lock.lockPriority();
                 image = ImageIO.read(file);
             }
-            catch(IOException e) {
+            catch (IOException e)
+            {
                 e.printStackTrace();
 
                 // TODO: this is temporary (aka more permanent than "forever")
                 throw new RuntimeException(e);
             }
-            finally {
+            finally
+            {
                 lock.unlock();
             }
         }
-        else {
+        else
+        {
             file.getParentFile().mkdirs();
         }
     }
 
-    public void save() {
-        try {
+    public void save()
+    {
+        try
+        {
             lock.lock();
             ImageIO.write(image, "png", file);
         }
-        catch(IOException e) {
+        catch (IOException e)
+        {
             e.printStackTrace();
 
             // TODO: this is temporary (aka more permanent than "forever")
             throw new RuntimeException(e);
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }
 
-    public void updateTile(BufferedImage tile, ChunkPos chunk) {
+    public void updateTile(BufferedImage tile, ChunkPos chunk)
+    {
         int xOffset = chunk.getRegionLocalX() << 4;
         int zOffset = chunk.getRegionLocalZ() << 4;
 
-        try {
+        try
+        {
             lock.lock();
-            for(int x = 0; x < 16; x++) {
-                for(int z = 0; z < 16; z++) {
+            for (int x = 0; x < 16; x++)
+            {
+                for (int z = 0; z < 16; z++)
+                {
                     image.setRGB(xOffset + x, zOffset + z, tile.getRGB(x, z));
                 }
             }
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }
 
-    public void consume(Consumer<BufferedImage> consumer) {
-        try {
+    public void consume(Consumer<BufferedImage> consumer)
+    {
+        try
+        {
             lock.lockPriority();
             consumer.accept(image);
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }

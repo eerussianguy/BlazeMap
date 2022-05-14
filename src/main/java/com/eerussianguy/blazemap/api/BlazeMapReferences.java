@@ -2,7 +2,8 @@ package com.eerussianguy.blazemap.api;
 
 import net.minecraft.resources.ResourceLocation;
 
-public class BlazeMapReferences {
+public class BlazeMapReferences
+{
     // Map Types
     public static final ResourceLocation MAP_AERIAL_VIEW = new ResourceLocation("blazemap", "map_aerial_view");
     public static final ResourceLocation MAP_TOPOGRAPHY = new ResourceLocation("blazemap", "map_topography");

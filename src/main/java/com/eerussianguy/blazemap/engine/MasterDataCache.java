@@ -9,18 +9,22 @@ import net.minecraft.world.level.ChunkPos;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MasterData;
 
-public class MasterDataCache {
+public class MasterDataCache
+{
     private final Map<ChunkPos, Set<Entry<?>>> cache = new HashMap<>();
 
-    public void put(ChunkPos pos, Set<Entry<?>> entries) {
+    public void put(ChunkPos pos, Set<Entry<?>> entries)
+    {
         cache.put(pos, entries);
     }
 
-    public void trimAround(ChunkPos origin) {
+    public void trimAround(ChunkPos origin)
+    {
         cache.keySet().removeIf(pos -> origin.getChessboardDistance(pos) > 16);
     }
 
-    public void stitchAround(ChunkPos origin) {
+    public void stitchAround(ChunkPos origin)
+    {
 
     }
 

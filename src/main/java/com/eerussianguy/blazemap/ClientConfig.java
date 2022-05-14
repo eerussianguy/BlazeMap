@@ -1,6 +1,7 @@
 package com.eerussianguy.blazemap;
 
-public class ClientConfig {
+public class ClientConfig
+{
     /*
 
     public final IntValue particleAttempts;

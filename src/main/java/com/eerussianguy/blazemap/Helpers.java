@@ -16,15 +16,18 @@ import com.mojang.serialization.Codec;
 
 import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
-public class Helpers {
+public class Helpers
+{
     public static final Direction[] DIRECTIONS = Direction.values();
     private static File baseDir;
 
-    public static ResourceLocation identifier(String name) {
+    public static ResourceLocation identifier(String name)
+    {
         return new ResourceLocation(MOD_ID, name);
     }
 
-    public static int randomBrightColor(Random random) {
+    public static int randomBrightColor(Random random)
+    {
         return new Color(random.nextFloat(), random.nextFloat(), random.nextFloat()).brighter().getRGB();
     }
 
@@ -33,22 +36,27 @@ public class Helpers {
         return Objects.requireNonNull(Minecraft.getInstance().level);
     }
 
-    public static String getServerID() {
+    public static String getServerID()
+    {
         Minecraft mc = Minecraft.getInstance();
-        if(mc.hasSingleplayerServer()) {
+        if (mc.hasSingleplayerServer())
+        {
             return "SP@" + mc.getSingleplayerServer().getWorldData().getLevelName();
         }
-        else {
+        else
+        {
             return "MP@" + mc.getCurrentServer().ip.replace(':', '+');
         }
     }
 
-    public static File getBaseDir() {
-        if(baseDir == null) baseDir = new File(Minecraft.getInstance().gameDirectory, MOD_ID);
+    public static File getBaseDir()
+    {
+        if (baseDir == null) baseDir = new File(Minecraft.getInstance().gameDirectory, MOD_ID);
         return baseDir;
     }
 
-    public static void runOnMainThread(Runnable r) {
+    public static void runOnMainThread(Runnable r)
+    {
         Minecraft.getInstance().tell(r);
     }
 
