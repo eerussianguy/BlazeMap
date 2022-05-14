@@ -16,7 +16,7 @@ public class MinimapRenderer implements AutoCloseable
     public MinimapRenderer()
     {
         this.textRenderType = RenderType.text(Helpers.identifier("default"));
-        this.texture = new DynamicTexture(128, 128, true);
+        this.texture = new DynamicTexture(512, 512, false);
     }
 
     public void setMapType(MapType type)

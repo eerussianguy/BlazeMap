@@ -1,7 +1,5 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import java.awt.image.BufferedImage;
-
 import net.minecraft.resources.ResourceLocation;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
@@ -9,6 +7,7 @@ import com.eerussianguy.blazemap.api.IMapView;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MasterData;
+import com.mojang.blaze3d.platform.NativeImage;
 
 public class TerrainHeightLayer extends Layer
 {
@@ -20,7 +19,7 @@ public class TerrainHeightLayer extends Layer
     }
 
     @Override
-    public boolean renderTile(BufferedImage tile, IMapView<ResourceLocation, MasterData> data)
+    public boolean renderTile(NativeImage tile, IMapView<ResourceLocation, MasterData> data)
     {
         TerrainHeightMD terrain = data.get(BlazeMapReferences.MD_TERRAIN_HEIGHT, TerrainHeightMD.class);
         float down = 1.0F / ((float) terrain.sea - terrain.minY);
@@ -32,16 +31,16 @@ public class TerrainHeightLayer extends Layer
                 if (h < terrain.sea)
                 {
                     int red = ((int) (255F * ((float) h) * down)) << 16;
-                    tile.setRGB(x, z, OPAQUE | red);
+                    tile.setPixelRGBA(x, z, OPAQUE | red);
                     continue;
                 }
                 if (h > terrain.sea)
                 {
                     int tone = (int) (255F * ((float) h) * up);
-                    tile.setRGB(x, z, OPAQUE | (tone << 16) | 0xFF00 | tone);
+                    tile.setPixelRGBA(x, z, OPAQUE | (tone << 16) | 0xFF00 | tone);
                     continue;
                 }
-                tile.setRGB(x, z, OPAQUE | 0x0088FF);
+                tile.setPixelRGBA(x, z, OPAQUE | 0x0088FF);
             }
         return true;
     }

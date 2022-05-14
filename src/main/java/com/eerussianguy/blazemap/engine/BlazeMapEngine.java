@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
@@ -20,6 +19,7 @@ import com.eerussianguy.blazemap.Helpers;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
+import com.mojang.blaze3d.platform.NativeImage;
 
 public class BlazeMapEngine
 {
@@ -151,12 +151,12 @@ public class BlazeMapEngine
             }
         }
 
-        public static void consumeTile(LayerRegion layerRegion, Consumer<BufferedImage> consumer)
+        public static void consumeTile(LayerRegion layerRegion, Consumer<NativeImage> consumer)
         {
             activePipeline.consumeTile(layerRegion.layer, layerRegion.region, consumer);
         }
 
-        public static void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer)
+        public static void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer)
         {
             activePipeline.consumeTile(layer, region, consumer);
         }

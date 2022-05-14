@@ -1,27 +1,27 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.function.Consumer;
-import javax.imageio.ImageIO;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
+import com.mojang.blaze3d.platform.NativeImage;
 
 public class LayerRegionTile
 {
     private final PriorityLock lock = new PriorityLock();
     private final File file;
-    private BufferedImage image;
+    private NativeImage image;
 
     public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir)
     {
         File layerDir = new File(worldDir, layer.toString().replace(':', '+'));
         this.file = new File(layerDir, region.toString() + ".png");
-        image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
+        image = new NativeImage(NativeImage.Format.RGBA, 512, 512, false);
     }
 
     public void tryLoad()
@@ -31,7 +31,7 @@ public class LayerRegionTile
             try
             {
                 lock.lockPriority();
-                image = ImageIO.read(file);
+                image = NativeImage.read(Files.newInputStream(file.toPath()));
             }
             catch (IOException e)
             {
@@ -56,7 +56,7 @@ public class LayerRegionTile
         try
         {
             lock.lock();
-            ImageIO.write(image, "png", file);
+            image.writeToFile(file);
         }
         catch (IOException e)
         {
@@ -71,7 +71,7 @@ public class LayerRegionTile
         }
     }
 
-    public void updateTile(BufferedImage tile, ChunkPos chunk)
+    public void updateTile(NativeImage tile, ChunkPos chunk)
     {
         int xOffset = chunk.getRegionLocalX() << 4;
         int zOffset = chunk.getRegionLocalZ() << 4;
@@ -83,7 +83,7 @@ public class LayerRegionTile
             {
                 for (int z = 0; z < 16; z++)
                 {
-                    image.setRGB(xOffset + x, zOffset + z, tile.getRGB(x, z));
+                    image.setPixelRGBA(xOffset + x, zOffset + z, tile.getPixelRGBA(x, z));
                 }
             }
         }
@@ -93,7 +93,7 @@ public class LayerRegionTile
         }
     }
 
-    public void consume(Consumer<BufferedImage> consumer)
+    public void consume(Consumer<NativeImage> consumer)
     {
         try
         {

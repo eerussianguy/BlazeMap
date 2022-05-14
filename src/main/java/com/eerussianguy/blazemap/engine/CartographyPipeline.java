@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
@@ -21,6 +20,7 @@ import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.DebouncingDomain;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
+import com.mojang.blaze3d.platform.NativeImage;
 
 public class CartographyPipeline
 {
@@ -65,7 +65,7 @@ public class CartographyPipeline
             {
                 Layer layer = BlazeMapAPI.LAYERS.get(layerID);
                 if (layer == null) throw new IllegalArgumentException("Layer " + layerID + " was not registered.");
-                if (!layer.shouldRenderForWorld(dimension)) continue;
+                if (!layer.shouldRenderInDimension(dimension)) continue;
                 mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
                 if (layers.contains(layerID)) continue;
                 layers.add(layerID);
@@ -158,7 +158,7 @@ public class CartographyPipeline
         MapView<ResourceLocation, MasterData> view = new MapView<>(data);
         for (Layer layer : dirtyLayers)
         {
-            BufferedImage layerChunkTile = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+            NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, 16, 16, false);
             view.setFilter(layer.getCollectors()); // the layer should only access declared collectors
 
             // only generate updates if the renderer populates the tile
@@ -224,7 +224,7 @@ public class CartographyPipeline
         return this;
     }
 
-    public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer)
+    public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer)
     {
         if (!mapTriggers.containsKey(layer))
             throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + world);
