@@ -60,11 +60,12 @@ public class MinimapRenderer implements AutoCloseable
 
     public void draw(PoseStack stack, MultiBufferSource buffers)
     {
-        if (requiresUpload)
+        /*if (requiresUpload)
         {
             upload();
             requiresUpload = false;
-        }
+        }*/
+        upload();
     }
 
     public void upload()
@@ -99,7 +100,7 @@ public class MinimapRenderer implements AutoCloseable
             BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
             for (int x = 0; x < 512; x++)
             {
-                for (int z = 0; z < 512; z++)w
+                for (int z = 0; z < 512; z++)
                 {
                     mutable.setWithOffset(corner, x, 0, z);
                     final ChunkPos chunkPos = new ChunkPos(mutable);
