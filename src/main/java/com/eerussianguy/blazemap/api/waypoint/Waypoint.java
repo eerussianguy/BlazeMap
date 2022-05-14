@@ -11,11 +11,12 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.Helpers;
+import com.mojang.serialization.Codec;
 
 public class Waypoint {
     public static Waypoint deserialize(CompoundTag tag) {
         final String name = tag.getString("name");
-        final GlobalPos pos = GlobalPos.CODEC.parse(NbtOps.INSTANCE, tag.get("pos")).getOrThrow(false, BlazeMap.LOGGER::error);
+        final GlobalPos pos = Helpers.decodeCodec(GlobalPos.CODEC, tag, "pos");
         final int color = tag.getInt("color");
         return new Waypoint(name, pos, color);
     }
@@ -37,7 +38,7 @@ public class Waypoint {
     public CompoundTag serialize() {
         CompoundTag tag = new CompoundTag();
         tag.putString("name", name);
-        GlobalPos.CODEC.encodeStart(NbtOps.INSTANCE, pos).getOrThrow(false, BlazeMap.LOGGER::error);
+        Helpers.writeCodec(GlobalPos.CODEC, pos, tag, "pos");
         return tag;
     }
 

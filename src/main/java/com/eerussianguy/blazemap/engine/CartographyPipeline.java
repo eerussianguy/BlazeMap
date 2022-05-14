@@ -5,12 +5,13 @@ import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
+import com.eerussianguy.blazemap.Helpers;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.mapping.Collector;
 import com.eerussianguy.blazemap.api.mapping.Layer;
@@ -102,7 +103,7 @@ public class CartographyPipeline {
 
     private Map<ResourceLocation, MasterData> collectFromChunk(ChunkPos pos) {
         Map<ResourceLocation, MasterData> data = new HashMap<>();
-        Level level = Minecraft.getInstance().level;
+        Level level = Helpers.levelOrThrow();
 
         // Do not collect data (thus skipping through the rest of the pipeline)
         // if this chunk is not currently in client cache, as that will return an empty chunk
@@ -116,8 +117,9 @@ public class CartographyPipeline {
         int z0 = pos.getMinBlockZ();
         int z1 = pos.getMaxBlockZ();
 
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for(Collector<?> collector : collectors.values()) {
-            data.put(collector.getID(), collector.collect(level, x0, z0, x1, z1));
+            data.put(collector.getID(), collector.collect(level, mutable, x0, z0, x1, z1));
         }
         return data;
     }

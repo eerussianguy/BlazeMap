@@ -16,7 +16,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.BlazeMap;
-import com.eerussianguy.blazemap.ClientUtils;
+import com.eerussianguy.blazemap.Helpers;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
@@ -33,7 +33,7 @@ public class BlazeMapEngine {
     public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
         dataCruncher = new AsyncDataCruncher("Blaze Map");
-        async = new AsyncChain.Root(dataCruncher, ClientUtils::runOnMainThread);
+        async = new AsyncChain.Root(dataCruncher, Helpers::runOnMainThread);
         debouncer = new DebouncingThread("Blaze Map Engine");
     }
 
@@ -49,8 +49,8 @@ public class BlazeMapEngine {
     public static void onJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
         LocalPlayer player = event.getPlayer();
         if(player == null) return;
-        serverID = ClientUtils.getServerID();
-        serverDir = new File(ClientUtils.getBaseDir(), serverID);
+        serverID = Helpers.getServerID();
+        serverDir = new File(Helpers.getBaseDir(), serverID);
         switchToPipeline(player.level.dimension());
     }
 
@@ -137,12 +137,12 @@ public class BlazeMapEngine {
         }
 
         public static Set<ResourceLocation> getAvailableLayers() {
-            if(activePipeline == null) return Collections.EMPTY_SET;
+            if(activePipeline == null) return Collections.emptySet();
             else return activePipeline.availableLayers;
         }
 
         public static Set<ResourceLocation> getAvailableMapTypes() {
-            if(activePipeline == null) return Collections.EMPTY_SET;
+            if(activePipeline == null) return Collections.emptySet();
             else return activePipeline.availableMapTypes;
         }
     }
