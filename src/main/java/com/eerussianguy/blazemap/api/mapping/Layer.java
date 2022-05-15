@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.api.IMapView;
+import com.eerussianguy.blazemap.api.util.IMapView;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public abstract class Layer

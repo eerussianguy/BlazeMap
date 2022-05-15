@@ -12,6 +12,8 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.Helpers;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
+import com.eerussianguy.blazemap.api.util.LayerRegion;
+import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.api.mapping.Collector;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
@@ -25,7 +27,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class CartographyPipeline
 {
     public final File dimensionDir;
-    public final ResourceKey<Level> world;
+    public final ResourceKey<Level> dimension;
     private boolean active;
 
     private final Map<ResourceLocation, Collector<?>> collectors = new HashMap<>();
@@ -44,7 +46,7 @@ public class CartographyPipeline
     {
         this.dimensionDir = new File(serverDir, dimension.location().toString().replace(':', '+'));
         this.dimensionDir.mkdirs();
-        this.world = dimension;
+        this.dimension = dimension;
 
         // Trim dependencies:
         // - Check what map types render on this dimension
@@ -64,7 +66,8 @@ public class CartographyPipeline
             for (ResourceLocation layerID : maptype.getLayers())
             {
                 Layer layer = BlazeMapAPI.LAYERS.get(layerID);
-                if (layer == null) throw new IllegalArgumentException("Layer " + layerID + " was not registered.");
+                if (layer == null)
+                    throw new IllegalArgumentException("Layer " + layerID + " was not registered.");
                 if (!layer.shouldRenderInDimension(dimension)) continue;
                 mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
                 if (layers.contains(layerID)) continue;
@@ -170,7 +173,11 @@ public class CartographyPipeline
                 // update this chunk of the region
                 LayerRegionTile layerRegionTile = getLayerRegionTile(layerID, regionPos, false);
                 layerRegionTile.updateTile(layerChunkTile, chunkPos);
+
+                // asynchronously save this region later
                 dirtyRegions.push(layerRegionTile);
+
+                // updates for the listeners
                 updates.add(new LayerRegion(layerID, regionPos));
             }
         }
@@ -201,11 +208,11 @@ public class CartographyPipeline
     // TODO: figure out why void gives generic errors but null Void is OK. Does it have to be an Object?
     private Void sendMapUpdates(List<LayerRegion> updates)
     {
-        if (active)
+        if(active)
         {
-            for (LayerRegion update : updates)
+            for(LayerRegion update : updates)
             {
-                BlazeMapEngine.Hooks.notifyLayerRegionChange(update);
+                BlazeMapEngine.notifyLayerRegionChange(update);
             }
         }
         return null;
@@ -227,7 +234,7 @@ public class CartographyPipeline
     public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer)
     {
         if (!mapTriggers.containsKey(layer))
-            throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + world);
+            throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + dimension);
         getLayerRegionTile(layer, region, false).consume(consumer);
     }
 }

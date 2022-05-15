@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
+import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 import com.mojang.blaze3d.platform.NativeImage;
 
@@ -53,6 +54,7 @@ public class LayerRegionTile
 
     public void save()
     {
+        /*
         try
         {
             lock.lock();
@@ -69,6 +71,7 @@ public class LayerRegionTile
         {
             lock.unlock();
         }
+        */
     }
 
     public void updateTile(NativeImage tile, ChunkPos chunk)

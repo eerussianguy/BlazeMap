@@ -3,7 +3,7 @@ package com.eerussianguy.blazemap.feature.mapping;
 import net.minecraft.resources.ResourceLocation;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
-import com.eerussianguy.blazemap.api.IMapView;
+import com.eerussianguy.blazemap.api.util.IMapView;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MasterData;

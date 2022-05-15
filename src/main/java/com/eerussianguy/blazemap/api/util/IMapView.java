@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api;
+package com.eerussianguy.blazemap.api.util;
 
 public interface IMapView<K, V>
 {

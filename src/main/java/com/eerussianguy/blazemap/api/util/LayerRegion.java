@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.engine;
+package com.eerussianguy.blazemap.api.util;
 
 import java.util.Objects;
 

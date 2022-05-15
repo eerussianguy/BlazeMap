@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.feature.render;
+package com.eerussianguy.blazemap.feature.maps;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -11,30 +11,29 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
-import com.eerussianguy.blazemap.BlazeMap;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+
 import com.eerussianguy.blazemap.Helpers;
-import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
-import com.eerussianguy.blazemap.engine.RegionPos;
+import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class MinimapRenderer implements AutoCloseable
 {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
+    private DimensionChangedEvent.DimensionTileStorage tileStorage;
 
     private static final int[][] OFFSETS = Util.make(() -> {
-        final int[][] offsets = new int[8][2];
+        final int[][] offsets = new int[9][2];
         int idx = 0;
         for (int x = -1; x <= 1; x++)
         {
             for (int z = -1; z <= 1; z++)
             {
-                if (!(x == 0 && z == 0))
-                {
-                    offsets[idx++] = new int[] {x, z};
-                }
+                offsets[idx++] = new int[] {x, z};
             }
         }
         return offsets;
@@ -51,6 +50,14 @@ public class MinimapRenderer implements AutoCloseable
         this.textRenderType = RenderType.text(Helpers.identifier("default"));
         this.texture = new DynamicTexture(512, 512, false);
         manager.register(Helpers.identifier("minimap"), this.texture);
+        MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @SubscribeEvent
+    public void onDimensionChanged(DimensionChangedEvent event)
+    {
+        this.tileStorage = event.tileStorage;
+        event.tileNotifications.addUpdateListener(layerRegion -> this.requiresUpload = true);
     }
 
     public void setMapType(MapType type)
@@ -60,12 +67,12 @@ public class MinimapRenderer implements AutoCloseable
 
     public void draw(PoseStack stack, MultiBufferSource buffers)
     {
-        /*if (requiresUpload)
+        if (requiresUpload)
         {
             upload();
             requiresUpload = false;
-        }*/
-        upload();
+        }
+        // upload();
     }
 
     public void upload()
@@ -80,11 +87,10 @@ public class MinimapRenderer implements AutoCloseable
                 for (int[] offset : OFFSETS)
                 {
                     final RegionPos currentRegion = originRegion.offset(offset[0], offset[1]);
-                    BlazeMapEngine.Hooks.consumeTile(layer, currentRegion, data ->
+                    tileStorage.consumeTile(layer, currentRegion, data ->
                         consume(playerPos, currentRegion, texture, data)
                     );
                 }
-
             }
         }
 
@@ -112,7 +118,6 @@ public class MinimapRenderer implements AutoCloseable
                 }
             }
         }
-
     }
 
     @Override
