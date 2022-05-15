@@ -8,7 +8,7 @@ import com.eerussianguy.blazemap.feature.mapping.TerrainHeightCollector;
 import com.eerussianguy.blazemap.feature.mapping.TerrainHeightLayer;
 import com.eerussianguy.blazemap.feature.mapping.TopographyMapType;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
-import com.eerussianguy.blazemap.feature.render.MinimapRenderer;
+import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 
 public class BlazeMapFeatures
 {
@@ -22,11 +22,6 @@ public class BlazeMapFeatures
     public static void initMiniMap()
     {
         MinimapRenderer.INSTANCE.setMapType(BlazeMapAPI.MAPTYPES.get(BlazeMapReferences.MAP_TOPOGRAPHY));
-    }
-
-    public static void initFullMap()
-    {
-
     }
 
     public static void initFullMap()

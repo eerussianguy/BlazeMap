@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.api.event;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -12,6 +11,7 @@ import net.minecraftforge.eventbus.api.Event;
 
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.mojang.blaze3d.platform.NativeImage;
 
 /**
  * Fired after the client enters a new dimension. <br>
@@ -77,7 +77,7 @@ public class DimensionChangedEvent extends Event {
          * <br>
          * <b>  WARNING!  </b><br>
          * <br>
-         * In order to ensure thread safety please do all BufferedImage related processing inside the Consumer code. <br>
+         * In order to ensure thread safety please do all NativeImage related processing inside the Consumer code. <br>
          * <b>DO NOT</b> attempt to save a reference to the image to handle it later.<br>
          * <br>
          * You have been warned.<br>
@@ -86,7 +86,7 @@ public class DimensionChangedEvent extends Event {
          * @throws IllegalArgumentException if the layer is not in the availableLayers Set.
          * @author LordFokas
          */
-        void consumeTile(ResourceLocation layer, RegionPos region, Consumer<BufferedImage> consumer);
+        void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer);
     }
 
     @FunctionalInterface

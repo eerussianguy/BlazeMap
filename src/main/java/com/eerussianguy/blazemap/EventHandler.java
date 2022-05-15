@@ -10,7 +10,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
-import com.eerussianguy.blazemap.feature.render.Overlays;
+import com.eerussianguy.blazemap.feature.maps.Overlays;
 
 
 public class EventHandler

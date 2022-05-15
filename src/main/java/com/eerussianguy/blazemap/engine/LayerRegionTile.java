@@ -54,6 +54,7 @@ public class LayerRegionTile
 
     public void save()
     {
+        /*
         try
         {
             lock.lock();
@@ -70,6 +71,7 @@ public class LayerRegionTile
         {
             lock.unlock();
         }
+        */
     }
 
     public void updateTile(NativeImage tile, ChunkPos chunk)

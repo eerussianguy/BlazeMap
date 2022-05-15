@@ -19,12 +19,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
-import com.eerussianguy.blazemap.api.event.ServerChangedEvent;
+import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.Helpers;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
-import com.mojang.blaze3d.platform.NativeImage;
 
 public class BlazeMapEngine
 {
@@ -63,7 +62,7 @@ public class BlazeMapEngine
         serverID = Helpers.getServerID();
         serverDir = new File(Helpers.getBaseDir(), serverID);
         serverDir.mkdirs();
-        MinecraftForge.EVENT_BUS.post(new ServerChangedEvent(serverID, serverDir));
+        MinecraftForge.EVENT_BUS.post(new ServerJoinedEvent(serverID, serverDir));
         switchToPipeline(player.level.dimension());
     }
 
@@ -90,7 +89,7 @@ public class BlazeMapEngine
     {
         if (activePipeline != null)
         {
-            if (activePipeline.world.equals(dimension)) return;
+            if (activePipeline.dimension.equals(dimension)) return;
             activePipeline.shutdown();
         }
         activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
