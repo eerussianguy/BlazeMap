@@ -20,11 +20,13 @@ import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
 
 public class MinimapRenderer implements AutoCloseable
 {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
-    private DimensionChangedEvent.DimensionTileStorage tileStorage;
+
 
     private static final int[][] OFFSETS = Util.make(() -> {
         final int[][] offsets = new int[9][2];
@@ -41,15 +43,18 @@ public class MinimapRenderer implements AutoCloseable
 
     private MapType mapType;
     private boolean requiresUpload = true;
-
+    private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private final RenderType textRenderType;
+    private final RenderType textureRenderType;
     private final DynamicTexture texture;
 
     MinimapRenderer(TextureManager manager)
     {
         this.textRenderType = RenderType.text(Helpers.identifier("default"));
         this.texture = new DynamicTexture(512, 512, false);
-        manager.register(Helpers.identifier("minimap"), this.texture);
+        ResourceLocation textureResource = Helpers.identifier("minimap");
+        manager.register(textureResource, this.texture);
+        this.textureRenderType = RenderType.text(textureResource);
         MinecraftForge.EVENT_BUS.register(this);
     }
 
@@ -72,7 +77,14 @@ public class MinimapRenderer implements AutoCloseable
             upload();
             requiresUpload = false;
         }
-        // upload();
+
+        int uv2 = 0xF000F0;
+        Matrix4f matrix4f = stack.last().pose();
+        VertexConsumer vertexconsumer = buffers.getBuffer(this.textureRenderType);
+        vertexconsumer.vertex(matrix4f, 0.0F, 128.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(uv2).endVertex();
+        vertexconsumer.vertex(matrix4f, 128.0F, 128.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(uv2).endVertex();
+        vertexconsumer.vertex(matrix4f, 128.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(uv2).endVertex();
+        vertexconsumer.vertex(matrix4f, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(uv2).endVertex();
     }
 
     public void upload()
