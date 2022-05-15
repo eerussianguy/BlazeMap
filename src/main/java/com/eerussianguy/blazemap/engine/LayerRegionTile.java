@@ -1,88 +1,108 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.function.Consumer;
-import javax.imageio.ImageIO;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
+import com.mojang.blaze3d.platform.NativeImage;
 
-public class LayerRegionTile {
+public class LayerRegionTile
+{
     private final PriorityLock lock = new PriorityLock();
     private final File file;
-    private BufferedImage image;
+    private NativeImage image;
 
-    public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir) {
+    public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir)
+    {
         File layerDir = new File(worldDir, layer.toString().replace(':', '+'));
         this.file = new File(layerDir, region.toString() + ".png");
-        image = new BufferedImage(512, 512, BufferedImage.TYPE_INT_ARGB);
+        image = new NativeImage(NativeImage.Format.RGBA, 512, 512, false);
     }
 
-    public void tryLoad() {
-        if(file.exists()) {
-            try {
+    public void tryLoad()
+    {
+        if (file.exists())
+        {
+            try
+            {
                 lock.lockPriority();
-                image = ImageIO.read(file);
+                image = NativeImage.read(Files.newInputStream(file.toPath()));
             }
-            catch(IOException e) {
+            catch (IOException e)
+            {
                 e.printStackTrace();
 
                 // TODO: this is temporary (aka more permanent than "forever")
                 throw new RuntimeException(e);
             }
-            finally {
+            finally
+            {
                 lock.unlock();
             }
         }
-        else {
+        else
+        {
             file.getParentFile().mkdirs();
         }
     }
 
-    public void save() {
-        try {
+    public void save()
+    {
+        try
+        {
             lock.lock();
-            ImageIO.write(image, "png", file);
+            image.writeToFile(file);
         }
-        catch(IOException e) {
+        catch (IOException e)
+        {
             e.printStackTrace();
 
             // TODO: this is temporary (aka more permanent than "forever")
             throw new RuntimeException(e);
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }
 
-    public void updateTile(BufferedImage tile, ChunkPos chunk) {
+    public void updateTile(NativeImage tile, ChunkPos chunk)
+    {
         int xOffset = chunk.getRegionLocalX() << 4;
         int zOffset = chunk.getRegionLocalZ() << 4;
 
-        try {
+        try
+        {
             lock.lock();
-            for(int x = 0; x < 16; x++) {
-                for(int z = 0; z < 16; z++) {
-                    image.setRGB(xOffset + x, zOffset + z, tile.getRGB(x, z));
+            for (int x = 0; x < 16; x++)
+            {
+                for (int z = 0; z < 16; z++)
+                {
+                    image.setPixelRGBA(xOffset + x, zOffset + z, tile.getPixelRGBA(x, z));
                 }
             }
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }
 
-    public void consume(Consumer<BufferedImage> consumer) {
-        try {
+    public void consume(Consumer<NativeImage> consumer)
+    {
+        try
+        {
             lock.lockPriority();
             consumer.accept(image);
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }

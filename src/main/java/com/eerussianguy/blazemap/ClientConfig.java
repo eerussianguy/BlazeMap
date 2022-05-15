@@ -1,29 +1,29 @@
 package com.eerussianguy.blazemap;
 
-public class ClientConfig {
-    /*
+import java.util.function.Function;
 
-    public final IntValue particleAttempts;
-    public final IntValue particleDistance;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec.*;
 
-    public final BooleanValue souls;
-    public final BooleanValue leaves;
-    public final BooleanValue snowballs;
+import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
-    public final IntValue leavesCacheSize;
-    public final DoubleValue leavesVariationDistance;
-    public final IntValue extraGrassRarity;
+/**
+ * Forge configs happen to be a very simple way to serialize things across saves and hold data within a particular instance
+ * It is not necessarily expected that the player will be editing the config
+ * We are free to use key binds to allow what is essentially config editing on the fly
+ */
+public class ClientConfig
+{
+    public final BooleanValue enableMinimap;
 
-    public final BooleanValue forceForgeLighting;
-
-    ClientConfig(Builder innerBuilder)
+    ClientConfig(ForgeConfigSpec.Builder innerBuilder)
     {
-        Function<String, Builder> builder = name -> innerBuilder.translation(MOD_ID + ".config.server." + name);
+        Function<String, ForgeConfigSpec.Builder> builder = name -> innerBuilder.translation(MOD_ID + ".config.server." + name);
 
         innerBuilder.push("general");
 
+        enableMinimap = builder.apply("enableMinimap").comment("Enable the minimap?").define("enableMinimap", true);
+
         innerBuilder.pop();
     }
-
-    */
 }

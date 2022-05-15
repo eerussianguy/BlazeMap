@@ -17,29 +17,32 @@ import org.slf4j.Logger;
 import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
 @Mod(MOD_ID)
-public class BlazeMap {
+public class BlazeMap
+{
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public static final String MOD_ID = "blazemap";
+    public static final String MOD_NAME = "Blaze Map";
 
-    public BlazeMap() {
+    public BlazeMap()
+    {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> "Nothing", (remote, isServer) -> true));
 
-        if(FMLEnvironment.dist == Dist.CLIENT) {
+        if (FMLEnvironment.dist == Dist.CLIENT)
+        {
             final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
             bus.addListener(this::setup);
 
             EventHandler.init();
             ForgeEventHandler.init();
+            BConfig.init();
         }
     }
 
-    public void setup(FMLCommonSetupEvent event) {
+    public void setup(FMLCommonSetupEvent event)
+    {
         BlazeMapEngine.init();
 
         BlazeMapFeatures.initMapping();
-        BlazeMapFeatures.initMiniMap();
-        BlazeMapFeatures.initFullMap();
-        BlazeMapFeatures.initWaypoints();
     }
 }

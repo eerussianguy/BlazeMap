@@ -1,42 +1,55 @@
 package com.eerussianguy.blazemap.engine.async;
 
-public class PriorityLock {
+public class PriorityLock
+{
     private boolean locked;
     private boolean priorityWaiting;
     private final Object mutex = new Object();
 
-    public void lock() {
-        synchronized(mutex) {
-            while(locked || priorityWaiting) {
-                try {
+    public void lock()
+    {
+        synchronized (mutex)
+        {
+            while (locked || priorityWaiting)
+            {
+                try
+                {
                     mutex.wait();
                 }
-                catch(InterruptedException ignored) {}
+                catch (InterruptedException ignored) {}
             }
             locked = true;
         }
     }
 
-    public void lockPriority() {
-        synchronized(mutex) {
+    public void lockPriority()
+    {
+        synchronized (mutex)
+        {
             priorityWaiting = true;
-            try {
-                while(locked) {
-                    try {
+            try
+            {
+                while (locked)
+                {
+                    try
+                    {
                         mutex.wait();
                     }
-                    catch(InterruptedException ignored) {}
+                    catch (InterruptedException ignored) {}
                 }
                 locked = true;
             }
-            finally {
+            finally
+            {
                 priorityWaiting = false;
             }
         }
     }
 
-    public void unlock() {
-        synchronized(mutex) {
+    public void unlock()
+    {
+        synchronized (mutex)
+        {
             locked = false;
             mutex.notifyAll();
         }

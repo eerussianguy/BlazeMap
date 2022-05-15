@@ -5,8 +5,9 @@ import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.Registry;
 
-public class BlazeMapAPI {
-    public static final Registry<Collector<?>> COLLECTORS = new Registry<>();
-    public static final Registry<Layer> LAYERS = new Registry<>();
-    public static final Registry<MapType> MAPTYPES = new Registry<>();
+public class BlazeMapAPI
+{
+    public static final BlazeRegistry<Collector<?>> COLLECTORS = new BlazeRegistry<>();
+    public static final BlazeRegistry<Layer> LAYERS = new BlazeRegistry<>();
+    public static final BlazeRegistry<MapType> MAPTYPES = new BlazeRegistry<>();
 }
