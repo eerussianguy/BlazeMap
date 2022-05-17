@@ -10,6 +10,7 @@ public final class AsyncDataCruncher
     private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
     private final Thread thread = new Thread(this::loop);
     private volatile boolean running = true;
+    private final Object mutex = new Object();
 
     public AsyncDataCruncher(String name)
     {
@@ -41,17 +42,30 @@ public final class AsyncDataCruncher
     public void submit(Runnable r)
     {
         tasks.add(r);
-        thread.interrupt();
+        synchronized(mutex)
+        {
+            mutex.notifyAll();
+        }
     }
 
-    @SuppressWarnings("BusyWait") // the thread is dedicated to this loop
     private void loop()
     {
         while (running)
         {
             this.work();
-            try {Thread.sleep(30_000L);}
-            catch (InterruptedException ignored) {}
+            try
+            {
+                synchronized(mutex)
+                {
+                    mutex.wait();
+                }
+            }
+            catch (InterruptedException ex)
+            {
+                // We can't tolerate interrupts on the worker threads as that messes up with java.nio
+                // The runtime exception helps us realize if it is happening
+                throw new RuntimeException(ex);
+            }
         }
     }
 
