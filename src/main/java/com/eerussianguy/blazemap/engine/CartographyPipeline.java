@@ -29,6 +29,8 @@ public class CartographyPipeline {
     public static final Profiler.LoadProfiler COLLECTOR_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
     public static final Profiler.TimeProfiler LAYER_TIME_PROFILER = new Profiler.TimeProfiler(20);
     public static final Profiler.LoadProfiler LAYER_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
+    public static final Profiler.TimeProfiler REGION_TIME_PROFILER = new Profiler.TimeProfiler(60);
+    public static final Profiler.LoadProfiler REGION_LOAD_PROFILER = new Profiler.LoadProfiler(60, 1000);
 
     public final File dimensionDir;
     public final ResourceKey<Level> dimension;
@@ -91,7 +93,12 @@ public class CartographyPipeline {
         // Set up debouncing mechanisms
         AsyncChain.Root async = BlazeMapEngine.async();
         DebouncingThread thread = BlazeMapEngine.debouncer();
-        this.dirtyRegions = new DebouncingDomain<>(region -> async.runOnDataThread(region::save), 1000, 30000);
+        this.dirtyRegions = new DebouncingDomain<>(region -> async.runOnDataThread(() -> {
+            REGION_LOAD_PROFILER.hit();
+            REGION_TIME_PROFILER.begin();
+            region.save();
+            REGION_TIME_PROFILER.end();
+        }), 1000, 30000);
         this.dirtyChunks = new DebouncingDomain<>(this::processDirtyChunk, 500, 5000);
         thread.add(dirtyRegions);
         thread.add(dirtyChunks);
@@ -223,6 +230,6 @@ public class CartographyPipeline {
     public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer) {
         if(!mapTriggers.containsKey(layer))
             throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + dimension);
-        getLayerRegionTile(layer, region, false).consume(consumer);
+        getLayerRegionTile(layer, region, true).consume(consumer);
     }
 }

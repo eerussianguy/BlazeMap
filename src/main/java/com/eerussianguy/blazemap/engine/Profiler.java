@@ -35,6 +35,7 @@ public abstract class Profiler {
     }
 
     public static class TimeProfiler extends Profiler {
+        private boolean populated = false;
         private long start;
 
         public TimeProfiler(int rollSize) {
@@ -46,19 +47,36 @@ public abstract class Profiler {
         }
 
         public void end() {
-            roll[idx] = System.nanoTime() - start;
-            idx = (idx + 1) % roll.length;
-            recalculate();
+            if(populated) {
+                roll[idx] = System.nanoTime() - start;
+                idx = (idx + 1) % roll.length;
+                recalculate();
+            }
+            else {
+                long delta = System.nanoTime() - start;
+                for(int i = 0; i < roll.length; i++) roll[i] = delta;
+                synchronized(this) {
+                    avg = min = max = delta;
+                }
+                populated = true;
+            }
         }
     }
 
     public static class LoadProfiler extends Profiler {
-        private final int interval;
+        public final int interval;
+        public final String unit;
         private long last;
 
         public LoadProfiler(int rollSize, int interval) {
             this.roll = new long[rollSize];
             this.interval = interval;
+            switch(interval) {
+                case 16 -> this.unit = "f";
+                case 50 -> this.unit = "t";
+                case 1000 -> this.unit = "s";
+                default -> this.unit = "?";
+            }
         }
 
         public void hit() {

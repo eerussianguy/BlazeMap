@@ -29,7 +29,6 @@ import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
-    private static final float SIZE = 256F;
 
     private static final int[][] OFFSETS = Util.make(() -> {
         final int[][] offsets = new int[9][2];
@@ -50,7 +49,8 @@ public class MinimapRenderer implements AutoCloseable {
     private final RenderType backgroundRenderType;
     private final RenderType playerRenderType;
     private final DynamicTexture texture;
-    private final Profiler.TimeProfiler drawProfiler, debugProfiler;
+    private final Profiler.TimeProfiler drawProfiler, debugProfiler, uploadTime;
+    private final Profiler.LoadProfiler uploadHits;
 
     MinimapRenderer(TextureManager manager) {
         this.texture = new DynamicTexture(512, 512, false);
@@ -65,6 +65,8 @@ public class MinimapRenderer implements AutoCloseable {
 
         this.drawProfiler = new Profiler.TimeProfiler(60);
         this.debugProfiler = new Profiler.TimeProfiler(60);
+        this.uploadTime = new Profiler.TimeProfiler(60);
+        this.uploadHits = new Profiler.LoadProfiler(60, 16);
     }
 
     @SubscribeEvent
@@ -77,10 +79,13 @@ public class MinimapRenderer implements AutoCloseable {
         mapType = type;
     }
 
-    public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui) {
+    public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
         if(requiresUpload) {
+            uploadHits.hit();
+            uploadTime.begin();
             upload();
             requiresUpload = false;
+            uploadTime.end();
         }
 
         // Prepare to render minimap
@@ -89,36 +94,24 @@ public class MinimapRenderer implements AutoCloseable {
         Matrix4f matrix4f = stack.last().pose();
 
         // Render map background
-        stack.translate(10, 10, 0);
-        VertexConsumer backgroundVertices = buffers.getBuffer(this.backgroundRenderType);
-        backgroundVertices.vertex(matrix4f, 0.0F, 320, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        backgroundVertices.vertex(matrix4f, 320, 320, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        backgroundVertices.vertex(matrix4f, 320, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        backgroundVertices.vertex(matrix4f, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        stack.translate(width - 330, 10, 0);
+        drawQuad(buffers.getBuffer(this.backgroundRenderType), matrix4f, 320, 320);
 
         // Render actual map tiles
         stack.translate(32, 32, 0);
-        VertexConsumer mapVertices = buffers.getBuffer(this.textureRenderType);
-        mapVertices.vertex(matrix4f, 0.0F, SIZE, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        mapVertices.vertex(matrix4f, SIZE, SIZE, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        mapVertices.vertex(matrix4f, SIZE, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        mapVertices.vertex(matrix4f, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 256, 256);
 
         // Render player marker
         stack.translate(128, 128, 0);
         stack.mulPose(Vector3f.ZP.rotationDegrees(Helpers.getPlayer().getRotationVector().y));
         stack.translate(-8, -8, 0);
-        VertexConsumer playerVertices = buffers.getBuffer(this.playerRenderType);
-        playerVertices.vertex(matrix4f, 0.0F, 16, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        playerVertices.vertex(matrix4f, 16, 16, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        playerVertices.vertex(matrix4f, 16, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        playerVertices.vertex(matrix4f, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        drawQuad(buffers.getBuffer(this.playerRenderType), matrix4f, 16, 16);
 
         stack.popPose();
         stack.pushPose();
 
         // Render player coordinates
-        stack.translate(10, 300, 0);
+        stack.translate(width - 330, 300, 0);
         Matrix4f matrix = stack.last().pose();
         Font fontRenderer = Minecraft.getInstance().font;
         BlockPos pos = Helpers.getPlayer().blockPosition();
@@ -132,10 +125,15 @@ public class MinimapRenderer implements AutoCloseable {
 
         if(debugEnabled) {
             debugProfiler.begin();
+
+            // ping load profilers
             CartographyPipeline.COLLECTOR_LOAD_PROFILER.ping();
             CartographyPipeline.LAYER_LOAD_PROFILER.ping();
+            CartographyPipeline.REGION_LOAD_PROFILER.ping();
+            uploadHits.ping();
+
             stack.pushPose();
-            stack.translate(10, 340, 0);
+            stack.translate(10, 10, 0);
             drawDebugInfo(stack, buffers, fontRenderer, pos);
             stack.popPose();
             debugProfiler.end();
@@ -146,7 +144,7 @@ public class MinimapRenderer implements AutoCloseable {
         Matrix4f matrix = stack.last().pose();
 
         VertexConsumer playerVertices = buffers.getBuffer(this.backgroundRenderType);
-        float w = 250, h = 140, o = 0;
+        float w = 250, h = 270, o = 0;
         playerVertices.vertex(matrix, o, h, -0.01F).color(0, 0, 0, 120).uv(0.25F, 0.75F).uv2(LightTexture.FULL_BRIGHT).endVertex();
         playerVertices.vertex(matrix, w, h, -0.01F).color(0, 0, 0, 120).uv(0.75F, 0.75F).uv2(LightTexture.FULL_BRIGHT).endVertex();
         playerVertices.vertex(matrix, w, o, -0.01F).color(0, 0, 0, 120).uv(0.75F, 0.25F).uv2(LightTexture.FULL_BRIGHT).endVertex();
@@ -157,35 +155,67 @@ public class MinimapRenderer implements AutoCloseable {
         fontRenderer.drawInBatch("Player Region: " + new RegionPos(pos), 5F, y += 10, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         drawTimeProfiler(debugProfiler, y += 10, "Debug Info", fontRenderer, matrix, buffers);
         drawTimeProfiler(drawProfiler, y += 10, "Minimap Draw", fontRenderer, matrix, buffers);
-        y = drawSubsystem(CartographyPipeline.COLLECTOR_LOAD_PROFILER, CartographyPipeline.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect", fontRenderer, matrix, buffers);
-        y = drawSubsystem(CartographyPipeline.LAYER_LOAD_PROFILER, CartographyPipeline.LAYER_TIME_PROFILER, y + 10, "Layer Render", fontRenderer, matrix, buffers);
+        y = drawSubsystem(uploadHits, uploadTime, y + 10, "Texture Upload      [ last second ]", fontRenderer, matrix, buffers, "frame load");
+
+        // Cartography Pipeline Profiling
+        fontRenderer.drawInBatch("Cartography Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        y = drawSubsystem(CartographyPipeline.COLLECTOR_LOAD_PROFILER, CartographyPipeline.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect      [ last second ]", fontRenderer, matrix, buffers, "tick load");
+        y = drawSubsystem(CartographyPipeline.LAYER_LOAD_PROFILER, CartographyPipeline.LAYER_TIME_PROFILER, y + 10, "Layer Render      [ last second ]", fontRenderer, matrix, buffers, "delay");
+        y = drawSubsystem(CartographyPipeline.REGION_LOAD_PROFILER, CartographyPipeline.REGION_TIME_PROFILER, y + 10, "Region Save      [ last minute ]", fontRenderer, matrix, buffers, "delay");
     }
 
-    private static float drawSubsystem(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers) {
+    private static float drawSubsystem(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {
         fontRenderer.drawInBatch(label, 5F, y += 5, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        drawTimeProfiler(time, y += 10, "    t ", fontRenderer, matrix, buffers);
-        drawLoadProfiler(load, y += 10, "    \u0394 ", fontRenderer, matrix, buffers);
-        drawSubsystemLoad(load, time, y += 10, "    \u03C1 ", fontRenderer, matrix, buffers);
+        drawTimeProfiler(time, y += 10, "    \u0394 ", fontRenderer, matrix, buffers);
+        drawLoadProfiler(load, y += 10, "    # ", fontRenderer, matrix, buffers);
+        drawSubsystemLoad(load, time, y += 10, "    \u03C1 ", fontRenderer, matrix, buffers, type);
         return y + 5;
     }
 
     private static void drawTimeProfiler(Profiler.TimeProfiler profiler, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers) {
-        String time = String.format("%s: %.2f\u03BCs [ %.1f\u03BCs - %.1f\u03BCs ]", label, profiler.getAvg() / 1000D, profiler.getMin() / 1000D, profiler.getMax() / 1000D);
+        double at = profiler.getAvg() / 1000D, nt = profiler.getMin() / 1000D, xt = profiler.getMax() / 1000D;
+        String au = "\u03BC", nu = "\u03BC", xu = "\u03BC";
+        if(at >= 1000) {
+            at /= 1000D;
+            au = "m";
+        }
+        if(nt >= 1000) {
+            nt /= 1000D;
+            nu = "m";
+        }
+        if(xt >= 1000) {
+            xt /= 1000D;
+            xu = "m";
+        }
+        String time = String.format("%s: %.2f%ss [ %.1f%ss - %.1f%ss ]", label, at, au, nt, nu, xt, xu);
         fontRenderer.drawInBatch(time, 5F, y, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
     }
 
     private static void drawLoadProfiler(Profiler.LoadProfiler profiler, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers) {
-        String load = String.format("%s: %.2f\u0394/t [ %.0f\u0394/t - %.0f\u0394/t ]", label, profiler.getAvg(), profiler.getMin(), profiler.getMax());
+        String u = profiler.unit;
+        String load = String.format("%s: %.2f\u0394/%s [ %.0f\u0394/%s - %.0f\u0394/%s ]", label, profiler.getAvg(), u, profiler.getMin(), u, profiler.getMax(), u);
         fontRenderer.drawInBatch(load, 5F, y, 0xAAAAFF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
     }
 
-    private static void drawSubsystemLoad(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers) {
+    private static void drawSubsystemLoad(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {
         double l = load.getAvg();
         double t = time.getAvg() / 1000D;
         double w = l * t;
-        double p = 100 * w / 50_000D;
-        String profile = String.format("%s: %.2f\u03BCs/t  |  %.3f%% load", label, w, p);
+        double p = 100 * w / (load.interval * 1000);
+        String u = "\u03BC";
+        if(w >= 1000) {
+            w /= 1000D;
+            u = "m";
+        }
+        String profile = String.format("%s: %.2f%ss/%s  |  %.3f%% %s", label, w, u, load.unit, p, type);
         fontRenderer.drawInBatch(profile, 5F, y, 0xFFAAAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+    }
+
+    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
+        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
     public void upload() {
