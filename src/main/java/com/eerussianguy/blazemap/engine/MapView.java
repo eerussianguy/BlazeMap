@@ -5,31 +5,26 @@ import java.util.Set;
 
 import com.eerussianguy.blazemap.api.util.IMapView;
 
-public class MapView<K, V> implements IMapView<K, V>
-{
+public class MapView<K, V> implements IMapView<K, V> {
     private final Map<K, V> source;
     private Set<K> filter;
 
-    public MapView(Map<K, V> source)
-    {
+    public MapView(Map<K, V> source) {
         this.source = source;
     }
 
-    public void setFilter(Set<K> filter)
-    {
+    public void setFilter(Set<K> filter) {
         this.filter = filter;
     }
 
     @Override
-    public V get(K key)
-    {
-        if (!filter.contains(key)) return null;
+    public V get(K key) {
+        if(!filter.contains(key)) return null;
         return source.get(key);
     }
 
     @Override
-    public <U extends V> U get(K key, Class<U> cls)
-    {
+    public <U extends V> U get(K key, Class<U> cls) {
         return (U) get(key);
     }
 }

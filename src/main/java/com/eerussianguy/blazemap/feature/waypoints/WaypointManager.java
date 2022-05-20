@@ -7,7 +7,7 @@ import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 public class WaypointManager {
 
     @SubscribeEvent
-    public static void onDimensionChanged(DimensionChangedEvent event){
+    public static void onDimensionChanged(DimensionChangedEvent event) {
 
     }
 }

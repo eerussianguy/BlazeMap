@@ -12,16 +12,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = RenderChunkRegion.class)
-public class RenderChunkRegionMixin
-{
+public class RenderChunkRegionMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void constructor(Level level, int centerX, int centerZ, RenderChunk[][] renderChunks, CallbackInfo ci)
-    {
-        for (RenderChunk[] rcs : renderChunks)
-        {
-            for (RenderChunk rc : rcs)
-            {
+    private void constructor(Level level, int centerX, int centerZ, RenderChunk[][] renderChunks, CallbackInfo ci) {
+        for(RenderChunk[] rcs : renderChunks) {
+            for(RenderChunk rc : rcs) {
                 ChunkPos pos = rc.wrapped.getPos();
                 BlazeMapEngine.onChunkChanged(pos);
             }

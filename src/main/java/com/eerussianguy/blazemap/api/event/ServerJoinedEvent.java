@@ -11,13 +11,17 @@ import net.minecraftforge.eventbus.api.Event;
  * @author LordFokas
  */
 public class ServerJoinedEvent extends Event {
-    /** The internal ID used to represent this server */
+    /**
+     * The internal ID used to represent this server
+     */
     public final String serverID;
 
-    /** The directory where Blaze Map stores all the data for this server */
+    /**
+     * The directory where Blaze Map stores all the data for this server
+     */
     public final File serverStorageDir;
 
-    public ServerJoinedEvent(String serverID, File serverDir){
+    public ServerJoinedEvent(String serverID, File serverDir) {
         this.serverID = serverID;
         this.serverStorageDir = serverDir;
     }
