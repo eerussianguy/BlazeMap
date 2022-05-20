@@ -3,7 +3,7 @@ package com.eerussianguy.blazemap;
 import java.util.function.Function;
 
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.*;
+import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 
 import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
@@ -12,12 +12,10 @@ import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
  * It is not necessarily expected that the player will be editing the config
  * We are free to use key binds to allow what is essentially config editing on the fly
  */
-public class ClientConfig
-{
+public class ClientConfig {
     public final BooleanValue enableMinimap;
 
-    ClientConfig(ForgeConfigSpec.Builder innerBuilder)
-    {
+    ClientConfig(ForgeConfigSpec.Builder innerBuilder) {
         Function<String, ForgeConfigSpec.Builder> builder = name -> innerBuilder.translation(MOD_ID + ".config.server." + name);
 
         innerBuilder.push("general");

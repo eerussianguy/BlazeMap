@@ -2,8 +2,7 @@ package com.eerussianguy.blazemap.api;
 
 import net.minecraft.resources.ResourceLocation;
 
-public class BlazeMapReferences
-{
+public class BlazeMapReferences {
     public static final String MODID = "blazemap";
 
     // Map Types

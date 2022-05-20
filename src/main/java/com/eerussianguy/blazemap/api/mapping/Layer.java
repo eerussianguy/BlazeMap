@@ -11,30 +11,25 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.api.util.IMapView;
 import com.mojang.blaze3d.platform.NativeImage;
 
-public abstract class Layer
-{
+public abstract class Layer {
     private final ResourceLocation id;
     private final Set<ResourceLocation> collectors;
 
-    public Layer(ResourceLocation id, ResourceLocation... collectors)
-    {
+    public Layer(ResourceLocation id, ResourceLocation... collectors) {
         this.id = id;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 
-    public ResourceLocation getID()
-    {
+    public ResourceLocation getID() {
         return id;
     }
 
-    public Set<ResourceLocation> getCollectors()
-    {
+    public Set<ResourceLocation> getCollectors() {
         return collectors;
     }
 
 
-    public boolean shouldRenderInDimension(ResourceKey<Level> dimension)
-    {
+    public boolean shouldRenderInDimension(ResourceKey<Level> dimension) {
         return true;
     }
 

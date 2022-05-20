@@ -13,23 +13,19 @@ import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.feature.maps.Overlays;
 
 
-public class EventHandler
-{
+public class EventHandler {
     private static final Supplier<Boolean> OPTIFINE_LOADED = Suppliers.memoize(() ->
     {
-        try
-        {
+        try {
             Class.forName("net.optifine.Config");
             return true;
         }
-        catch (ClassNotFoundException ignored)
-        {
+        catch(ClassNotFoundException ignored) {
             return false;
         }
     });
 
-    public static void init()
-    {
+    public static void init() {
         final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 
         bus.addListener(EventHandler::clientSetup);
@@ -37,18 +33,15 @@ public class EventHandler
         bus.addListener(EventHandler::onTextureStitch);
     }
 
-    private static void clientSetup(final FMLClientSetupEvent event)
-    {
+    private static void clientSetup(final FMLClientSetupEvent event) {
         Overlays.reload();
     }
 
-    private static void onConfigReload(ModConfigEvent.Reloading event)
-    {
+    private static void onConfigReload(ModConfigEvent.Reloading event) {
         Overlays.reload();
     }
 
-    private static void onTextureStitch(TextureStitchEvent.Post event)
-    {
+    private static void onTextureStitch(TextureStitchEvent.Post event) {
         BlazeMapFeatures.initMiniMap();
         BlazeMapFeatures.initFullMap();
         BlazeMapFeatures.initWaypoints();
