@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.feature.maps;
 
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.player.LocalPlayer;
@@ -29,17 +28,13 @@ import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
+    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
 
-    private static final int[][] OFFSETS = Util.make(() -> {
-        final int[][] offsets = new int[9][2];
-        int idx = 0;
-        for(int x = -1; x <= 1; x++) {
-            for(int z = -1; z <= 1; z++) {
-                offsets[idx++] = new int[] {x, z};
-            }
-        }
-        return offsets;
-    });
+    private static final int[][] OFFSETS = new int[][] {
+        new int[] {-1, -1}, new int[] {0, -1}, new int[] {1, -1},
+        new int[] {-1, 0}, new int[] {0, 0}, new int[] {1, 0},
+        new int[] {-1, 1}, new int[] {0, 1}, new int[] {1, 1}
+    };
 
     private MapType mapType;
     private boolean requiresUpload = true;
@@ -51,9 +46,10 @@ public class MinimapRenderer implements AutoCloseable {
     private final DynamicTexture texture;
     private final Profiler.TimeProfiler drawProfiler, debugProfiler, uploadTime;
     private final Profiler.LoadProfiler uploadHits;
+    private BlockPos last = BlockPos.ZERO;
 
     MinimapRenderer(TextureManager manager) {
-        this.texture = new DynamicTexture(512, 512, false);
+        this.texture = new DynamicTexture(SIZE, SIZE, false);
         ResourceLocation textureResource = Helpers.identifier("minimap");
         ResourceLocation mapBackground = Helpers.identifier("textures/map.png");
         ResourceLocation playerMarker = Helpers.identifier("textures/player.png");
@@ -80,7 +76,10 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
-        if(requiresUpload) {
+        BlockPos pos = Helpers.getPlayer().blockPosition();
+
+        if(requiresUpload || !pos.equals(last)) {
+            last = pos;
             uploadHits.hit();
             uploadTime.begin();
             upload();
@@ -93,31 +92,33 @@ public class MinimapRenderer implements AutoCloseable {
         stack.pushPose();
         Matrix4f matrix4f = stack.last().pose();
 
+        int w = 136, h = 148, m = 8;
+
         // Render map background
-        stack.translate(width - 330, 10, 0);
-        drawQuad(buffers.getBuffer(this.backgroundRenderType), matrix4f, 320, 320);
+        stack.translate(width - (w + m), m, 0);
+        drawQuad(buffers.getBuffer(this.backgroundRenderType), matrix4f, w, h);
 
         // Render actual map tiles
-        stack.translate(32, 32, 0);
-        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 256, 256);
+        stack.translate(4, 4, 0);
+        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128);
 
         // Render player marker
-        stack.translate(128, 128, 0);
+        stack.translate(64, 64, 0);
         stack.mulPose(Vector3f.ZP.rotationDegrees(Helpers.getPlayer().getRotationVector().y));
-        stack.translate(-8, -8, 0);
-        drawQuad(buffers.getBuffer(this.playerRenderType), matrix4f, 16, 16);
+        stack.translate(-6, -6, 0);
+        drawQuad(buffers.getBuffer(this.playerRenderType), matrix4f, 12, 12);
 
         stack.popPose();
         stack.pushPose();
 
         // Render player coordinates
-        stack.translate(width - 330, 300, 0);
+        stack.translate(width - (w + m), h - 4, 0);
+        stack.scale(0.5F, 0.5F, 0);
         Matrix4f matrix = stack.last().pose();
         Font fontRenderer = Minecraft.getInstance().font;
-        BlockPos pos = Helpers.getPlayer().blockPosition();
         String position = pos.toShortString();
-        int offset = (320 - fontRenderer.width(position)) / 2;
-        fontRenderer.drawInBatch(position, offset, 0F, 0x222222, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        int offset = (w * 2 - fontRenderer.width(position)) / 2;
+        fontRenderer.drawInBatch(position, offset, 0F, 0xDDDDDD, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
 
         // Finish
         stack.popPose();
@@ -133,7 +134,8 @@ public class MinimapRenderer implements AutoCloseable {
             uploadHits.ping();
 
             stack.pushPose();
-            stack.translate(10, 10, 0);
+            stack.translate(5, 5, 0);
+            stack.scale(0.75F, 0.75F, 0);
             drawDebugInfo(stack, buffers, fontRenderer, pos);
             stack.popPose();
             debugProfiler.end();
@@ -226,6 +228,7 @@ public class MinimapRenderer implements AutoCloseable {
             for(ResourceLocation layer : mapType.getLayers()) {
                 for(int[] offset : OFFSETS) {
                     final RegionPos currentRegion = originRegion.offset(offset[0], offset[1]);
+                    if(!currentRegion.containsSquare(playerPos, SIZE_HALF)) continue;
                     tileStorage.consumeTile(layer, currentRegion, data ->
                         consume(playerPos, currentRegion, texture, data)
                     );
@@ -239,11 +242,11 @@ public class MinimapRenderer implements AutoCloseable {
     private void consume(BlockPos center, RegionPos currentRegion, DynamicTexture minimap, NativeImage tileImage) {
         NativeImage minimapPixels = minimap.getPixels();
         if(minimapPixels != null) {
-            BlockPos corner = center.offset(-256, 0, -256);
+            BlockPos corner = center.offset(-SIZE_HALF, 0, -SIZE_HALF);
             BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
             int pixelRegionX, pixelRegionZ;
-            for(int x = 0; x < 512; x++) {
-                for(int z = 0; z < 512; z++) {
+            for(int x = 0; x < SIZE; x++) {
+                for(int z = 0; z < SIZE; z++) {
                     mutable.setWithOffset(corner, x, 0, z);
                     pixelRegionX = mutable.getX() >> 9;
                     pixelRegionZ = mutable.getZ() >> 9;
