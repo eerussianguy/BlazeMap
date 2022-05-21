@@ -2,15 +2,21 @@ package com.eerussianguy.blazemap.api.util;
 
 import java.util.Objects;
 
-import net.minecraft.resources.ResourceLocation;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.mapping.Layer;
 
 public class LayerRegion {
-    public final ResourceLocation layer;
+    public final BlazeRegistry.Key<Layer> layer;
     public final RegionPos region;
 
-    public LayerRegion(ResourceLocation layer, RegionPos region) {
+    public LayerRegion(BlazeRegistry.Key<Layer> layer, RegionPos region) {
         this.layer = layer;
         this.region = region;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(layer, region);
     }
 
     @Override
@@ -19,10 +25,5 @@ public class LayerRegion {
         if(o == null || getClass() != o.getClass()) return false;
         LayerRegion that = (LayerRegion) o;
         return Objects.equals(layer, that.layer) && Objects.equals(region, that.region);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(layer, region);
     }
 }

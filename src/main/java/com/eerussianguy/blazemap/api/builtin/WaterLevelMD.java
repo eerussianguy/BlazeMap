@@ -4,20 +4,16 @@ import net.minecraft.nbt.CompoundTag;
 
 import com.eerussianguy.blazemap.api.mapping.MasterDatum;
 
-public class TerrainHeightMD implements MasterDatum {
-    public final int minY, maxY, height, sea, minX, minZ;
-    public final int[][] heightmap;
+public class WaterLevelMD implements MasterDatum {
+    public final int sea, minX, minZ;
+    public final int[][] level;
 
-    public TerrainHeightMD(int minY, int maxY, int height, int sea, int minX, int minZ, int[][] heightmap) {
-        this.minY = minY;
-        this.maxY = maxY;
-        this.height = height;
+    public WaterLevelMD(int sea, int minX, int minZ, int[][] level) {
         this.sea = sea;
-
         this.minX = minX;
         this.minZ = minZ;
 
-        this.heightmap = heightmap;
+        this.level = level;
     }
 
     @Override

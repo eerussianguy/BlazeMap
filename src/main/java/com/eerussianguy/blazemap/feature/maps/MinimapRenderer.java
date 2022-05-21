@@ -15,7 +15,9 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.Helpers;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
+import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.CartographyPipeline;
@@ -28,24 +30,22 @@ import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
-    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
-
     private static final int[][] OFFSETS = new int[][] {
         new int[] {-1, -1}, new int[] {0, -1}, new int[] {1, -1},
         new int[] {-1, 0}, new int[] {0, 0}, new int[] {1, 0},
         new int[] {-1, 1}, new int[] {0, 1}, new int[] {1, 1}
-    };
+    };    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
 
-    private MapType mapType;
-    private boolean requiresUpload = true;
-    private boolean debugEnabled = true;
-    private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private final RenderType textureRenderType;
     private final RenderType backgroundRenderType;
     private final RenderType playerRenderType;
     private final DynamicTexture texture;
     private final Profiler.TimeProfiler drawProfiler, debugProfiler, uploadTime;
     private final Profiler.LoadProfiler uploadHits;
+    private MapType mapType;
+    private boolean requiresUpload = true;
+    private boolean debugEnabled = true;
+    private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private BlockPos last = BlockPos.ZERO;
 
     MinimapRenderer(TextureManager manager) {
@@ -73,6 +73,49 @@ public class MinimapRenderer implements AutoCloseable {
 
     public void setMapType(MapType type) {
         mapType = type;
+    }
+
+    public void upload() {
+        LocalPlayer player = Helpers.getPlayer();
+        if(player != null) {
+            final BlockPos playerPos = player.blockPosition();
+            final RegionPos originRegion = new RegionPos(playerPos);
+            texture.getPixels().fillRect(0, 0, SIZE, SIZE, 0);
+            for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
+                for(int[] offset : OFFSETS) {
+                    final RegionPos currentRegion = originRegion.offset(offset[0], offset[1]);
+                    if(!currentRegion.containsSquare(playerPos, SIZE_HALF)) continue;
+                    tileStorage.consumeTile(layer, currentRegion, data ->
+                        consume(playerPos, currentRegion, texture, data)
+                    );
+                }
+            }
+        }
+
+        texture.upload();
+    }
+
+    private void consume(BlockPos center, RegionPos currentRegion, DynamicTexture minimap, NativeImage tileImage) {
+        NativeImage minimapPixels = minimap.getPixels();
+        if(minimapPixels != null) {
+            BlockPos corner = center.offset(-SIZE_HALF, 0, -SIZE_HALF);
+            BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+            int pixelRegionX, pixelRegionZ;
+            for(int x = 0; x < SIZE; x++) {
+                for(int z = 0; z < SIZE; z++) {
+                    mutable.setWithOffset(corner, x, 0, z);
+                    pixelRegionX = mutable.getX() >> 9;
+                    pixelRegionZ = mutable.getZ() >> 9;
+                    if(currentRegion.x == pixelRegionX && currentRegion.z == pixelRegionZ) {
+                        int color = blend(
+                            minimapPixels.getPixelRGBA(x, z),
+                            tileImage.getPixelRGBA(mutable.getX() & 0x01FF, mutable.getZ() & 0x01FF)
+                        );
+                        minimapPixels.setPixelRGBA(x, z, color);
+                    }
+                }
+            }
+        }
     }
 
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
@@ -220,42 +263,12 @@ public class MinimapRenderer implements AutoCloseable {
         vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
-    public void upload() {
-        LocalPlayer player = Helpers.getPlayer();
-        if(player != null) {
-            final BlockPos playerPos = player.blockPosition();
-            final RegionPos originRegion = new RegionPos(playerPos);
-            for(ResourceLocation layer : mapType.getLayers()) {
-                for(int[] offset : OFFSETS) {
-                    final RegionPos currentRegion = originRegion.offset(offset[0], offset[1]);
-                    if(!currentRegion.containsSquare(playerPos, SIZE_HALF)) continue;
-                    tileStorage.consumeTile(layer, currentRegion, data ->
-                        consume(playerPos, currentRegion, texture, data)
-                    );
-                }
-            }
-        }
+    private static int blend(int bottom, int top) {
+        if((top & 0xFF000000) == 0xFF000000) return top; // top is opaque, use top
+        if((top & 0xFF000000) == 0) return bottom; // top is transparent, use bottom
+        if((bottom & 0xFF000000) == 0) return top; // bottom is transparent, use top
 
-        texture.upload();
-    }
-
-    private void consume(BlockPos center, RegionPos currentRegion, DynamicTexture minimap, NativeImage tileImage) {
-        NativeImage minimapPixels = minimap.getPixels();
-        if(minimapPixels != null) {
-            BlockPos corner = center.offset(-SIZE_HALF, 0, -SIZE_HALF);
-            BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-            int pixelRegionX, pixelRegionZ;
-            for(int x = 0; x < SIZE; x++) {
-                for(int z = 0; z < SIZE; z++) {
-                    mutable.setWithOffset(corner, x, 0, z);
-                    pixelRegionX = mutable.getX() >> 9;
-                    pixelRegionZ = mutable.getZ() >> 9;
-                    if(currentRegion.x == pixelRegionX && currentRegion.z == pixelRegionZ) {
-                        minimapPixels.setPixelRGBA(x, z, tileImage.getPixelRGBA(mutable.getX() & 0x01FF, mutable.getZ() & 0x01FF));
-                    }
-                }
-            }
-        }
+        return 0xFF000000; // TODO: implement proper color blending
     }
 
     @Override

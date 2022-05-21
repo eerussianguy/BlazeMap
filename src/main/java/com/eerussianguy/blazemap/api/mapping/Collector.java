@@ -1,18 +1,28 @@
 package com.eerussianguy.blazemap.api.mapping;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+
+import com.eerussianguy.blazemap.api.BlazeRegistry;
 
 
-public abstract class Collector<T extends MasterData> {
-    private final ResourceLocation id;
+public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.Registerable<Collector<T>> {
+    private static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
 
-    public Collector(ResourceLocation id) {
-        this.id = id;
+    protected static boolean isWater(Level level, int x, int y, int z) {
+        BlockState state = level.getBlockState(POS.setX(x).setY(y).setZ(z));
+        return state.getFluidState().getTags().anyMatch(t -> t.equals(FluidTags.WATER));
+    }
+    private final BlazeRegistry.Key<Collector<T>> id;
+
+    @SuppressWarnings("unchecked")
+    public Collector(BlazeRegistry.Key<? extends Collector<T>> id) {
+        this.id = (BlazeRegistry.Key<Collector<T>>) id;
     }
 
-    public ResourceLocation getID() {
+    public BlazeRegistry.Key<Collector<T>> getID() {
         return id;
     }
 
