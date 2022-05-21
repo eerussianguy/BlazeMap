@@ -30,11 +30,13 @@ import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
+    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
+
     private static final int[][] OFFSETS = new int[][] {
         new int[] {-1, -1}, new int[] {0, -1}, new int[] {1, -1},
         new int[] {-1, 0}, new int[] {0, 0}, new int[] {1, 0},
         new int[] {-1, 1}, new int[] {0, 1}, new int[] {1, 1}
-    };    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
+    };
 
     private final RenderType textureRenderType;
     private final RenderType backgroundRenderType;
