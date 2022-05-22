@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.Helpers;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Collector;
@@ -22,16 +22,10 @@ import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.DebouncingDomain;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
+import static com.eerussianguy.blazemap.util.Profilers.Engine.*;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public class CartographyPipeline {
-    public static final Profiler.TimeProfiler COLLECTOR_TIME_PROFILER = new Profiler.TimeProfiler(20);
-    public static final Profiler.LoadProfiler COLLECTOR_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
-    public static final Profiler.TimeProfiler LAYER_TIME_PROFILER = new Profiler.TimeProfiler(20);
-    public static final Profiler.LoadProfiler LAYER_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
-    public static final Profiler.TimeProfiler REGION_TIME_PROFILER = new Profiler.TimeProfiler(60);
-    public static final Profiler.LoadProfiler REGION_LOAD_PROFILER = new Profiler.LoadProfiler(60, 1000);
-
     public final File dimensionDir;
     public final ResourceKey<Level> dimension;
     public final Set<BlazeRegistry.Key<MapType>> availableMapTypes;

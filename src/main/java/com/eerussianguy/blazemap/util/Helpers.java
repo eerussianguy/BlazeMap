@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap;
+package com.eerussianguy.blazemap.util;
 
 import java.awt.*;
 import java.io.File;
@@ -13,6 +13,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 
+import com.eerussianguy.blazemap.BlazeMap;
 import com.mojang.serialization.Codec;
 import org.jetbrains.annotations.Nullable;
 

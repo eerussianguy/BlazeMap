@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.engine;
+package com.eerussianguy.blazemap.util;
 
 public abstract class Profiler {
     protected long[] roll;
