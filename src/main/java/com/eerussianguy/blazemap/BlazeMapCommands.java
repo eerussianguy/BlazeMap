@@ -9,11 +9,11 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
 public class BlazeMapCommands {
     private static final EnumArgument<MinimapRenderer.MinimapSize> MINIMAP_SIZE = EnumArgument.enumArgument(MinimapRenderer.MinimapSize.class);
+    private static final EnumArgument<MinimapRenderer.MinimapZoom> MINIMAP_ZOOM = EnumArgument.enumArgument(MinimapRenderer.MinimapZoom.class);
 
     public static LiteralArgumentBuilder<CommandSourceStack> create() {
         return Commands.literal("blazemap")
@@ -36,11 +36,8 @@ public class BlazeMapCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> createMinimap() {
         return Commands.literal("minimap")
             .then(minimapSize())
-            .then(minimapType());
-
-            /*
-            .then(minimapZoom())
-             */
+            .then(minimapType())
+            .then(minimapZoom());
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> minimapSize() {
@@ -70,6 +67,12 @@ public class BlazeMapCommands {
 
     private static LiteralArgumentBuilder<CommandSourceStack> minimapZoom() {
         return Commands.literal("zoom")
-            .then((ArgumentBuilder<CommandSourceStack, ?>) null);
+            .then(Commands.argument("value", MINIMAP_ZOOM)
+                .executes(cmd -> {
+                    MinimapRenderer.MinimapZoom zoom = cmd.getArgument("value", MinimapRenderer.MinimapZoom.class);
+                    MinimapRenderer.INSTANCE.setMapZoom(zoom);
+                    return Command.SINGLE_SUCCESS;
+                })
+            );
     }
 }

@@ -30,7 +30,7 @@ import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
-    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
+    private static final int SIZE = 512, SIZE_HALF = SIZE / 2;
 
     private static final int[][] OFFSETS = new int[][] {
         new int[] {-1, -1}, new int[] {0, -1}, new int[] {1, -1},
@@ -46,21 +46,35 @@ public class MinimapRenderer implements AutoCloseable {
     private final Profiler.LoadProfiler uploadHits;
     private MapType mapType;
     private boolean requiresUpload = true;
-    private boolean debugEnabled = true;
+    private boolean debugEnabled = false;
     private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private BlockPos last = BlockPos.ZERO;
     private MinimapSize size = MinimapSize.LARGE;
+    private MinimapZoom zoom = MinimapZoom.MEDIUM;
 
     public enum MinimapSize {
-        SMALL(1.00F),
-        MEDIUM(1.25F),
-        LARGE(1.50F),
-        DEV_HUGE(2.00F);
+        SMALL   (1.00F),
+        MEDIUM  (1.25F),
+        LARGE   (1.50F),
+        HUGE    (2.00F);
 
         public final float scale;
 
         MinimapSize(float scale) {
             this.scale = scale;
+        }
+    }
+
+    public enum MinimapZoom {
+        SHORT   (0.75F),
+        NEAR    (0.50F),
+        MEDIUM  (0.25F),
+        FAR     (0.00F);
+
+        public final float trim;
+
+        MinimapZoom(float trim) {
+            this.trim = trim/2F;
         }
     }
 
@@ -97,6 +111,10 @@ public class MinimapRenderer implements AutoCloseable {
 
     public void setMapSize(MinimapSize size) {
         this.size = size;
+    }
+
+    public void setMapZoom(MinimapZoom zoom) {
+        this.zoom = zoom;
     }
 
     public void upload() {
@@ -162,7 +180,7 @@ public class MinimapRenderer implements AutoCloseable {
         int w = 136, h = 148, m = 8;
 
         // Translate to corner and apply scale
-        stack.translate(width, m, 0);
+        stack.translate(width, 0, 0);
         stack.scale(size.scale, size.scale, 0);
 
         // Render map background
@@ -171,7 +189,7 @@ public class MinimapRenderer implements AutoCloseable {
 
         // Render actual map tiles
         stack.translate(4, 4, 0);
-        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128);
+        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128, zoom.trim);
 
         // Render player marker
         stack.translate(64, 64, 0);
@@ -183,7 +201,7 @@ public class MinimapRenderer implements AutoCloseable {
         stack.pushPose();
 
         // Translate to corner and apply scale
-        stack.translate(width, m, 0);
+        stack.translate(width, 0, 0);
         stack.scale(size.scale, size.scale, 0);
 
         // Render player coordinates
@@ -289,10 +307,14 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
-        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        drawQuad(vertices, matrix, w, h, 0);
+    }
+
+    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h, float trim) {
+        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F+trim, 1.0F-trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F-trim, 1.0F-trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F-trim, 0.0F+trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F+trim, 0.0F+trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
     private static int blend(int bottom, int top) {
