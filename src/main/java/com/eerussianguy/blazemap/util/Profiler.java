@@ -1,5 +1,7 @@
 package com.eerussianguy.blazemap.util;
 
+import java.util.Arrays;
+
 public abstract class Profiler {
     protected long[] roll;
     protected long min, max;
@@ -54,7 +56,7 @@ public abstract class Profiler {
             }
             else {
                 long delta = System.nanoTime() - start;
-                for(int i = 0; i < roll.length; i++) roll[i] = delta;
+                Arrays.fill(roll, delta);
                 synchronized(this) {
                     avg = min = max = delta;
                 }
