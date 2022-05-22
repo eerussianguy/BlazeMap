@@ -17,13 +17,13 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.BlazeMap;
-import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
+import com.eerussianguy.blazemap.util.Helpers;
 
 public class BlazeMapEngine {
     private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();

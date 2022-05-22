@@ -17,13 +17,13 @@ import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import com.eerussianguy.blazemap.util.Colors;
-import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.eerussianguy.blazemap.util.Colors;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profiler;
 import com.eerussianguy.blazemap.util.Profilers;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -53,7 +53,7 @@ public class MinimapRenderer implements AutoCloseable {
     private BlockPos last = BlockPos.ZERO;
     private MinimapSize size = MinimapSize.LARGE;
     private MinimapZoom zoom = MinimapZoom.MEDIUM;
-    private Set<BlazeRegistry.Key<Layer>> DISABLED_LAYERS = new HashSet<>();
+    private final Set<BlazeRegistry.Key<Layer>> DISABLED_LAYERS = new HashSet<>();
 
     MinimapRenderer(TextureManager manager) {
         this.texture = new DynamicTexture(SIZE, SIZE, false);
@@ -89,10 +89,11 @@ public class MinimapRenderer implements AutoCloseable {
         this.zoom = zoom;
     }
 
-    public void setLayerStatus(BlazeRegistry.Key<Layer> layer, boolean enabled){
-        if(enabled){
+    public void setLayerStatus(BlazeRegistry.Key<Layer> layer, boolean enabled) {
+        if(enabled) {
             DISABLED_LAYERS.remove(layer);
-        }else{
+        }
+        else {
             DISABLED_LAYERS.add(layer);
         }
         requiresUpload = true;
@@ -293,10 +294,10 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h, float trim) {
-        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F+trim, 1.0F-trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F-trim, 1.0F-trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F-trim, 0.0F+trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F+trim, 0.0F+trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F + trim, 1.0F - trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F - trim, 1.0F - trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F - trim, 0.0F + trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F + trim, 0.0F + trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
     @Override

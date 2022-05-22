@@ -8,7 +8,7 @@ import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 
 public class BlazeRegistry<T> {
-    private final Map<Key<T>, Registerable> objects;
+    private final Map<Key<T>, RegistryEntry> objects;
 
     public BlazeRegistry() {
         this.objects = new HashMap<>();
@@ -24,14 +24,14 @@ public class BlazeRegistry<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public void register(Registerable object) {
+    public void register(RegistryEntry object) {
         Key<T> key = (Key<T>) object.getID();
         if(objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is already set!");
         objects.put(key, object);
     }
 
     @SuppressWarnings("unchecked")
-    public void replace(Registerable object) {
+    public void replace(RegistryEntry object) {
         Key<T> key = (Key<T>) object.getID();
         if(!objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is not set!");
         objects.put(key, object);
@@ -41,7 +41,7 @@ public class BlazeRegistry<T> {
         return objects.keySet();
     }
 
-    public interface Registerable {
+    public interface RegistryEntry {
         Key<?> getID();
     }
 
@@ -55,8 +55,8 @@ public class BlazeRegistry<T> {
             this.registry = registry;
         }
 
-        public Key(BlazeRegistry<T> registry, String namespace, String resource) {
-            super(namespace, resource);
+        public Key(BlazeRegistry<T> registry, String namespace, String path) {
+            super(namespace, path);
             Objects.requireNonNull(registry);
             this.registry = registry;
         }

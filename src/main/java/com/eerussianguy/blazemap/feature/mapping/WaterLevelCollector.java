@@ -5,7 +5,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
-import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Collector;
 

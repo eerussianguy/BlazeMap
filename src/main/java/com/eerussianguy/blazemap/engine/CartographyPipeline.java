@@ -9,7 +9,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Collector;
@@ -22,8 +21,10 @@ import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.DebouncingDomain;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
-import static com.eerussianguy.blazemap.util.Profilers.Engine.*;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
+
+import static com.eerussianguy.blazemap.util.Profilers.Engine.*;
 
 public class CartographyPipeline {
     public final File dimensionDir;

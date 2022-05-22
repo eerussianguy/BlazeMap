@@ -1,6 +1,6 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import java.awt.Color;
+import java.awt.*;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
@@ -60,10 +60,11 @@ public class TerrainHeightLayer extends Layer {
                         tile.setPixelRGBA(x, z, bottom.color);
                         continue next_pixel;
                     }
-                    if(point > bottom.keypoint){
+                    if(point > bottom.keypoint) {
                         tile.setPixelRGBA(x, z, Colors.interpolate(bottom.color, bottom.keypoint, top.color, top.keypoint, point));
                         break;
-                    }else{
+                    }
+                    else {
                         top = bottom;
                     }
                 }

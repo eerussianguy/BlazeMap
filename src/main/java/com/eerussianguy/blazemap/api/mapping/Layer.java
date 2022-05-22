@@ -11,7 +11,7 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
-public abstract class Layer implements BlazeRegistry.Registerable {
+public abstract class Layer implements BlazeRegistry.RegistryEntry {
     protected static final int OPAQUE = 0xFF000000;
 
     private final BlazeRegistry.Key<Layer> id;
