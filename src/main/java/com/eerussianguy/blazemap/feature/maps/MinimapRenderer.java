@@ -49,6 +49,20 @@ public class MinimapRenderer implements AutoCloseable {
     private boolean debugEnabled = true;
     private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private BlockPos last = BlockPos.ZERO;
+    private MinimapSize size = MinimapSize.LARGE;
+
+    public enum MinimapSize {
+        SMALL(1.00F),
+        MEDIUM(1.25F),
+        LARGE(1.50F),
+        DEV_HUGE(2.00F);
+
+        public final float scale;
+
+        MinimapSize(float scale) {
+            this.scale = scale;
+        }
+    }
 
     MinimapRenderer(TextureManager manager) {
         this.texture = new DynamicTexture(SIZE, SIZE, false);
@@ -73,8 +87,16 @@ public class MinimapRenderer implements AutoCloseable {
         event.tileNotifications.addUpdateListener(layerRegion -> this.requiresUpload = true);
     }
 
+    public void setDebugEnabled(boolean debugEnabled) {
+        this.debugEnabled = debugEnabled;
+    }
+
     public void setMapType(MapType type) {
         mapType = type;
+    }
+
+    public void setMapSize(MinimapSize size) {
+        this.size = size;
     }
 
     public void upload() {
@@ -139,8 +161,12 @@ public class MinimapRenderer implements AutoCloseable {
 
         int w = 136, h = 148, m = 8;
 
+        // Translate to corner and apply scale
+        stack.translate(width, m, 0);
+        stack.scale(size.scale, size.scale, 0);
+
         // Render map background
-        stack.translate(width - (w + m), m, 0);
+        stack.translate(-(w + m), m, 0);
         drawQuad(buffers.getBuffer(this.backgroundRenderType), matrix4f, w, h);
 
         // Render actual map tiles
@@ -156,8 +182,12 @@ public class MinimapRenderer implements AutoCloseable {
         stack.popPose();
         stack.pushPose();
 
+        // Translate to corner and apply scale
+        stack.translate(width, m, 0);
+        stack.scale(size.scale, size.scale, 0);
+
         // Render player coordinates
-        stack.translate(width - (w + m), h - 4, 0);
+        stack.translate(-(w + m), h - 4, 0);
         stack.scale(0.5F, 0.5F, 0);
         Matrix4f matrix = stack.last().pose();
         Font fontRenderer = Minecraft.getInstance().font;
