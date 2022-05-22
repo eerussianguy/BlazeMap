@@ -1,5 +1,8 @@
 package com.eerussianguy.blazemap.feature.maps;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.player.LocalPlayer;
@@ -14,14 +17,15 @@ import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import com.eerussianguy.blazemap.Helpers;
+import com.eerussianguy.blazemap.util.Colors;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
-import com.eerussianguy.blazemap.engine.CartographyPipeline;
-import com.eerussianguy.blazemap.engine.Profiler;
+import com.eerussianguy.blazemap.util.Profiler;
+import com.eerussianguy.blazemap.util.Profilers;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -30,7 +34,7 @@ import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
-    private static final int SIZE = 384, SIZE_HALF = SIZE / 2;
+    private static final int SIZE = 512, SIZE_HALF = SIZE / 2;
 
     private static final int[][] OFFSETS = new int[][] {
         new int[] {-1, -1}, new int[] {0, -1}, new int[] {1, -1},
@@ -42,27 +46,14 @@ public class MinimapRenderer implements AutoCloseable {
     private final RenderType backgroundRenderType;
     private final RenderType playerRenderType;
     private final DynamicTexture texture;
-    private final Profiler.TimeProfiler drawProfiler, debugProfiler, uploadTime;
-    private final Profiler.LoadProfiler uploadHits;
     private MapType mapType;
     private boolean requiresUpload = true;
-    private boolean debugEnabled = true;
+    private boolean debugEnabled = false;
     private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private BlockPos last = BlockPos.ZERO;
     private MinimapSize size = MinimapSize.LARGE;
-
-    public enum MinimapSize {
-        SMALL(1.00F),
-        MEDIUM(1.25F),
-        LARGE(1.50F),
-        DEV_HUGE(2.00F);
-
-        public final float scale;
-
-        MinimapSize(float scale) {
-            this.scale = scale;
-        }
-    }
+    private MinimapZoom zoom = MinimapZoom.MEDIUM;
+    private Set<BlazeRegistry.Key<Layer>> DISABLED_LAYERS = new HashSet<>();
 
     MinimapRenderer(TextureManager manager) {
         this.texture = new DynamicTexture(SIZE, SIZE, false);
@@ -74,11 +65,6 @@ public class MinimapRenderer implements AutoCloseable {
         this.backgroundRenderType = RenderType.text(mapBackground);
         this.playerRenderType = RenderType.text(playerMarker);
         MinecraftForge.EVENT_BUS.register(this);
-
-        this.drawProfiler = new Profiler.TimeProfiler(60);
-        this.debugProfiler = new Profiler.TimeProfiler(60);
-        this.uploadTime = new Profiler.TimeProfiler(60);
-        this.uploadHits = new Profiler.LoadProfiler(60, 16);
     }
 
     @SubscribeEvent
@@ -99,6 +85,19 @@ public class MinimapRenderer implements AutoCloseable {
         this.size = size;
     }
 
+    public void setMapZoom(MinimapZoom zoom) {
+        this.zoom = zoom;
+    }
+
+    public void setLayerStatus(BlazeRegistry.Key<Layer> layer, boolean enabled){
+        if(enabled){
+            DISABLED_LAYERS.remove(layer);
+        }else{
+            DISABLED_LAYERS.add(layer);
+        }
+        requiresUpload = true;
+    }
+
     public void upload() {
         LocalPlayer player = Helpers.getPlayer();
         if(player != null) {
@@ -106,6 +105,7 @@ public class MinimapRenderer implements AutoCloseable {
             final RegionPos originRegion = new RegionPos(playerPos);
             texture.getPixels().fillRect(0, 0, SIZE, SIZE, 0);
             for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
+                if(DISABLED_LAYERS.contains(layer)) continue;
                 for(int[] offset : OFFSETS) {
                     final RegionPos currentRegion = originRegion.offset(offset[0], offset[1]);
                     if(!currentRegion.containsSquare(playerPos, SIZE_HALF)) continue;
@@ -131,7 +131,7 @@ public class MinimapRenderer implements AutoCloseable {
                     pixelRegionX = mutable.getX() >> 9;
                     pixelRegionZ = mutable.getZ() >> 9;
                     if(currentRegion.x == pixelRegionX && currentRegion.z == pixelRegionZ) {
-                        int color = blend(
+                        int color = Colors.layerBlend(
                             minimapPixels.getPixelRGBA(x, z),
                             tileImage.getPixelRGBA(mutable.getX() & 0x01FF, mutable.getZ() & 0x01FF)
                         );
@@ -147,22 +147,22 @@ public class MinimapRenderer implements AutoCloseable {
 
         if(requiresUpload || !pos.equals(last)) {
             last = pos;
-            uploadHits.hit();
-            uploadTime.begin();
+            Profilers.Minimap.TEXTURE_LOAD_PROFILER.hit();
+            Profilers.Minimap.TEXTURE_TIME_PROFILER.begin();
             upload();
             requiresUpload = false;
-            uploadTime.end();
+            Profilers.Minimap.TEXTURE_TIME_PROFILER.end();
         }
 
         // Prepare to render minimap
-        drawProfiler.begin();
+        Profilers.Minimap.DRAW_TIME_PROFILER.begin();
         stack.pushPose();
         Matrix4f matrix4f = stack.last().pose();
 
         int w = 136, h = 148, m = 8;
 
         // Translate to corner and apply scale
-        stack.translate(width, m, 0);
+        stack.translate(width, 0, 0);
         stack.scale(size.scale, size.scale, 0);
 
         // Render map background
@@ -171,7 +171,7 @@ public class MinimapRenderer implements AutoCloseable {
 
         // Render actual map tiles
         stack.translate(4, 4, 0);
-        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128);
+        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128, zoom.trim);
 
         // Render player marker
         stack.translate(64, 64, 0);
@@ -183,7 +183,7 @@ public class MinimapRenderer implements AutoCloseable {
         stack.pushPose();
 
         // Translate to corner and apply scale
-        stack.translate(width, m, 0);
+        stack.translate(width, 0, 0);
         stack.scale(size.scale, size.scale, 0);
 
         // Render player coordinates
@@ -197,23 +197,23 @@ public class MinimapRenderer implements AutoCloseable {
 
         // Finish
         stack.popPose();
-        drawProfiler.end();
+        Profilers.Minimap.DRAW_TIME_PROFILER.end();
 
         if(debugEnabled) {
-            debugProfiler.begin();
+            Profilers.Minimap.DEBUG_TIME_PROFILER.begin();
 
             // ping load profilers
-            CartographyPipeline.COLLECTOR_LOAD_PROFILER.ping();
-            CartographyPipeline.LAYER_LOAD_PROFILER.ping();
-            CartographyPipeline.REGION_LOAD_PROFILER.ping();
-            uploadHits.ping();
+            Profilers.Engine.COLLECTOR_LOAD_PROFILER.ping();
+            Profilers.Engine.LAYER_LOAD_PROFILER.ping();
+            Profilers.Engine.REGION_LOAD_PROFILER.ping();
+            Profilers.Minimap.TEXTURE_LOAD_PROFILER.ping();
 
             stack.pushPose();
             stack.translate(5, 5, 0);
             stack.scale(0.75F, 0.75F, 0);
             drawDebugInfo(stack, buffers, fontRenderer, pos);
             stack.popPose();
-            debugProfiler.end();
+            Profilers.Minimap.DEBUG_TIME_PROFILER.end();
         }
     }
 
@@ -230,15 +230,15 @@ public class MinimapRenderer implements AutoCloseable {
         float y = 5F;
         fontRenderer.drawInBatch("Debug Info", 5F, y, 0xFF0000, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         fontRenderer.drawInBatch("Player Region: " + new RegionPos(pos), 5F, y += 10, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        drawTimeProfiler(debugProfiler, y += 10, "Debug Info", fontRenderer, matrix, buffers);
-        drawTimeProfiler(drawProfiler, y += 10, "Minimap Draw", fontRenderer, matrix, buffers);
-        y = drawSubsystem(uploadHits, uploadTime, y + 10, "Texture Upload      [ last second ]", fontRenderer, matrix, buffers, "frame load");
+        drawTimeProfiler(Profilers.Minimap.DEBUG_TIME_PROFILER, y += 10, "Debug Info", fontRenderer, matrix, buffers);
+        drawTimeProfiler(Profilers.Minimap.DRAW_TIME_PROFILER, y += 10, "Minimap Draw", fontRenderer, matrix, buffers);
+        y = drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Texture Upload      [ last second ]", fontRenderer, matrix, buffers, "frame load");
 
         // Cartography Pipeline Profiling
         fontRenderer.drawInBatch("Cartography Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        y = drawSubsystem(CartographyPipeline.COLLECTOR_LOAD_PROFILER, CartographyPipeline.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect      [ last second ]", fontRenderer, matrix, buffers, "tick load");
-        y = drawSubsystem(CartographyPipeline.LAYER_LOAD_PROFILER, CartographyPipeline.LAYER_TIME_PROFILER, y + 10, "Layer Render      [ last second ]", fontRenderer, matrix, buffers, "delay");
-        y = drawSubsystem(CartographyPipeline.REGION_LOAD_PROFILER, CartographyPipeline.REGION_TIME_PROFILER, y + 10, "Region Save      [ last minute ]", fontRenderer, matrix, buffers, "delay");
+        y = drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect      [ last second ]", fontRenderer, matrix, buffers, "tick load");
+        y = drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, "Layer Render      [ last second ]", fontRenderer, matrix, buffers, "delay");
+        y = drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save      [ last minute ]", fontRenderer, matrix, buffers, "delay");
     }
 
     private static float drawSubsystem(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {
@@ -289,18 +289,14 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
-        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        drawQuad(vertices, matrix, w, h, 0);
     }
 
-    private static int blend(int bottom, int top) {
-        if((top & 0xFF000000) == 0xFF000000) return top; // top is opaque, use top
-        if((top & 0xFF000000) == 0) return bottom; // top is transparent, use bottom
-        if((bottom & 0xFF000000) == 0) return top; // bottom is transparent, use top
-
-        return 0xFF000000; // TODO: implement proper color blending
+    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h, float trim) {
+        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F+trim, 1.0F-trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F-trim, 1.0F-trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F-trim, 0.0F+trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F+trim, 0.0F+trim).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
     @Override

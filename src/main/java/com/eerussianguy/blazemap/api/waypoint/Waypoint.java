@@ -8,7 +8,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.Helpers;
+import com.eerussianguy.blazemap.util.Helpers;
 
 public class Waypoint {
     public static Waypoint deserialize(CompoundTag tag) {
