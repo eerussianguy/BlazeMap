@@ -30,9 +30,9 @@ public class CartographyPipeline {
     public final ResourceKey<Level> dimension;
     public final Set<BlazeRegistry.Key<MapType>> availableMapTypes;
     public final Set<BlazeRegistry.Key<Layer>> availableLayers;
-    private final Map<BlazeRegistry.Key<Collector<?>>, Collector<?>> collectors = new HashMap<>();
+    private final Map<BlazeRegistry.Key<Collector<MasterDatum>>, Collector<MasterDatum>> collectors = new HashMap<>();
     private final Map<BlazeRegistry.Key<Layer>, List<MapType>> mapTriggers = new HashMap<>();
-    private final Map<BlazeRegistry.Key<Collector<?>>, List<Layer>> layerTriggers = new HashMap<>();
+    private final Map<BlazeRegistry.Key<Collector<MasterDatum>>, List<Layer>> layerTriggers = new HashMap<>();
     private final Map<BlazeRegistry.Key<Layer>, Map<RegionPos, LayerRegionTile>> regions = new HashMap<>();
     private final DebouncingDomain<LayerRegionTile> dirtyRegions;
     private final DebouncingDomain<ChunkPos> dirtyChunks;
@@ -69,8 +69,8 @@ public class CartographyPipeline {
                 mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
                 if(layers.contains(layerID)) continue;
                 layers.add(layerID);
-                for(BlazeRegistry.Key<Collector<?>> collectorID : layer.getCollectors()) {
-                    Collector<?> collector = BlazeMapAPI.COLLECTORS.get(collectorID);
+                for(BlazeRegistry.Key<Collector<MasterDatum>> collectorID : layer.getCollectors()) {
+                    Collector<MasterDatum> collector = BlazeMapAPI.COLLECTORS.get(collectorID);
                     if(collector == null)
                         throw new RuntimeException("Collector " + collectorID + " was not registered.");
                     if(!collector.getID().equals(collectorID))
@@ -112,11 +112,10 @@ public class CartographyPipeline {
             .start();
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> collectFromChunk(ChunkPos pos) {
+    private Map<BlazeRegistry.Key<Collector<MasterDatum>>, MasterDatum> collectFromChunk(ChunkPos pos) {
         COLLECTOR_LOAD_PROFILER.hit();
         COLLECTOR_TIME_PROFILER.begin();
-        Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> data = new HashMap<>();
+        Map<BlazeRegistry.Key<Collector<MasterDatum>>, MasterDatum> data = new HashMap<>();
         Level level = Helpers.levelOrThrow();
 
         // Do not collect data (thus skipping through the rest of the pipeline)
@@ -132,8 +131,8 @@ public class CartographyPipeline {
         int z1 = pos.getMaxBlockZ();
 
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
-        for(Collector<?> collector : collectors.values()) {
-            data.put((BlazeRegistry.Key<Collector<?>>) (Object) collector.getID(), collector.collect(level, mutable, x0, z0, x1, z1));
+        for(Collector<MasterDatum> collector : collectors.values()) {
+            data.put(collector.getID(), collector.collect(level, mutable, x0, z0, x1, z1));
         }
 
         COLLECTOR_TIME_PROFILER.end();
@@ -147,11 +146,11 @@ public class CartographyPipeline {
     // -  - mark dependent map types as changed
     // -  - update map files with new tile
     // -  - add LayerRegion to the list of updated images to return
-    private List<LayerRegion> processMasterData(Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> data, ChunkPos chunkPos) {
+    private List<LayerRegion> processMasterData(Map<BlazeRegistry.Key<Collector<MasterDatum>>, MasterDatum> data, ChunkPos chunkPos) {
         LAYER_LOAD_PROFILER.hit();
         LAYER_TIME_PROFILER.begin();
         Set<Layer> dirtyLayers = new HashSet<>();
-        for(Map.Entry<BlazeRegistry.Key<Collector<?>>, MasterDatum> entry : data.entrySet()) {
+        for(Map.Entry<BlazeRegistry.Key<Collector<MasterDatum>>, MasterDatum> entry : data.entrySet()) {
             if(entry.getValue() != null) {
                 // TODO: more advanced diffing
                 dirtyLayers.addAll(layerTriggers.get(entry.getKey()));

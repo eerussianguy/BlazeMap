@@ -8,12 +8,10 @@ import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 
 public class BlazeRegistry<T> {
-    private final Map<Key<T>, Registerable<T>> objects;
-    private final Class<T> cls;
+    private final Map<Key<T>, Registerable> objects;
 
-    public BlazeRegistry(Class<T> cls) {
+    public BlazeRegistry() {
         this.objects = new HashMap<>();
-        this.cls = cls;
     }
 
     public boolean exists(Key<? extends T> key) {
@@ -26,44 +24,39 @@ public class BlazeRegistry<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public void register(Registerable<? extends T> object) {
-        requireInstanceOfT(object);
-        Key<? extends T> key = object.getID();
+    public void register(Registerable object) {
+        Key<T> key = (Key<T>) object.getID();
         if(objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is already set!");
-        objects.put((Key<T>) key, (Registerable<T>) object);
+        objects.put(key, object);
     }
 
     @SuppressWarnings("unchecked")
-    public void replace(Registerable<? extends T> object) {
-        requireInstanceOfT(object);
-        Key<? extends T> key = object.getID();
+    public void replace(Registerable object) {
+        Key<T> key = (Key<T>) object.getID();
         if(!objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is not set!");
-        objects.put((Key<T>) key, (Registerable<T>) object);
+        objects.put(key, object);
     }
 
     public Set<Key<T>> keys() {
         return objects.keySet();
     }
 
-    private void requireInstanceOfT(Registerable<? extends T> obj) {
-        obj.getClass().asSubclass(cls);
-    }
-
-    public interface Registerable<T> {
-        Key<T> getID();
+    public interface Registerable {
+        Key<?> getID();
     }
 
     public static class Key<T> extends ResourceLocation {
+
         private final BlazeRegistry<T> registry;
 
-        public Key(BlazeRegistry<T> registry, String fqdn) {
-            super(fqdn);
+        public Key(BlazeRegistry<T> registry, String path) {
+            super(path);
             Objects.requireNonNull(registry);
             this.registry = registry;
         }
 
-        public Key(BlazeRegistry<T> registry, String modid, String resource) {
-            super(modid, resource);
+        public Key(BlazeRegistry<T> registry, String namespace, String resource) {
+            super(namespace, resource);
             Objects.requireNonNull(registry);
             this.registry = registry;
         }

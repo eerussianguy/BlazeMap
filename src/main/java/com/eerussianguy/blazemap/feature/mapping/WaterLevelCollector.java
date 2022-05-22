@@ -5,6 +5,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Collector;
 
@@ -13,6 +14,7 @@ public class WaterLevelCollector extends Collector<WaterLevelMD> {
     public WaterLevelCollector() {
         super(BlazeMapReferences.MasterData.WATER_LEVEL);
     }
+
 
     @Override
     public WaterLevelMD collect(Level level, BlockPos.MutableBlockPos mutable, int minX, int minZ, int maxX, int maxZ) {

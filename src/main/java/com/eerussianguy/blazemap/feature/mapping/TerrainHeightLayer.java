@@ -42,8 +42,8 @@ public class TerrainHeightLayer extends Layer {
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        TerrainHeightMD terrain = data.get(BlazeMapReferences.MasterData.TERRAIN_HEIGHT);
-        WaterLevelMD water = data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
+        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.TERRAIN_HEIGHT);
+        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
         float down = -1.0F / ((float) terrain.sea - terrain.minY);
         float up = 1.0F / ((float) terrain.maxY - terrain.sea);
         for(int x = 0; x < 16; x++) {

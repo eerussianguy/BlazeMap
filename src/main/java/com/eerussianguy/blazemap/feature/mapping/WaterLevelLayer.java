@@ -14,7 +14,7 @@ public class WaterLevelLayer extends Layer {
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        WaterLevelMD water = data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
+        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
         for(int x = 0; x < 16; x++)
             for(int z = 0; z < 16; z++) {
                 int d = water.level[x][z];

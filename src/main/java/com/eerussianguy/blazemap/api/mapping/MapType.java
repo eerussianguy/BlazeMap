@@ -10,7 +10,7 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 
-public abstract class MapType implements BlazeRegistry.Registerable<MapType> {
+public abstract class MapType implements BlazeRegistry.Registerable {
     private final BlazeRegistry.Key<MapType> id;
     private final Set<BlazeRegistry.Key<Layer>> layers;
 

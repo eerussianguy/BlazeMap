@@ -8,18 +8,18 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 
 
-public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.Registerable<Collector<T>> {
+public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.Registerable {
     protected static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
-    private final BlazeRegistry.Key<Collector<T>> id;
+    protected final BlazeRegistry.Key<Collector<MasterDatum>> id;
 
-    @SuppressWarnings("unchecked")
-    public Collector(BlazeRegistry.Key<? extends Collector<T>> id) {
-        this.id = (BlazeRegistry.Key<Collector<T>>) id;
+    public Collector(BlazeRegistry.Key<Collector<MasterDatum>> id) {
+        this.id = id;
     }
 
-    public BlazeRegistry.Key<Collector<T>> getID() {
+    public BlazeRegistry.Key<Collector<MasterDatum>> getID() {
         return id;
     }
 
