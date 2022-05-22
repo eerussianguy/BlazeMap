@@ -1,6 +1,7 @@
 package com.eerussianguy.blazemap.feature.maps;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
@@ -14,9 +15,11 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.ForgeIngameGui;
+import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
+import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
@@ -32,6 +35,29 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
+    public static void enableLayer(BlazeRegistry.Key<?> key)
+    {
+        ForgeConfigSpec.ConfigValue<List<? extends String>> opt = BlazeMapConfig.CLIENT.disabledLayers;
+        List<? extends String> list = opt.get();
+        if (list.contains(key.toString()))
+        {
+            list.remove(key.toString());
+            opt.set(list);
+        }
+    }
+
+    public static void disableLayer(BlazeRegistry.Key<?> key)
+    {
+        ForgeConfigSpec.ConfigValue<List<? extends String>> opt = BlazeMapConfig.CLIENT.disabledLayers;
+        // noinspection unchecked
+        List<String> list = (List<String>) opt.get();
+        if (!list.contains(key.toString()))
+        {
+            list.add(key.toString());
+            opt.set(list);
+        }
+    }
+
     public static final MinimapRenderer INSTANCE = new MinimapRenderer(Minecraft.getInstance().textureManager);
     private static final int SIZE = 512, SIZE_HALF = SIZE / 2;
 
@@ -47,11 +73,8 @@ public class MinimapRenderer implements AutoCloseable {
     private final DynamicTexture texture;
     private MapType mapType;
     private boolean requiresUpload = true;
-    private boolean debugEnabled = false;
     private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private BlockPos last = BlockPos.ZERO;
-    private MinimapSize size = MinimapSize.LARGE;
-    private MinimapZoom zoom = MinimapZoom.MEDIUM;
     private final Set<BlazeRegistry.Key<Layer>> DISABLED_LAYERS = new HashSet<>();
 
     MinimapRenderer(TextureManager manager) {
@@ -72,30 +95,8 @@ public class MinimapRenderer implements AutoCloseable {
         event.tileNotifications.addUpdateListener(layerRegion -> this.requiresUpload = true);
     }
 
-    public void setDebugEnabled(boolean debugEnabled) {
-        this.debugEnabled = debugEnabled;
-    }
-
     public void setMapType(MapType type) {
         mapType = type;
-    }
-
-    public void setMapSize(MinimapSize size) {
-        this.size = size;
-    }
-
-    public void setMapZoom(MinimapZoom zoom) {
-        this.zoom = zoom;
-    }
-
-    public void setLayerStatus(BlazeRegistry.Key<Layer> layer, boolean enabled) {
-        if(enabled) {
-            DISABLED_LAYERS.remove(layer);
-        }
-        else {
-            DISABLED_LAYERS.add(layer);
-        }
-        requiresUpload = true;
     }
 
     public void upload() {
@@ -107,7 +108,7 @@ public class MinimapRenderer implements AutoCloseable {
             if (pixels != null) {
                 pixels.fillRect(0, 0, SIZE, SIZE, 0);
                 for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
-                    if(DISABLED_LAYERS.contains(layer)) continue;
+                    if(BlazeMapConfig.CLIENT.disabledLayers.get().contains(layer.toString())) continue;
                     for(int[] offset : OFFSETS) {
                         final RegionPos currentRegion = originRegion.offset(offset[0], offset[1]);
                         if(!currentRegion.containsSquare(playerPos, SIZE_HALF)) continue;
@@ -166,6 +167,7 @@ public class MinimapRenderer implements AutoCloseable {
 
         int w = 136, h = 148, m = 8;
 
+        final MinimapSize size = BlazeMapConfig.CLIENT.minimapSize.get();
         // Translate to corner and apply scale
         stack.translate(width, 0, 0);
         stack.scale(size.scale, size.scale, 0);
@@ -176,7 +178,7 @@ public class MinimapRenderer implements AutoCloseable {
 
         // Render actual map tiles
         stack.translate(4, 4, 0);
-        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128, zoom.trim);
+        drawQuad(buffers.getBuffer(this.textureRenderType), matrix4f, 128, 128, BlazeMapConfig.CLIENT.minimapZoom.get().trim);
 
         // Render player marker
         stack.translate(64, 64, 0);
@@ -204,7 +206,7 @@ public class MinimapRenderer implements AutoCloseable {
         stack.popPose();
         Profilers.Minimap.DRAW_TIME_PROFILER.end();
 
-        if(debugEnabled) {
+        if(BlazeMapConfig.CLIENT.enableDebug.get()) {
             Profilers.Minimap.DEBUG_TIME_PROFILER.begin();
 
             // ping load profilers

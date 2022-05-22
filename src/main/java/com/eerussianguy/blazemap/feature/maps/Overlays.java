@@ -5,7 +5,7 @@ import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.client.gui.IIngameOverlay;
 import net.minecraftforge.client.gui.OverlayRegistry;
 
-import com.eerussianguy.blazemap.BConfig;
+import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 
@@ -15,7 +15,7 @@ public class Overlays {
     public static final IIngameOverlay MINIMAP = OverlayRegistry.registerOverlayTop(MOD_NAME + " Minimap", Overlays::renderMinimap);
 
     public static void reload() {
-        OverlayRegistry.enableOverlay(MINIMAP, BConfig.CLIENT.enableMinimap.get());
+        OverlayRegistry.enableOverlay(MINIMAP, BlazeMapConfig.CLIENT.enableMinimap.get());
     }
 
     public static void renderMinimap(ForgeIngameGui gui, PoseStack stack, float partialTicks, int width, int height) {
