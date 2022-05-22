@@ -5,33 +5,37 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.api.util.IMapView;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
-public abstract class Layer {
-    private final ResourceLocation id;
-    private final Set<ResourceLocation> collectors;
+public abstract class Layer implements BlazeRegistry.Registerable<Layer> {
+    protected static final int OPAQUE = 0xFF000000;
 
-    public Layer(ResourceLocation id, ResourceLocation... collectors) {
-        this.id = id;
-        this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
+    private final BlazeRegistry.Key<Layer> id;
+    private final Set<BlazeRegistry.Key<Collector<?>>> collectors;
+
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    public Layer(BlazeRegistry.Key<? extends Layer> id, BlazeRegistry.Key<? extends Collector<?>>... collectors) {
+        this.id = (BlazeRegistry.Key<Layer>) id;
+        // yes I'm a TypeScript developer... how did you guess?                  X as any as Y;
+        this.collectors = (Set<BlazeRegistry.Key<Collector<?>>>) (Object) Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 
-    public ResourceLocation getID() {
+    public BlazeRegistry.Key<Layer> getID() {
         return id;
     }
 
-    public Set<ResourceLocation> getCollectors() {
+    public Set<BlazeRegistry.Key<Collector<?>>> getCollectors() {
         return collectors;
     }
-
 
     public boolean shouldRenderInDimension(ResourceKey<Level> dimension) {
         return true;
     }
 
-    public abstract boolean renderTile(NativeImage tile, IMapView<ResourceLocation, MasterData> data);
+    public abstract boolean renderTile(NativeImage tile, IDataSource data);
 }

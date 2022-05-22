@@ -5,10 +5,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.eventbus.api.Event;
 
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -35,12 +37,12 @@ public class DimensionChangedEvent extends Event {
     /**
      * Set of map types available in the new dimension
      */
-    public final Set<ResourceLocation> availableMapTypes;
+    public final Set<BlazeRegistry.Key<MapType>> availableMapTypes;
 
     /**
      * Set of map layers available in the new dimension
      */
-    public final Set<ResourceLocation> availableLayers;
+    public final Set<BlazeRegistry.Key<Layer>> availableLayers;
 
     /**
      * Allows setting listeners to tile change notifications for this dimension <br>
@@ -58,7 +60,7 @@ public class DimensionChangedEvent extends Event {
      */
     public final File dimensionStorageDir;
 
-    public DimensionChangedEvent(ResourceKey<Level> dimension, Set<ResourceLocation> mapTypes, Set<ResourceLocation> layers, DimensionTileNotifications notifications, DimensionTileStorage tiles, File dir) {
+    public DimensionChangedEvent(ResourceKey<Level> dimension, Set<BlazeRegistry.Key<MapType>> mapTypes, Set<BlazeRegistry.Key<Layer>> layers, DimensionTileNotifications notifications, DimensionTileStorage tiles, File dir) {
         this.dimension = dimension;
         this.availableMapTypes = mapTypes;
         this.availableLayers = layers;
@@ -86,7 +88,7 @@ public class DimensionChangedEvent extends Event {
          * @throws IllegalArgumentException if the layer is not in the availableLayers Set.
          * @author LordFokas
          */
-        void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer);
+        void consumeTile(BlazeRegistry.Key<Layer> layer, RegionPos region, Consumer<NativeImage> consumer);
     }
 
     @FunctionalInterface

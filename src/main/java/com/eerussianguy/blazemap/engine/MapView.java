@@ -3,28 +3,27 @@ package com.eerussianguy.blazemap.engine;
 import java.util.Map;
 import java.util.Set;
 
-import com.eerussianguy.blazemap.api.util.IMapView;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.mapping.MasterDatum;
+import com.eerussianguy.blazemap.api.util.IDataSource;
 
-public class MapView<K, V> implements IMapView<K, V> {
-    private final Map<K, V> source;
-    private Set<K> filter;
+public class MapView implements IDataSource {
+    private final Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> source;
+    private Set<BlazeRegistry.Key<Collector<?>>> filter;
 
-    public MapView(Map<K, V> source) {
+    public MapView(Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> source) {
         this.source = source;
     }
 
-    public void setFilter(Set<K> filter) {
+    public void setFilter(Set<BlazeRegistry.Key<Collector<?>>> filter) {
         this.filter = filter;
     }
 
     @Override
-    public V get(K key) {
+    @SuppressWarnings("unchecked")
+    public <T extends MasterDatum> T get(BlazeRegistry.Key<Collector<T>> key) {
         if(!filter.contains(key)) return null;
-        return source.get(key);
-    }
-
-    @Override
-    public <U extends V> U get(K key, Class<U> cls) {
-        return (U) get(key);
+        return (T) source.get(key);
     }
 }

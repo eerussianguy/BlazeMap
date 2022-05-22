@@ -20,10 +20,9 @@ public class Overlays {
 
     public static void renderMinimap(ForgeIngameGui gui, PoseStack stack, float partialTicks, int width, int height) {
         stack.pushPose();
-        //stack.translate(20f, 20f, 0f);
         stack.scale(0.5f, 0.5f, 1f);
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        MinimapRenderer.INSTANCE.draw(stack, buffers, gui);
+        MinimapRenderer.INSTANCE.draw(stack, buffers, gui, width * 2, height * 2);
         buffers.endBatch();
         stack.popPose();
     }

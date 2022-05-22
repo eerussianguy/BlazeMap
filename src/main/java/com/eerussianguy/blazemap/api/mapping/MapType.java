@@ -2,26 +2,30 @@ package com.eerussianguy.blazemap.api.mapping;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-public abstract class MapType {
-    private final Set<ResourceLocation> layers;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
 
-    public MapType(ResourceLocation... layers) {
-        this.layers = Arrays.stream(layers).collect(Collectors.toUnmodifiableSet());
+public abstract class MapType implements BlazeRegistry.Registerable<MapType> {
+    private final BlazeRegistry.Key<MapType> id;
+    private final Set<BlazeRegistry.Key<Layer>> layers;
+
+    @SafeVarargs
+    public MapType(BlazeRegistry.Key<MapType> id, BlazeRegistry.Key<Layer>... layers) {
+        this.id = id;
+        this.layers = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(layers)));
     }
 
-    public MapType(Set<ResourceLocation> layers) {
-        this.layers = Collections.unmodifiableSet(layers);
-    }
-
-    public Set<ResourceLocation> getLayers() {
+    public Set<BlazeRegistry.Key<Layer>> getLayers() {
         return layers;
+    }
+
+    public BlazeRegistry.Key<MapType> getID() {
+        return id;
     }
 
     public boolean shouldRenderInDimension(ResourceKey<Level> dimension) {

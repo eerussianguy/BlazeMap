@@ -27,6 +27,17 @@ public class RegionPos {
         return new RegionPos(this.x + x, this.z + z);
     }
 
+    public boolean containsSquare(BlockPos center, int radius) {
+        if(radius > 256) throw new IllegalArgumentException("Radius too big, max is 256");
+        int cx = center.getX();
+        int cz = center.getZ();
+        int xp = (cx + radius) >> 9;
+        int xn = (cx - radius) >> 9;
+        int zp = (cz + radius) >> 9;
+        int zn = (cz - radius) >> 9;
+        return (xp == x || xn == x) && (zp == z || zn == z);
+    }
+
     @Override
     public boolean equals(Object o) {
         if(this == o) return true;

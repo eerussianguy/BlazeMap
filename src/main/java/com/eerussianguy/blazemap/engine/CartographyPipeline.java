@@ -6,16 +6,16 @@ import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.Helpers;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Collector;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.api.mapping.MasterData;
+import com.eerussianguy.blazemap.api.mapping.MasterDatum;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
@@ -29,21 +29,21 @@ public class CartographyPipeline {
     public static final Profiler.LoadProfiler COLLECTOR_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
     public static final Profiler.TimeProfiler LAYER_TIME_PROFILER = new Profiler.TimeProfiler(20);
     public static final Profiler.LoadProfiler LAYER_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
+    public static final Profiler.TimeProfiler REGION_TIME_PROFILER = new Profiler.TimeProfiler(60);
+    public static final Profiler.LoadProfiler REGION_LOAD_PROFILER = new Profiler.LoadProfiler(60, 1000);
 
     public final File dimensionDir;
     public final ResourceKey<Level> dimension;
-    private boolean active;
-
-    private final Map<ResourceLocation, Collector<?>> collectors = new HashMap<>();
-    private final Map<ResourceLocation, List<MapType>> mapTriggers = new HashMap<>();
-    private final Map<ResourceLocation, List<Layer>> layerTriggers = new HashMap<>();
-    public final Set<ResourceLocation> availableMapTypes;
-    public final Set<ResourceLocation> availableLayers;
-
-    private final Map<ResourceLocation, Map<RegionPos, LayerRegionTile>> regions = new HashMap<>();
+    public final Set<BlazeRegistry.Key<MapType>> availableMapTypes;
+    public final Set<BlazeRegistry.Key<Layer>> availableLayers;
+    private final Map<BlazeRegistry.Key<Collector<?>>, Collector<?>> collectors = new HashMap<>();
+    private final Map<BlazeRegistry.Key<Layer>, List<MapType>> mapTriggers = new HashMap<>();
+    private final Map<BlazeRegistry.Key<Collector<?>>, List<Layer>> layerTriggers = new HashMap<>();
+    private final Map<BlazeRegistry.Key<Layer>, Map<RegionPos, LayerRegionTile>> regions = new HashMap<>();
     private final DebouncingDomain<LayerRegionTile> dirtyRegions;
     private final DebouncingDomain<ChunkPos> dirtyChunks;
     private final PriorityLock lock = new PriorityLock();
+    private boolean active;
 
 
     public CartographyPipeline(File serverDir, ResourceKey<Level> dimension) {
@@ -59,24 +59,28 @@ public class CartographyPipeline {
         // Build dependents tree:
         // - What layers depend on each MD collector?
         // - What maps depend on each layer?
-        final Set<ResourceLocation> maps = new HashSet<>();
-        final Set<ResourceLocation> layers = new HashSet<>();
-        for(ResourceLocation key : BlazeMapAPI.MAPTYPES.keys()) {
+        final Set<BlazeRegistry.Key<MapType>> maps = new HashSet<>();
+        final Set<BlazeRegistry.Key<Layer>> layers = new HashSet<>();
+        for(BlazeRegistry.Key<MapType> key : BlazeMapAPI.MAPTYPES.keys()) {
             MapType maptype = BlazeMapAPI.MAPTYPES.get(key);
             if(!maptype.shouldRenderInDimension(dimension)) continue;
             maps.add(key);
-            for(ResourceLocation layerID : maptype.getLayers()) {
+            for(BlazeRegistry.Key<Layer> layerID : maptype.getLayers()) {
                 Layer layer = BlazeMapAPI.LAYERS.get(layerID);
                 if(layer == null)
-                    throw new IllegalArgumentException("Layer " + layerID + " was not registered.");
+                    throw new RuntimeException("Layer " + layerID + " was not registered.");
+                if(!layer.getID().equals(layerID))
+                    throw new RuntimeException("Layer " + layer.getID() + " mismatches registry key " + layerID);
                 if(!layer.shouldRenderInDimension(dimension)) continue;
                 mapTriggers.computeIfAbsent(layerID, $ -> new ArrayList<>(8)).add(maptype);
                 if(layers.contains(layerID)) continue;
                 layers.add(layerID);
-                for(ResourceLocation collectorID : layer.getCollectors()) {
+                for(BlazeRegistry.Key<Collector<?>> collectorID : layer.getCollectors()) {
                     Collector<?> collector = BlazeMapAPI.COLLECTORS.get(collectorID);
                     if(collector == null)
-                        throw new IllegalArgumentException("Layer " + collectorID + " was not registered.");
+                        throw new RuntimeException("Collector " + collectorID + " was not registered.");
+                    if(!collector.getID().equals(collectorID))
+                        throw new RuntimeException("Collector " + collector.getID() + " mismatches registry key " + collectorID);
                     layerTriggers.computeIfAbsent(collectorID, $ -> new ArrayList<>(8)).add(layer);
                     if(collectors.containsKey(collectorID)) continue;
                     collectors.put(collectorID, collector);
@@ -91,7 +95,12 @@ public class CartographyPipeline {
         // Set up debouncing mechanisms
         AsyncChain.Root async = BlazeMapEngine.async();
         DebouncingThread thread = BlazeMapEngine.debouncer();
-        this.dirtyRegions = new DebouncingDomain<>(region -> async.runOnDataThread(region::save), 1000, 30000);
+        this.dirtyRegions = new DebouncingDomain<>(region -> async.runOnDataThread(() -> {
+            REGION_LOAD_PROFILER.hit();
+            REGION_TIME_PROFILER.begin();
+            region.save();
+            REGION_TIME_PROFILER.end();
+        }), 1000, 30000);
         this.dirtyChunks = new DebouncingDomain<>(this::processDirtyChunk, 500, 5000);
         thread.add(dirtyRegions);
         thread.add(dirtyChunks);
@@ -109,10 +118,11 @@ public class CartographyPipeline {
             .start();
     }
 
-    private Map<ResourceLocation, MasterData> collectFromChunk(ChunkPos pos) {
+    @SuppressWarnings("unchecked")
+    private Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> collectFromChunk(ChunkPos pos) {
         COLLECTOR_LOAD_PROFILER.hit();
         COLLECTOR_TIME_PROFILER.begin();
-        Map<ResourceLocation, MasterData> data = new HashMap<>();
+        Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> data = new HashMap<>();
         Level level = Helpers.levelOrThrow();
 
         // Do not collect data (thus skipping through the rest of the pipeline)
@@ -129,7 +139,7 @@ public class CartographyPipeline {
 
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for(Collector<?> collector : collectors.values()) {
-            data.put(collector.getID(), collector.collect(level, mutable, x0, z0, x1, z1));
+            data.put((BlazeRegistry.Key<Collector<?>>) (Object) collector.getID(), collector.collect(level, mutable, x0, z0, x1, z1));
         }
 
         COLLECTOR_TIME_PROFILER.end();
@@ -143,11 +153,11 @@ public class CartographyPipeline {
     // -  - mark dependent map types as changed
     // -  - update map files with new tile
     // -  - add LayerRegion to the list of updated images to return
-    private List<LayerRegion> processMasterData(Map<ResourceLocation, MasterData> data, ChunkPos chunkPos) {
+    private List<LayerRegion> processMasterData(Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> data, ChunkPos chunkPos) {
         LAYER_LOAD_PROFILER.hit();
         LAYER_TIME_PROFILER.begin();
         Set<Layer> dirtyLayers = new HashSet<>();
-        for(Map.Entry<ResourceLocation, MasterData> entry : data.entrySet()) {
+        for(Map.Entry<BlazeRegistry.Key<Collector<?>>, MasterDatum> entry : data.entrySet()) {
             if(entry.getValue() != null) {
                 // TODO: more advanced diffing
                 dirtyLayers.addAll(layerTriggers.get(entry.getKey()));
@@ -156,7 +166,7 @@ public class CartographyPipeline {
 
         List<LayerRegion> updates = new LinkedList<>();
         RegionPos regionPos = new RegionPos(chunkPos);
-        MapView<ResourceLocation, MasterData> view = new MapView<>(data);
+        MapView view = new MapView(data);
         for(Layer layer : dirtyLayers) {
             NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, 16, 16, false);
             view.setFilter(layer.getCollectors()); // the layer should only access declared collectors
@@ -164,7 +174,7 @@ public class CartographyPipeline {
             // only generate updates if the renderer populates the tile
             // this is determined by the return value of renderTile being true
             if(layer.renderTile(layerChunkTile, view)) {
-                ResourceLocation layerID = layer.getID();
+                BlazeRegistry.Key<Layer> layerID = layer.getID();
 
                 // update this chunk of the region
                 LayerRegionTile layerRegionTile = getLayerRegionTile(layerID, regionPos, false);
@@ -182,7 +192,7 @@ public class CartographyPipeline {
         return updates;
     }
 
-    private LayerRegionTile getLayerRegionTile(ResourceLocation layer, RegionPos region, boolean priority) {
+    private LayerRegionTile getLayerRegionTile(BlazeRegistry.Key<Layer> layer, RegionPos region, boolean priority) {
         try {
             if(priority) lock.lockPriority();
             else lock.lock();
@@ -220,9 +230,9 @@ public class CartographyPipeline {
         return this;
     }
 
-    public void consumeTile(ResourceLocation layer, RegionPos region, Consumer<NativeImage> consumer) {
+    public void consumeTile(BlazeRegistry.Key<Layer> layer, RegionPos region, Consumer<NativeImage> consumer) {
         if(!mapTriggers.containsKey(layer))
             throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + dimension);
-        getLayerRegionTile(layer, region, false).consume(consumer);
+        getLayerRegionTile(layer, region, true).consume(consumer);
     }
 }

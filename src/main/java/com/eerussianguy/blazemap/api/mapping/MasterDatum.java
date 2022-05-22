@@ -2,8 +2,8 @@ package com.eerussianguy.blazemap.api.mapping;
 
 import net.minecraft.nbt.CompoundTag;
 
-public interface MasterData {
+public interface MasterDatum {
     CompoundTag serialize();
 
-    MasterData deserialize(CompoundTag nbt);
+    MasterDatum deserialize(CompoundTag nbt);
 }
