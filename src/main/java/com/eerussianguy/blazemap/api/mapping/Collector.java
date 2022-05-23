@@ -5,7 +5,6 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 
@@ -26,11 +25,11 @@ public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.
 
     protected static boolean isWater(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));
-        return state.getFluidState().getTags().anyMatch(t -> t.equals(FluidTags.WATER));
+        return state.getFluidState().is(FluidTags.WATER);
     }
 
     protected static boolean isLeaves(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));
-        return state.is(BlockTags.LEAVES) || state.isAir() || state.getMaterial() == Material.VEGETABLE;
+        return state.is(BlockTags.LEAVES) || state.isAir() || state.getMaterial().isReplaceable();
     }
 }

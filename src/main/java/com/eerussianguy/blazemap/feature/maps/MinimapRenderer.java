@@ -75,7 +75,6 @@ public class MinimapRenderer implements AutoCloseable {
     private boolean requiresUpload = true;
     private DimensionChangedEvent.DimensionTileStorage tileStorage;
     private BlockPos last = BlockPos.ZERO;
-    private final Set<BlazeRegistry.Key<Layer>> DISABLED_LAYERS = new HashSet<>();
 
     MinimapRenderer(TextureManager manager) {
         this.texture = new DynamicTexture(SIZE, SIZE, false);

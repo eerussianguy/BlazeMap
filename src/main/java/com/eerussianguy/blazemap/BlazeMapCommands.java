@@ -1,10 +1,8 @@
 package com.eerussianguy.blazemap;
 
-import java.util.List;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.server.command.EnumArgument;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;

@@ -13,14 +13,13 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class TerrainHeightLayer extends Layer {
 
     public TerrainHeightLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, BlazeMapReferences.MasterData.TERRAIN_HEIGHT, BlazeMapReferences.MasterData.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
-    // Normalization
-    // WORLD TOP =  1
-    // SEA LEVEL =  0
-    // BEDROCK   = -1
-    private enum Gradient { // Entry names are just a rough approximation of Y level. Don't mean a thing.
+    /**
+     * Entry names are just a rough approximation of Y level. Don't mean a thing.
+     */
+    private enum Gradient {
         WORLD_TOP(1, new Color(0xFFFFFF)),
         CLOUDS(.75F, new Color(0xAADDFF)),
         MOUNTAINS(.5F, new Color(0X666688)),
@@ -30,20 +29,22 @@ public class TerrainHeightLayer extends Layer {
         DEEPSLATE(-.5F, new Color(0x990000)),
         BEDROCK(-1F, new Color(0x222222));
 
+        public static final Gradient[] VALUES = values();
+
         final float keypoint;
         final int color;
 
         Gradient(float keypoint, Color color) {
             this.keypoint = keypoint;
             // NativeImage colors are ABGR. Mojang has no standards. I blame Microsoft.
-            this.color = OPAQUE | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
+            this.color = abgr(color);
         }
     }
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.TERRAIN_HEIGHT);
-        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
+        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.Collectors.TERRAIN_HEIGHT);
+        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.Collectors.WATER_LEVEL);
         float down = -1.0F / ((float) terrain.sea - terrain.minY);
         float up = 1.0F / ((float) terrain.maxY - terrain.sea);
         for(int x = 0; x < 16; x++) {
@@ -54,7 +55,7 @@ public class TerrainHeightLayer extends Layer {
                 int depth = terrain.sea - h;
                 float point = h == terrain.sea ? 0 : h < terrain.sea ? down * (depth) : up * (height);
                 Gradient top = Gradient.WORLD_TOP;
-                for(Gradient bottom : Gradient.values()) {
+                for(Gradient bottom : Gradient.VALUES) {
                     float epsilon = bottom.keypoint - point;
                     if(epsilon < 0.005F && epsilon > -0.005F) {
                         tile.setPixelRGBA(x, z, bottom.color);

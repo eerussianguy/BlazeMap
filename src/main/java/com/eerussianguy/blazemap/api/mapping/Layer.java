@@ -1,5 +1,6 @@
 package com.eerussianguy.blazemap.api.mapping;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -12,6 +13,11 @@ import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public abstract class Layer implements BlazeRegistry.RegistryEntry {
+    protected static int abgr(Color color)
+    {
+        return OPAQUE | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
+    }
+
     protected static final int OPAQUE = 0xFF000000;
 
     private final BlazeRegistry.Key<Layer> id;
