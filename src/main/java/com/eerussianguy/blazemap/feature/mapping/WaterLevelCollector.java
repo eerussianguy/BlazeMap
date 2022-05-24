@@ -11,8 +11,9 @@ import com.eerussianguy.blazemap.api.mapping.Collector;
 public class WaterLevelCollector extends Collector<WaterLevelMD> {
 
     public WaterLevelCollector() {
-        super(BlazeMapReferences.MasterData.WATER_LEVEL);
+        super(BlazeMapReferences.Collectors.WATER_LEVEL);
     }
+
 
     @Override
     public WaterLevelMD collect(Level level, BlockPos.MutableBlockPos mutable, int minX, int minZ, int maxX, int maxZ) {

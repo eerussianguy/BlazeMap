@@ -32,7 +32,7 @@ public class BlazeMap {
 
             EventHandler.init();
             ForgeEventHandler.init();
-            BConfig.init();
+            BlazeMapConfig.init();
         }
     }
 

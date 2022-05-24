@@ -9,14 +9,14 @@ import com.eerussianguy.blazemap.api.mapping.MasterDatum;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 
 public class MapView implements IDataSource {
-    private final Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> source;
-    private Set<BlazeRegistry.Key<Collector<?>>> filter;
+    private final Map<BlazeRegistry.Key<Collector<MasterDatum>>, MasterDatum> source;
+    private Set<BlazeRegistry.Key<Collector<MasterDatum>>> filter;
 
-    public MapView(Map<BlazeRegistry.Key<Collector<?>>, MasterDatum> source) {
+    public MapView(Map<BlazeRegistry.Key<Collector<MasterDatum>>, MasterDatum> source) {
         this.source = source;
     }
 
-    public void setFilter(Set<BlazeRegistry.Key<Collector<?>>> filter) {
+    public void setFilter(Set<BlazeRegistry.Key<Collector<MasterDatum>>> filter) {
         this.filter = filter;
     }
 

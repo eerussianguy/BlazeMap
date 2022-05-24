@@ -7,7 +7,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 
-public class BConfig {
+public class BlazeMapConfig {
     public static final ClientConfig CLIENT = register(ClientConfig::new);
 
     public static void init() {}

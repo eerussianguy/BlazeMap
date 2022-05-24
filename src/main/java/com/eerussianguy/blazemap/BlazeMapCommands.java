@@ -1,5 +1,6 @@
 package com.eerussianguy.blazemap;
 
+
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraftforge.server.command.EnumArgument;
@@ -27,11 +28,11 @@ public class BlazeMapCommands {
     private static LiteralArgumentBuilder<CommandSourceStack> createDebug() {
         return Commands.literal("debug")
             .then(Commands.literal("on").executes($ -> {
-                MinimapRenderer.INSTANCE.setDebugEnabled(true);
+                BlazeMapConfig.CLIENT.enableDebug.set(true);
                 return Command.SINGLE_SUCCESS;
             }))
             .then(Commands.literal("off").executes($ -> {
-                MinimapRenderer.INSTANCE.setDebugEnabled(false);
+                BlazeMapConfig.CLIENT.enableDebug.set(false);
                 return Command.SINGLE_SUCCESS;
             }));
     }
@@ -50,11 +51,11 @@ public class BlazeMapCommands {
         for(final BlazeRegistry.Key<Layer> key : BlazeMapAPI.LAYERS.keys()) {
             builder.then(Commands.literal(key.toString())
                 .then(Commands.literal("on").executes($ -> {
-                    MinimapRenderer.INSTANCE.setLayerStatus(key, true);
+                    MinimapRenderer.enableLayer(key);
                     return Command.SINGLE_SUCCESS;
                 }))
                 .then(Commands.literal("off").executes($ -> {
-                    MinimapRenderer.INSTANCE.setLayerStatus(key, false);
+                    MinimapRenderer.disableLayer(key);
                     return Command.SINGLE_SUCCESS;
                 }))
             );
@@ -68,7 +69,7 @@ public class BlazeMapCommands {
             .then(Commands.argument("value", MINIMAP_SIZE)
                 .executes(cmd -> {
                     MinimapSize size = cmd.getArgument("value", MinimapSize.class);
-                    MinimapRenderer.INSTANCE.setMapSize(size);
+                    BlazeMapConfig.CLIENT.minimapSize.set(size);
                     return Command.SINGLE_SUCCESS;
                 })
             );
@@ -93,7 +94,7 @@ public class BlazeMapCommands {
             .then(Commands.argument("value", MINIMAP_ZOOM)
                 .executes(cmd -> {
                     MinimapZoom zoom = cmd.getArgument("value", MinimapZoom.class);
-                    MinimapRenderer.INSTANCE.setMapZoom(zoom);
+                    BlazeMapConfig.CLIENT.minimapZoom.set(zoom);
                     return Command.SINGLE_SUCCESS;
                 })
             );

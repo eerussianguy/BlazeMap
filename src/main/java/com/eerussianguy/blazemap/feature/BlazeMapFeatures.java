@@ -12,12 +12,18 @@ public class BlazeMapFeatures {
     public static void initMapping() {
         BlazeMapAPI.COLLECTORS.register(new TerrainHeightCollector());
         BlazeMapAPI.COLLECTORS.register(new WaterLevelCollector());
+        BlazeMapAPI.COLLECTORS.register(new AerialViewCollector());
+        BlazeMapAPI.COLLECTORS.register(new NetherCollector());
 
         BlazeMapAPI.LAYERS.register(new TerrainHeightLayer());
         BlazeMapAPI.LAYERS.register(new WaterLevelLayer());
         BlazeMapAPI.LAYERS.register(new TerrainIsolinesLayer());
+        BlazeMapAPI.LAYERS.register(new BlockColorLayer());
+        BlazeMapAPI.LAYERS.register(new NetherLayer());
 
         BlazeMapAPI.MAPTYPES.register(new TopographyMapType());
+        BlazeMapAPI.MAPTYPES.register(new AerialViewMapType());
+        BlazeMapAPI.MAPTYPES.register(new NetherMapType());
     }
 
     public static void initMiniMap() {
