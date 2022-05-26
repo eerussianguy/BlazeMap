@@ -30,14 +30,13 @@ public class BlazeMapEngine {
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
     private static DebouncingThread debouncer;
     private static AsyncChain.Root async;
-    private static AsyncDataCruncher dataCruncher;
     private static CartographyPipeline activePipeline;
     private static String serverID;
     private static File serverDir;
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
-        dataCruncher = new AsyncDataCruncher("Blaze Map");
+        AsyncDataCruncher dataCruncher = new AsyncDataCruncher("Blaze Map");
         async = new AsyncChain.Root(dataCruncher, Helpers::runOnMainThread);
         debouncer = new DebouncingThread("Blaze Map Engine");
     }
@@ -55,7 +54,7 @@ public class BlazeMapEngine {
         LocalPlayer player = event.getPlayer();
         if(player == null) return;
         serverID = Helpers.getServerID();
-        serverDir = new File(Helpers.getBaseDir(), serverID);
+        serverDir = Helpers.getClientSideStorageDir();
         serverDir.mkdirs();
         MinecraftForge.EVENT_BUS.post(new ServerJoinedEvent(serverID, serverDir));
         switchToPipeline(player.level.dimension());

@@ -8,10 +8,10 @@ import java.util.Random;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.LevelResource;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.mojang.serialization.Codec;
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import static com.eerussianguy.blazemap.BlazeMap.MOD_ID;
 
 public class Helpers {
-    public static final Direction[] DIRECTIONS = Direction.values();
     private static File baseDir;
 
     public static ResourceLocation identifier(String name) {
@@ -43,16 +42,25 @@ public class Helpers {
     public static String getServerID() {
         Minecraft mc = Minecraft.getInstance();
         if(mc.hasSingleplayerServer()) {
-            return "SP@" + mc.getSingleplayerServer().getWorldData().getLevelName();
+            return mc.getSingleplayerServer().getWorldData().getLevelName();
         }
         else {
-            return "MP@" + mc.getCurrentServer().ip.replace(':', '+');
+            return mc.getCurrentServer().ip;
         }
     }
 
-    public static File getBaseDir() {
-        if(baseDir == null) baseDir = new File(Minecraft.getInstance().gameDirectory, MOD_ID);
-        return baseDir;
+    /**
+     * @return the client-side dir to store data for the currently connected server
+     */
+    public static File getClientSideStorageDir() {
+        Minecraft mc = Minecraft.getInstance();
+        if(mc.hasSingleplayerServer()) {
+            return new File(mc.getSingleplayerServer().getWorldPath(LevelResource.ROOT).toFile(), "blazemap-client");
+        }
+        else {
+            if(baseDir == null) baseDir = new File(mc.gameDirectory, MOD_ID);
+            return new File(baseDir, mc.getCurrentServer().ip.replace(':', '+'));
+        }
     }
 
     public static void runOnMainThread(Runnable r) {
@@ -66,5 +74,4 @@ public class Helpers {
     public static <T> T decodeCodec(Codec<T> codec, CompoundTag tag, String field) {
         return codec.parse(NbtOps.INSTANCE, tag.get(field)).getOrThrow(false, BlazeMap.LOGGER::error);
     }
-
 }
