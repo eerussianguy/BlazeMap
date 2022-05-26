@@ -8,8 +8,8 @@ import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public class TerrainIsolinesLayer extends Layer {
-    private static final int FULL = OPAQUE | 0x444444;
-    private static final int HALF = OPAQUE | 0x888888;
+    private static final int FULL = 0x5F444444;
+    private static final int HALF = 0x3F444444;
 
     private static int height(TerrainHeightMD terrain, WaterLevelMD water, int x, int z, int def) {
         if(x < 0 || z < 0 || x > 15 || z > 15) return def;

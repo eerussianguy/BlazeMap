@@ -13,20 +13,14 @@ import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public abstract class Layer implements BlazeRegistry.RegistryEntry {
-    protected static int abgr(Color color)
-    {
-        return OPAQUE | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
-    }
-
     protected static final int OPAQUE = 0xFF000000;
 
     private final BlazeRegistry.Key<Layer> id;
     private final Set<BlazeRegistry.Key<Collector<MasterDatum>>> collectors;
 
     @SafeVarargs
-    @SuppressWarnings("unchecked")
-    public Layer(BlazeRegistry.Key<? extends Layer> id, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
-        this.id = (BlazeRegistry.Key<Layer>) id;
+    public Layer(BlazeRegistry.Key<Layer> id, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+        this.id = id;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 

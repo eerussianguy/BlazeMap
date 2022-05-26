@@ -1,6 +1,6 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import java.awt.*;
+import java.awt.Color;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
@@ -37,7 +37,7 @@ public class TerrainHeightLayer extends Layer {
         Gradient(float keypoint, Color color) {
             this.keypoint = keypoint;
             // NativeImage colors are ABGR. Mojang has no standards. I blame Microsoft.
-            this.color = abgr(color);
+            this.color = Colors.abgr(color);
         }
     }
 

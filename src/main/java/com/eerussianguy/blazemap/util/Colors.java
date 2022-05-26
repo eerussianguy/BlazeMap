@@ -1,12 +1,15 @@
 package com.eerussianguy.blazemap.util;
 
+import java.awt.Color;
+
 public class Colors {
     public static int layerBlend(int bottom, int top) {
         if((top & 0xFF000000) == 0xFF000000) return top; // top is opaque, use top
         if((top & 0xFF000000) == 0) return bottom; // top is transparent, use bottom
         if((bottom & 0xFF000000) == 0) return top; // bottom is transparent, use top
 
-        return 0xFF000000; // TODO: implement proper color blending
+        float point = ((float)(top >> 24)) / 255F;
+        return 0xFF000000 | interpolate(bottom, 0, top, 1, point);
     }
 
     public static int interpolate(int color1, float key1, int color2, float key2, float point) {
@@ -22,5 +25,9 @@ public class Colors {
         a *= (1F - p);
         b *= p;
         return Math.max(0, Math.min(255, a + b));
+    }
+
+    public static int abgr(Color color) {
+        return 0xFF000000 | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
     }
 }
