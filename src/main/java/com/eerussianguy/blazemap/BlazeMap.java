@@ -40,5 +40,8 @@ public class BlazeMap {
         BlazeMapEngine.init();
 
         BlazeMapFeatures.initMapping();
+
+        BlazeMapFeatures.initFullMap();
+        BlazeMapFeatures.initWaypoints();
     }
 }

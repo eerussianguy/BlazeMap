@@ -46,7 +46,7 @@ public class DimensionChangedEvent extends Event {
 
     /**
      * Allows setting listeners to tile change notifications for this dimension <br>
-     * Listeners do not persist between dimensions or visits to the same dimension and must be ser every time
+     * Listeners do not persist between dimensions or visits to the same dimension and must be set every time
      */
     public final DimensionTileNotifications tileNotifications;
 

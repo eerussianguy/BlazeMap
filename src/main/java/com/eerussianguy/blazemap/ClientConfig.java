@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.function.Function;
 
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.*;
+import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
+import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
+import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.eerussianguy.blazemap.feature.maps.MinimapSize;

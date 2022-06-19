@@ -1,6 +1,8 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import java.awt.Color;
+import java.awt.*;
+
+import net.minecraft.network.chat.TextComponent;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
@@ -13,7 +15,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class TerrainHeightLayer extends Layer {
 
     public TerrainHeightLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, new TextComponent("Terrain Height"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     /**

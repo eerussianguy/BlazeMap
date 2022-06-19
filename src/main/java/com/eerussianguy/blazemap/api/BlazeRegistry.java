@@ -61,6 +61,10 @@ public class BlazeRegistry<T> {
             this.registry = registry;
         }
 
+        public T value() {
+            return registry.get(this);
+        }
+
         @Override
         public boolean equals(Object o) {
             if(o instanceof Key k) {

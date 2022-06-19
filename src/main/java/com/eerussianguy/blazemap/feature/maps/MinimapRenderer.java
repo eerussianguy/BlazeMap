@@ -1,8 +1,6 @@
 package com.eerussianguy.blazemap.feature.maps;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -35,24 +33,20 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 
 public class MinimapRenderer implements AutoCloseable {
-    public static void enableLayer(BlazeRegistry.Key<?> key)
-    {
+    public static void enableLayer(BlazeRegistry.Key<?> key) {
         ForgeConfigSpec.ConfigValue<List<? extends String>> opt = BlazeMapConfig.CLIENT.disabledLayers;
         List<? extends String> list = opt.get();
-        if (list.contains(key.toString()))
-        {
+        if(list.contains(key.toString())) {
             list.remove(key.toString());
             opt.set(list);
         }
     }
 
-    public static void disableLayer(BlazeRegistry.Key<?> key)
-    {
+    public static void disableLayer(BlazeRegistry.Key<?> key) {
         ForgeConfigSpec.ConfigValue<List<? extends String>> opt = BlazeMapConfig.CLIENT.disabledLayers;
         // noinspection unchecked
         List<String> list = (List<String>) opt.get();
-        if (!list.contains(key.toString()))
-        {
+        if(!list.contains(key.toString())) {
             list.add(key.toString());
             opt.set(list);
         }
@@ -104,7 +98,7 @@ public class MinimapRenderer implements AutoCloseable {
             final BlockPos playerPos = player.blockPosition();
             final RegionPos originRegion = new RegionPos(playerPos);
             NativeImage pixels = texture.getPixels();
-            if (pixels != null) {
+            if(pixels != null) {
                 pixels.fillRect(0, 0, SIZE, SIZE, 0);
                 for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
                     if(BlazeMapConfig.CLIENT.disabledLayers.get().contains(layer.toString())) continue;
@@ -146,8 +140,10 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
+        if(Minecraft.getInstance().screen instanceof WorldMapGui) return;
+
         LocalPlayer player = Helpers.getPlayer();
-        if (player == null) return;
+        if(player == null) return;
         BlockPos pos = player.blockPosition();
 
         if(requiresUpload || !pos.equals(last)) {

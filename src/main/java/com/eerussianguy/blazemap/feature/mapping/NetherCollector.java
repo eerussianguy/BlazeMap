@@ -1,9 +1,7 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
@@ -26,8 +24,7 @@ public class NetherCollector extends Collector<TerrainHeightMD> {
                     height--;
                     if(height <= level.getMinBuildHeight()) break;
                 }
-                if (height > level.getMinBuildHeight())
-                {
+                if(height > level.getMinBuildHeight()) {
                     while(isNotBaseStone(level, minX + x, height - 1, minZ + z)) {
                         height--;
                         if(height <= level.getMinBuildHeight()) break;
@@ -40,13 +37,11 @@ public class NetherCollector extends Collector<TerrainHeightMD> {
         return new TerrainHeightMD(level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
     }
 
-    private boolean isNotAir(Level level, int x, int y, int z)
-    {
+    private boolean isNotAir(Level level, int x, int y, int z) {
         return !level.getBlockState(POS.set(x, y, z)).isAir();
     }
 
-    private boolean isNotBaseStone(Level level, int x, int y, int z)
-    {
+    private boolean isNotBaseStone(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));
         return !state.getMaterial().isSolid();
     }

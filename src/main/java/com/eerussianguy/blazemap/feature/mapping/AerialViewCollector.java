@@ -29,27 +29,22 @@ public class AerialViewCollector extends Collector<BlockColorMD> {
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, minX + x, minZ + z);
 
                 int color = -1;
-                while (color == 0 || color == -1)
-                {
+                while(color == 0 || color == -1) {
                     mutable.set(x + minX, y, z + minZ);
                     final BlockState state = level.getBlockState(mutable);
                     color = blockColors.getColor(state, level, mutable, 0);
-                    if (color <= 0)
-                    {
+                    if(color <= 0) {
                         MaterialColor mapColor = state.getMapColor(level, mutable);
-                        if (mapColor != MaterialColor.NONE)
-                        {
+                        if(mapColor != MaterialColor.NONE) {
                             color = mapColor.col;
                         }
                     }
                     y--;
-                    if (y <= level.getMinBuildHeight())
-                    {
+                    if(y <= level.getMinBuildHeight()) {
                         break;
                     }
                 }
-                if (color != 0 && color != -1)
-                {
+                if(color != 0 && color != -1) {
                     colors[x][z] = color;
                 }
             }

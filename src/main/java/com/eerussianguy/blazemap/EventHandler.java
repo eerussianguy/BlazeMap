@@ -43,7 +43,5 @@ public class EventHandler {
 
     private static void onTextureStitch(TextureStitchEvent.Post event) {
         BlazeMapFeatures.initMiniMap();
-        BlazeMapFeatures.initFullMap();
-        BlazeMapFeatures.initWaypoints();
     }
 }

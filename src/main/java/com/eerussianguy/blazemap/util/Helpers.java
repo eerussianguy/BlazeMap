@@ -58,7 +58,7 @@ public class Helpers {
             return new File(mc.getSingleplayerServer().getWorldPath(LevelResource.ROOT).toFile(), "blazemap-client");
         }
         else {
-            if(baseDir == null) baseDir = new File(mc.gameDirectory, MOD_ID);
+            if(baseDir == null) baseDir = new File(mc.gameDirectory, "blazemap-servers");
             return new File(baseDir, mc.getCurrentServer().ip.replace(':', '+'));
         }
     }

@@ -1,6 +1,6 @@
 package com.eerussianguy.blazemap.util;
 
-import java.awt.Color;
+import java.awt.*;
 
 public class Colors {
     public static int layerBlend(int bottom, int top) {
@@ -8,7 +8,7 @@ public class Colors {
         if((top & 0xFF000000) == 0) return bottom; // top is transparent, use bottom
         if((bottom & 0xFF000000) == 0) return top; // bottom is transparent, use top
 
-        float point = ((float)(top >> 24)) / 255F;
+        float point = ((float) (top >> 24)) / 255F;
         return 0xFF000000 | interpolate(bottom, 0, top, 1, point);
     }
 
