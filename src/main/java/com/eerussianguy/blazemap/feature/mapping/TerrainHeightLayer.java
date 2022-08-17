@@ -10,12 +10,13 @@ import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.util.Colors;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public class TerrainHeightLayer extends Layer {
 
     public TerrainHeightLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, new TextComponent("Terrain Height"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, Helpers.translate("blazemap.terrain_height"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     /**

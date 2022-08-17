@@ -9,16 +9,20 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import com.eerussianguy.blazemap.BlazeMap;
+import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.feature.mapping.*;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
+import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {
     public static final KeyMapping OPEN_FULL_MAP = new KeyMapping("blazemap.key.open_full_map", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, BlazeMap.MOD_NAME);
+    public static final KeyMapping CYCLE_ZOOM = new KeyMapping("blazemap.key.cycle_zoom", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, BlazeMap.MOD_NAME);
 
     public static void initMapping() {
         BlazeMapAPI.COLLECTORS.register(new TerrainHeightCollector());
@@ -43,12 +47,17 @@ public class BlazeMapFeatures {
 
     public static void initFullMap() {
         ClientRegistry.registerKeyBinding(OPEN_FULL_MAP);
+        ClientRegistry.registerKeyBinding(CYCLE_ZOOM);
 
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(WorldMapGui::onDimensionChange);
         bus.addListener((InputEvent.KeyInputEvent evt) -> {
             if(OPEN_FULL_MAP.isDown()) {
                 WorldMapGui.open();
+            }
+            if (CYCLE_ZOOM.isDown()) {
+                MinimapZoom zoom = BlazeMapConfig.CLIENT.minimapZoom.get();
+                BlazeMapConfig.CLIENT.minimapZoom.set(zoom.next());
             }
         });
     }

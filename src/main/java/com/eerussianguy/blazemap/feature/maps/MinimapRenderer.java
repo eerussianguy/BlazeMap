@@ -92,6 +92,11 @@ public class MinimapRenderer implements AutoCloseable {
         mapType = type;
     }
 
+    public MapType getMapType()
+    {
+        return mapType;
+    }
+
     public void upload() {
         LocalPlayer player = Helpers.getPlayer();
         if(player != null) {

@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -17,10 +18,10 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
 
     private final BlazeRegistry.Key<Layer> id;
     private final Set<BlazeRegistry.Key<Collector<MasterDatum>>> collectors;
-    private final Component name;
+    private final TranslatableComponent name;
 
     @SafeVarargs
-    public Layer(BlazeRegistry.Key<Layer> id, Component name, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+    public Layer(BlazeRegistry.Key<Layer> id, TranslatableComponent name, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
         this.id = id;
         this.name = name;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
@@ -40,7 +41,7 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
 
     public abstract boolean renderTile(NativeImage tile, IDataSource data);
 
-    public Component getName() {
+    public TranslatableComponent getName() {
         return name;
     }
 }

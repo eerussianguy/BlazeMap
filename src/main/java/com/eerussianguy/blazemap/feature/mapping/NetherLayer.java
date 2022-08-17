@@ -2,18 +2,17 @@ package com.eerussianguy.blazemap.feature.mapping;
 
 import java.awt.*;
 
-import net.minecraft.network.chat.TextComponent;
-
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.util.Colors;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public class NetherLayer extends Layer {
     public NetherLayer() {
-        super(BlazeMapReferences.Layers.NETHER, new TextComponent("Nether Terrain"), BlazeMapReferences.Collectors.NETHER);
+        super(BlazeMapReferences.Layers.NETHER, Helpers.translate("blazemap.nether_terrain"), BlazeMapReferences.Collectors.NETHER);
     }
 
     private enum Gradient {
