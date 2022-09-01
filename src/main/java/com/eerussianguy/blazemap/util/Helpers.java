@@ -10,6 +10,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.LevelResource;
 
@@ -73,5 +74,10 @@ public class Helpers {
 
     public static <T> T decodeCodec(Codec<T> codec, CompoundTag tag, String field) {
         return codec.parse(NbtOps.INSTANCE, tag.get(field)).getOrThrow(false, BlazeMap.LOGGER::error);
+    }
+
+    public static TranslatableComponent translate(String key)
+    {
+        return new TranslatableComponent(key);
     }
 }

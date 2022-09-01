@@ -7,6 +7,7 @@ import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public class TerrainIsolinesLayer extends Layer {
@@ -27,7 +28,7 @@ public class TerrainIsolinesLayer extends Layer {
     }
 
     public TerrainIsolinesLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_ISOLINES, new TextComponent("Terrain Isolines"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.TERRAIN_ISOLINES, Helpers.translate("blazemap.terrain_isolines"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     @Override

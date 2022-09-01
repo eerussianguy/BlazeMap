@@ -10,12 +10,13 @@ import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.util.Colors;
+import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
 
 public class BlockColorLayer extends Layer {
 
     public BlockColorLayer() {
-        super(BlazeMapReferences.Layers.BLOCK_COLOR, new TextComponent("Block Color"), BlazeMapReferences.Collectors.BLOCK_COLOR, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.BLOCK_COLOR, Helpers.translate("blazemap.block_color"), BlazeMapReferences.Collectors.BLOCK_COLOR, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     @Override

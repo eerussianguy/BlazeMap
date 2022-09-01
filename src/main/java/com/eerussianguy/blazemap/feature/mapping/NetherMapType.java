@@ -6,11 +6,12 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.util.Helpers;
 
 public class NetherMapType extends MapType {
 
     public NetherMapType() {
-        super(BlazeMapReferences.MapTypes.NETHER, new TextComponent("Nether"), BlazeMapReferences.Layers.NETHER);
+        super(BlazeMapReferences.MapTypes.NETHER, Helpers.translate("blazemap.nether"), BlazeMapReferences.Layers.NETHER);
     }
 
     @Override
