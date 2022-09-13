@@ -92,8 +92,7 @@ public class MinimapRenderer implements AutoCloseable {
         mapType = type;
     }
 
-    public MapType getMapType()
-    {
+    public MapType getMapType() {
         return mapType;
     }
 

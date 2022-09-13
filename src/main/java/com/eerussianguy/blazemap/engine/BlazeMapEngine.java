@@ -17,6 +17,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.BlazeMap;
+import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
@@ -33,6 +34,7 @@ public class BlazeMapEngine {
     private static CartographyPipeline activePipeline;
     private static String serverID;
     private static File serverDir;
+    private static boolean frozenRegistries = false;
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
@@ -51,6 +53,13 @@ public class BlazeMapEngine {
 
     @SubscribeEvent
     public static void onJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
+        if(!frozenRegistries) {
+            BlazeMapAPI.MAPTYPES.freeze();
+            BlazeMapAPI.LAYERS.freeze();
+            BlazeMapAPI.COLLECTORS.freeze();
+            frozenRegistries = true;
+        }
+
         LocalPlayer player = event.getPlayer();
         if(player == null) return;
         serverID = Helpers.getServerID();

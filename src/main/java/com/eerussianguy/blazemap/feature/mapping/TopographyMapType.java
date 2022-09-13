@@ -12,6 +12,7 @@ public class TopographyMapType extends MapType {
         super(
             BlazeMapReferences.MapTypes.TOPOGRAPHY,
             Helpers.translate("blazemap.topography"),
+            Helpers.identifier("textures/map_icons/map_topography.png"),
 
             BlazeMapReferences.Layers.TERRAIN_HEIGHT,
             BlazeMapReferences.Layers.TERRAIN_ISOLINES,

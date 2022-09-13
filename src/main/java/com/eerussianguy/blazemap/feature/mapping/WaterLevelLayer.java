@@ -1,7 +1,5 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import net.minecraft.network.chat.TextComponent;
-
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
@@ -12,7 +10,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class WaterLevelLayer extends Layer {
 
     public WaterLevelLayer() {
-        super(BlazeMapReferences.Layers.WATER_LEVEL, Helpers.translate("blazemap.water_depth"), BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.WATER_LEVEL, Helpers.translate("blazemap.water_depth"), Helpers.identifier("textures/map_icons/layer_water.png"), BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     @Override

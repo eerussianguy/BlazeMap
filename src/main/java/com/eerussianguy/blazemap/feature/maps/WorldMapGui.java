@@ -1,15 +1,17 @@
 package com.eerussianguy.blazemap.feature.maps;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.lwjgl.glfw.GLFW;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.controls.KeyBindsList;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -25,12 +27,12 @@ import net.minecraft.world.phys.Vec3;
 
 import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
-import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -45,13 +47,12 @@ public class WorldMapGui extends Screen {
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
-    private static final ResourceLocation _TYPE = Helpers.identifier("textures/map_type.png");
     private static DimensionChangedEvent.DimensionTileStorage tileStorage;
     private static HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
 
     private final BlockPos.MutableBlockPos center;
     private final ResourceLocation textureResource = Helpers.identifier("fullmap");
-    private int nativeWidth, nativeHeight;
+    private int mapWidth, mapHeight;
     private boolean needsUpdate = false;
     private DynamicTexture mapTexture;
     private RenderType renderType;
@@ -94,32 +95,8 @@ public class WorldMapGui extends Screen {
 
         int y = 20;
         for(BlazeRegistry.Key<MapType> key : BlazeMapAPI.MAPTYPES.keys()) {
-            addRenderableWidget(new MapTypeButton(7, y += 20, 16, 16, _TYPE, key));
+            addRenderableWidget(new MapTypeButton(7, y += 20, 16, 16, key));
         }
-    }
-
-    @Override
-    public boolean keyPressed(int key, int x, int y) {
-        int dx = 0;
-        int dz = 0;
-        if (key == GLFW.GLFW_KEY_W) {
-            dz += 16;
-        }
-        if (key == GLFW.GLFW_KEY_S) {
-            dz -= 16;
-        }
-        if (key == GLFW.GLFW_KEY_D) {
-            dx -= 16;
-        }
-        if (key == GLFW.GLFW_KEY_A) {
-            dx += 16;
-        }
-        if (dx != 0 || dz != 0)
-        {
-            setCenter(center.getX() + dx, center.getZ() + dz);
-            return true;
-        }
-        return super.keyPressed(key, x, y);
     }
 
     public void setType(MapType mapType) {
@@ -165,34 +142,33 @@ public class WorldMapGui extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
     private void makeOffsets() {
         Window window = getMinecraft().getWindow();
-        this.nativeWidth = window.getScreenWidth();
-        this.nativeHeight = window.getScreenHeight();
+        this.mapWidth = window.getScreenWidth();
+        this.mapHeight = window.getScreenHeight();
 
-        int w2 = nativeWidth / 2;
-        int h2 = nativeHeight / 2;
+        int w2 = mapWidth / 2;
+        int h2 = mapHeight / 2;
         RegionPos begin = new RegionPos(center.offset(-w2, 0, -h2));
         RegionPos end = new RegionPos(center.offset(w2, 0, h2));
 
-        int dx = end.x - begin.x + 2;
-        int dz = end.z - begin.z + 2;
+        int dx = end.x - begin.x + 1;
+        int dz = end.z - begin.z + 1;
 
         offsets = new RegionPos[dx][dz];
         for(int x = 0; x < dx; x++) {
             for(int z = 0; z < dz; z++) {
-                offsets[x][z] = begin.offset(x, z);
+                offsets[x][z] = begin.offset(x - 1, z - 1);
             }
         }
     }
 
     private void createImage() {
         makeOffsets();
-        this.mapTexture = new DynamicTexture(nativeWidth, nativeHeight, false);
+        this.mapTexture = new DynamicTexture(mapWidth, mapHeight, false);
         getMinecraft().getTextureManager().register(textureResource, mapTexture);
         renderType = RenderType.text(textureResource);
         needsUpdate = true;
@@ -207,6 +183,7 @@ public class WorldMapGui extends Screen {
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
         stack.pushPose();
         renderTiles(stack, buffers);
+        debugMapInfo(stack, buffers);
         stack.popPose();
         buffers.endBatch();
 
@@ -215,11 +192,26 @@ public class WorldMapGui extends Screen {
         stack.popPose();
     }
 
+    private void debugMapInfo(PoseStack stack, MultiBufferSource buffers) {
+        stack.translate(150, 10, 0);
+        stack.scale(0.5F, 0.5F, 0.5F);
+        Matrix4f matrix = stack.last().pose();
+        Font font = getMinecraft().font;
+
+        NativeImage texture = mapTexture.getPixels();
+        BlockPos begin = center.offset(-texture.getWidth() / 2, 0, -texture.getHeight() / 2);
+        font.drawInBatch("Center: " + center.toShortString(), 0, 0, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Begin: " + begin.toShortString(), 0, 10, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Region 0,0: " + offsets[0][0].toString(), 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Native W: " + mapWidth, 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Native H: " + mapHeight, 0, 40, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("GUI Scale: " + getMinecraft().getWindow().getGuiScale(), 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+    }
+
     @Override
-    public void onClose()
-    {
+    public void onClose() {
         MinimapRenderer.INSTANCE.setMapType(mapType);
-        List<String> layers = disabled.stream().map(ResourceLocation::toString).collect(Collectors.toList());
+        List<String> layers = disabled.stream().map(BlazeRegistry.Key::toString).collect(Collectors.toList());
         BlazeMapConfig.CLIENT.disabledLayers.set(layers);
         super.onClose();
     }
@@ -256,23 +248,24 @@ public class WorldMapGui extends Screen {
         int w = texture.getWidth();
         texture.fillRect(0, 0, w, h, 0);
 
-        final int cx = center.getX() & 0x01FF;
-        final int cz = center.getZ() & 0x01FF;
+        BlockPos begin = center.offset(-w / 2, 0, -h / 2);
+        final int cx = (begin.getX() % 512 + 512) % 512;
+        final int cz = (begin.getZ() % 512 + 512) % 512;
 
         for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
             if(!isLayerVisible(layer)) continue;
             for(int ox = 0; ox < offsets.length; ox++) {
                 for(int oz = 0; oz < offsets[ox].length; oz++) {
-                    final RegionPos region = offsets[ox][oz];
                     final int rx = ox, rz = oz;
-                    tileStorage.consumeTile(layer, region, source -> {
-                        xx:
-                        for(int x = 0; x < source.getWidth(); x++) {
-                            for(int y = 0; y < source.getHeight(); y++) {
-                                int tx = (rx * 512) + x - cx;
+                    tileStorage.consumeTile(layer, offsets[ox][oz], source -> {
+                        for(int x = (rx * 512) < begin.getX() ? cx : 0; x < source.getWidth(); x++) {
+                            int tx = (rx * 512) + x - cx;
+                            if(tx < 0 || tx >= w) continue;
+
+                            for(int y = (rz * 512) < begin.getZ() ? cz : 0; y < source.getHeight(); y++) {
                                 int ty = (rz * 512) + y - cz;
-                                if(tx < 0 || tx >= w) continue xx;
                                 if(ty < 0 || ty >= h) continue;
+
                                 int color = Colors.layerBlend(texture.getPixelRGBA(tx, ty), source.getPixelRGBA(x, y));
                                 texture.setPixelRGBA(tx, ty, color);
                             }
@@ -283,6 +276,34 @@ public class WorldMapGui extends Screen {
         }
         mapTexture.upload();
         needsUpdate = false;
+    }
+
+    @Override
+    public boolean keyPressed(int key, int x, int y) {
+        if(key == BlazeMapFeatures.OPEN_FULL_MAP.getKey().getValue()) {
+            this.onClose();
+            return true;
+        }
+
+        int dx = 0;
+        int dz = 0;
+        if(key == GLFW.GLFW_KEY_W) {
+            dz += 16;
+        }
+        if(key == GLFW.GLFW_KEY_S) {
+            dz -= 16;
+        }
+        if(key == GLFW.GLFW_KEY_D) {
+            dx -= 16;
+        }
+        if(key == GLFW.GLFW_KEY_A) {
+            dx += 16;
+        }
+        if(dx != 0 || dz != 0) {
+            setCenter(center.getX() + dx, center.getZ() + dz);
+            return true;
+        }
+        return super.keyPressed(key, x, y);
     }
 
     private static class Image implements Widget {
@@ -313,8 +334,8 @@ public class WorldMapGui extends Screen {
         private final BlazeRegistry.Key<MapType> key;
         private final List<LayerButton> layers = new ArrayList<>();
 
-        public MapTypeButton(int px, int py, int w, int h, ResourceLocation image, BlazeRegistry.Key<MapType> key) {
-            super(px, py, w, h, 0, 0, 0, image, w, h, button -> {
+        public MapTypeButton(int px, int py, int w, int h, BlazeRegistry.Key<MapType> key) {
+            super(px, py, w, h, 0, 0, 0, key.value().getIcon(), w, h, button -> {
                 WorldMapGui.this.setType(key.value());
             }, key.value().getName());
             this.key = key;
@@ -323,7 +344,7 @@ public class WorldMapGui extends Screen {
 
             int layerX = px + 20;
             for(BlazeRegistry.Key<Layer> layer : map.getLayers()) {
-                LayerButton lb = new LayerButton(layerX, py, 16, 16, _TYPE, layer, map);
+                LayerButton lb = new LayerButton(layerX, py, 16, 16, layer, map);
                 layers.add(lb);
                 layerX += 20;
                 addRenderableWidget(lb);
@@ -334,8 +355,7 @@ public class WorldMapGui extends Screen {
         public void renderToolTip(PoseStack stack, int x, int y) {
             RenderSystem.setShaderColor(1, 1, 1, 1);
             TranslatableComponent component = key.value().getName();
-            if (active)
-            {
+            if(active) {
                 component.append(Helpers.translate("blazemap.enabled"));
             }
             WorldMapGui.this.renderTooltip(stack, component, x, y);
@@ -359,8 +379,8 @@ public class WorldMapGui extends Screen {
         private final BlazeRegistry.Key<Layer> key;
         private final MapType parent;
 
-        public LayerButton(int px, int py, int w, int h, ResourceLocation image, BlazeRegistry.Key<Layer> key, MapType parent) {
-            super(px, py, w, h, 0, 0, 0, image, w, h, button -> {
+        public LayerButton(int px, int py, int w, int h, BlazeRegistry.Key<Layer> key, MapType parent) {
+            super(px, py, w, h, 0, 0, 0, key.value().getIcon(), w, h, button -> {
                 WorldMapGui.this.toggleLayer(key);
             }, key.value().getName());
             this.key = key;
@@ -386,8 +406,7 @@ public class WorldMapGui extends Screen {
         public void renderToolTip(PoseStack stack, int x, int y) {
             RenderSystem.setShaderColor(1, 1, 1, 1);
             TranslatableComponent component = key.value().getName();
-            if (active)
-            {
+            if(active) {
                 component.append(Helpers.translate("blazemap.enabled"));
             }
             WorldMapGui.this.renderTooltip(stack, component, x, y);

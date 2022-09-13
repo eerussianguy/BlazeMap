@@ -8,8 +8,7 @@ public enum MinimapZoom {
 
     public static final MinimapZoom[] VALUES = values();
 
-    private static MinimapZoom byId(int id)
-    {
+    private static MinimapZoom byId(int id) {
         return id >= VALUES.length ? SHORT : VALUES[id];
     }
 
@@ -19,8 +18,7 @@ public enum MinimapZoom {
         this.trim = trim / 2F;
     }
 
-    public MinimapZoom next()
-    {
+    public MinimapZoom next() {
         return byId(ordinal() + 1);
     }
 }

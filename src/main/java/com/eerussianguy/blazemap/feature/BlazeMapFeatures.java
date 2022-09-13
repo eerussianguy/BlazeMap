@@ -17,7 +17,6 @@ import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
-import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {
@@ -55,7 +54,7 @@ public class BlazeMapFeatures {
             if(OPEN_FULL_MAP.isDown()) {
                 WorldMapGui.open();
             }
-            if (CYCLE_ZOOM.isDown()) {
+            if(CYCLE_ZOOM.isDown()) {
                 MinimapZoom zoom = BlazeMapConfig.CLIENT.minimapZoom.get();
                 BlazeMapConfig.CLIENT.minimapZoom.set(zoom.next());
             }

@@ -1,6 +1,7 @@
 package com.eerussianguy.blazemap;
 
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -9,6 +10,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
+import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.mojang.logging.LogUtils;
@@ -40,6 +42,10 @@ public class BlazeMap {
         BlazeMapEngine.init();
 
         BlazeMapFeatures.initMapping();
+        IEventBus bus = MinecraftForge.EVENT_BUS;
+        bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
+        bus.post(new BlazeRegistryEvent.LayerRegistryEvent());
+        bus.post(new BlazeRegistryEvent.MapTypeRegistryEvent());
 
         BlazeMapFeatures.initFullMap();
         BlazeMapFeatures.initWaypoints();

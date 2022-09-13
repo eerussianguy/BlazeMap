@@ -1,7 +1,5 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import net.minecraft.network.chat.TextComponent;
-
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
@@ -28,7 +26,7 @@ public class TerrainIsolinesLayer extends Layer {
     }
 
     public TerrainIsolinesLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_ISOLINES, Helpers.translate("blazemap.terrain_isolines"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.TERRAIN_ISOLINES, Helpers.translate("blazemap.terrain_isolines"), Helpers.identifier("textures/map_icons/layer_terrain_isolines.png"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     @Override

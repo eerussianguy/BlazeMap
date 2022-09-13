@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.function.Consumer;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -17,8 +18,8 @@ public class LayerRegionTile {
     private final File file;
     private NativeImage image;
 
-    public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir) {
-        File layerDir = new File(worldDir, layer.toString().replace(':', '+'));
+    public LayerRegionTile(BlazeRegistry.Key<Layer> layer, RegionPos region, File worldDir) {
+        File layerDir = new File(worldDir, layer.location.toString().replace(':', '+'));
         this.file = new File(layerDir, region.toString() + ".png");
         image = new NativeImage(NativeImage.Format.RGBA, 512, 512, false);
     }

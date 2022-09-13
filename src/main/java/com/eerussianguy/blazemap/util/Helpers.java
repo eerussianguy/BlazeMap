@@ -76,8 +76,7 @@ public class Helpers {
         return codec.parse(NbtOps.INSTANCE, tag.get(field)).getOrThrow(false, BlazeMap.LOGGER::error);
     }
 
-    public static TranslatableComponent translate(String key)
-    {
+    public static TranslatableComponent translate(String key) {
         return new TranslatableComponent(key);
     }
 }
