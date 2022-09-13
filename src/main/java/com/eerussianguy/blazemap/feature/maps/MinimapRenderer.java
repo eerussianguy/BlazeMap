@@ -204,47 +204,6 @@ public class MinimapRenderer implements AutoCloseable {
         // Finish
         stack.popPose();
         Profilers.Minimap.DRAW_TIME_PROFILER.end();
-
-        if(BlazeMapConfig.CLIENT.enableDebug.get()) {
-            Profilers.Minimap.DEBUG_TIME_PROFILER.begin();
-
-            // ping load profilers
-            Profilers.Engine.COLLECTOR_LOAD_PROFILER.ping();
-            Profilers.Engine.LAYER_LOAD_PROFILER.ping();
-            Profilers.Engine.REGION_LOAD_PROFILER.ping();
-            Profilers.Minimap.TEXTURE_LOAD_PROFILER.ping();
-
-            stack.pushPose();
-            stack.translate(5, 5, 0);
-            stack.scale(0.75F, 0.75F, 0);
-            drawDebugInfo(stack, buffers, fontRenderer, pos);
-            stack.popPose();
-            Profilers.Minimap.DEBUG_TIME_PROFILER.end();
-        }
-    }
-
-    private void drawDebugInfo(PoseStack stack, MultiBufferSource buffers, Font fontRenderer, BlockPos pos) {
-        Matrix4f matrix = stack.last().pose();
-
-        VertexConsumer playerVertices = buffers.getBuffer(this.backgroundRenderType);
-        float w = 250, h = 270, o = 0;
-        playerVertices.vertex(matrix, o, h, -0.01F).color(0, 0, 0, 120).uv(0.25F, 0.75F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        playerVertices.vertex(matrix, w, h, -0.01F).color(0, 0, 0, 120).uv(0.75F, 0.75F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        playerVertices.vertex(matrix, w, o, -0.01F).color(0, 0, 0, 120).uv(0.75F, 0.25F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        playerVertices.vertex(matrix, o, o, -0.01F).color(0, 0, 0, 120).uv(0.25F, 0.25F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-
-        float y = 5F;
-        fontRenderer.drawInBatch("Debug Info", 5F, y, 0xFF0000, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        fontRenderer.drawInBatch("Player Region: " + new RegionPos(pos), 5F, y += 10, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        DebugRenderUtils.drawTimeProfiler(Profilers.Minimap.DEBUG_TIME_PROFILER, y += 10, "Debug Info", fontRenderer, matrix, buffers);
-        DebugRenderUtils.drawTimeProfiler(Profilers.Minimap.DRAW_TIME_PROFILER, y += 10, "Minimap Draw", fontRenderer, matrix, buffers);
-        y = DebugRenderUtils.drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Texture Upload      [ last second ]", fontRenderer, matrix, buffers, "frame load");
-
-        // Cartography Pipeline Profiling
-        fontRenderer.drawInBatch("Cartography Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        y = DebugRenderUtils.drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect      [ last second ]", fontRenderer, matrix, buffers, "tick load");
-        y = DebugRenderUtils.drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, "Layer Render      [ last second ]", fontRenderer, matrix, buffers, "delay");
-        y = DebugRenderUtils.drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save      [ last minute ]", fontRenderer, matrix, buffers, "delay");
     }
 
     private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
