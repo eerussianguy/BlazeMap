@@ -47,8 +47,9 @@ public class WorldMapGui extends Screen {
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
+    private static final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
     private static DimensionChangedEvent.DimensionTileStorage tileStorage;
-    private static HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
+    private static final double MIN_ZOOM = 0.5, MAX_ZOOM = 16;
 
     private final BlockPos.MutableBlockPos center;
     private final ResourceLocation textureResource = Helpers.identifier("fullmap");
@@ -59,6 +60,7 @@ public class WorldMapGui extends Screen {
     private MapType mapType = MinimapRenderer.INSTANCE.getMapType();
     private RegionPos[][] offsets;
     private List<BlazeRegistry.Key<Layer>> disabled;
+    private double zoom = 1;
 
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());
@@ -136,7 +138,7 @@ public class WorldMapGui extends Screen {
     @Override
     public boolean mouseDragged(double cx, double cy, int button, double dx, double dy) {
         double scale = getMinecraft().getWindow().getGuiScale();
-        setCenter(this.center.getX() - (int) (dx * scale), this.center.getZ() - (int) (dy * scale));
+        setCenter(this.center.getX() - (int) (dx * scale / zoom), this.center.getZ() - (int) (dy * scale / zoom));
         return super.mouseDragged(cx, cy, button, dx, dy);
     }
 
@@ -145,10 +147,20 @@ public class WorldMapGui extends Screen {
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+        // zoom in or out by a factor of 2, and clamp the value between min and max zoom.
+        double prevZoom = zoom;
+        zoom = Math.max(MIN_ZOOM, Math.min(zoom * (scroll > 0 ? 2 : 0.5), MAX_ZOOM));
+        if(prevZoom == zoom) return false;
+        createImage();
+        return true;
+    }
+
     private void makeOffsets() {
         Window window = getMinecraft().getWindow();
-        this.mapWidth = window.getScreenWidth();
-        this.mapHeight = window.getScreenHeight();
+        this.mapWidth = (int) (window.getScreenWidth() / zoom);
+        this.mapHeight = (int) (window.getScreenHeight() / zoom);
 
         int w2 = mapWidth / 2;
         int h2 = mapHeight / 2;
@@ -193,6 +205,8 @@ public class WorldMapGui extends Screen {
     }
 
     private void debugMapInfo(PoseStack stack, MultiBufferSource buffers) {
+        if(!BlazeMapConfig.CLIENT.enableDebug.get()) return;
+
         stack.translate(150, 10, 0);
         stack.scale(0.5F, 0.5F, 0.5F);
         Matrix4f matrix = stack.last().pose();
@@ -202,10 +216,10 @@ public class WorldMapGui extends Screen {
         BlockPos begin = center.offset(-texture.getWidth() / 2, 0, -texture.getHeight() / 2);
         font.drawInBatch("Center: " + center.toShortString(), 0, 0, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
         font.drawInBatch("Begin: " + begin.toShortString(), 0, 10, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Region 0,0: " + offsets[0][0].toString(), 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Native W: " + mapWidth, 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Native H: " + mapHeight, 0, 40, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("GUI Scale: " + getMinecraft().getWindow().getGuiScale(), 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Active Regions: " + offsets.length * offsets[0].length, 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Map Size: " + mapWidth + " x " + mapHeight, 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("GUI Scale: " + getMinecraft().getWindow().getGuiScale(), 0, 40, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Zoom Factor: " + zoom + "x", 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
     }
 
     @Override
@@ -288,16 +302,16 @@ public class WorldMapGui extends Screen {
         int dx = 0;
         int dz = 0;
         if(key == GLFW.GLFW_KEY_W) {
-            dz += 16;
-        }
-        if(key == GLFW.GLFW_KEY_S) {
             dz -= 16;
         }
+        if(key == GLFW.GLFW_KEY_S) {
+            dz += 16;
+        }
         if(key == GLFW.GLFW_KEY_D) {
-            dx -= 16;
+            dx += 16;
         }
         if(key == GLFW.GLFW_KEY_A) {
-            dx += 16;
+            dx -= 16;
         }
         if(dx != 0 || dz != 0) {
             setCenter(center.getX() + dx, center.getZ() + dz);

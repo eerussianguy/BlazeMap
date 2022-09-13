@@ -12,6 +12,7 @@ import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapSize;
 import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
+import com.eerussianguy.blazemap.feature.maps.Overlays;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
@@ -29,10 +30,12 @@ public class BlazeMapCommands {
         return Commands.literal("debug")
             .then(Commands.literal("on").executes($ -> {
                 BlazeMapConfig.CLIENT.enableDebug.set(true);
+                Overlays.reload();
                 return Command.SINGLE_SUCCESS;
             }))
             .then(Commands.literal("off").executes($ -> {
                 BlazeMapConfig.CLIENT.enableDebug.set(false);
+                Overlays.reload();
                 return Command.SINGLE_SUCCESS;
             }));
     }
