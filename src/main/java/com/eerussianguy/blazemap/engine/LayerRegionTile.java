@@ -17,6 +17,7 @@ public class LayerRegionTile {
     private final PriorityLock lock = new PriorityLock();
     private final File file;
     private NativeImage image;
+    private boolean isEmpty = true;
 
     public LayerRegionTile(BlazeRegistry.Key<Layer> layer, RegionPos region, File worldDir) {
         File layerDir = new File(worldDir, layer.location.toString().replace(':', '+'));
@@ -29,6 +30,7 @@ public class LayerRegionTile {
             try {
                 lock.lockPriority();
                 image = NativeImage.read(Files.newInputStream(file.toPath()));
+                isEmpty = false;
             }
             catch(IOException e) {
                 e.printStackTrace();
@@ -46,6 +48,7 @@ public class LayerRegionTile {
     }
 
     public void save() {
+        if(isEmpty) return;
         try {
             lock.lock();
             image.writeToFile(file);
@@ -72,6 +75,7 @@ public class LayerRegionTile {
                     image.setPixelRGBA(xOffset + x, zOffset + z, tile.getPixelRGBA(x, z));
                 }
             }
+            isEmpty = false;
         }
         finally {
             lock.unlock();
@@ -79,6 +83,7 @@ public class LayerRegionTile {
     }
 
     public void consume(Consumer<NativeImage> consumer) {
+        if(isEmpty) return;
         try {
             lock.lockPriority();
             consumer.accept(image);

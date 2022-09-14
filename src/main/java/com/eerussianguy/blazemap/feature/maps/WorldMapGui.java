@@ -62,6 +62,8 @@ public class WorldMapGui extends Screen {
     private List<BlazeRegistry.Key<Layer>> disabled;
     private double zoom = 1;
 
+    private int r_regions = 0, r_tiles = 0;
+
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());
     }
@@ -216,9 +218,9 @@ public class WorldMapGui extends Screen {
         BlockPos begin = center.offset(-texture.getWidth() / 2, 0, -texture.getHeight() / 2);
         font.drawInBatch("Center: " + center.toShortString(), 0, 0, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
         font.drawInBatch("Begin: " + begin.toShortString(), 0, 10, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Active Regions: " + offsets.length * offsets[0].length, 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Map Size: " + mapWidth + " x " + mapHeight, 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("GUI Scale: " + getMinecraft().getWindow().getGuiScale(), 0, 40, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Active Regions: " + r_regions + " / " + offsets.length * offsets[0].length, 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Rendered tiles: " + r_tiles, 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Map Size: " + mapWidth + " x " + mapHeight, 0, 40, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
         font.drawInBatch("Zoom Factor: " + zoom + "x", 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
     }
 
@@ -266,12 +268,16 @@ public class WorldMapGui extends Screen {
         final int cx = (begin.getX() % 512 + 512) % 512;
         final int cz = (begin.getZ() % 512 + 512) % 512;
 
+        r_tiles = 0;
         for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
             if(!isLayerVisible(layer)) continue;
+            r_regions = 0;
             for(int ox = 0; ox < offsets.length; ox++) {
                 for(int oz = 0; oz < offsets[ox].length; oz++) {
                     final int rx = ox, rz = oz;
                     tileStorage.consumeTile(layer, offsets[ox][oz], source -> {
+                        r_tiles++;
+                        r_regions++;
                         for(int x = (rx * 512) < begin.getX() ? cx : 0; x < source.getWidth(); x++) {
                             int tx = (rx * 512) + x - cx;
                             if(tx < 0 || tx >= w) continue;
