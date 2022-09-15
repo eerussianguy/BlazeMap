@@ -1,17 +1,18 @@
 package com.eerussianguy.blazemap.feature.maps;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -42,16 +43,21 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 
 public class WorldMapGui extends Screen {
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
     private static final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
-    private static DimensionChangedEvent.DimensionTileStorage tileStorage;
+    private static final File SCREENSHOT_DIR = new File(Minecraft.getInstance().gameDirectory, "screenshots");
     private static final double MIN_ZOOM = 0.5, MAX_ZOOM = 16;
+    private static final ResourceLocation PLAYER = Helpers.identifier("textures/player.png");
 
-    private final BlockPos.MutableBlockPos center;
+    private static DimensionChangedEvent.DimensionTileStorage tileStorage;
+    private static boolean showWidgets = true;
+
+    private final BlockPos.MutableBlockPos center, begin, end;
     private final ResourceLocation textureResource = Helpers.identifier("fullmap");
     private int mapWidth, mapHeight;
     private boolean needsUpdate = false;
@@ -75,6 +81,8 @@ public class WorldMapGui extends Screen {
     public WorldMapGui() {
         super(EMPTY);
         this.center = new BlockPos.MutableBlockPos();
+        this.begin = new BlockPos.MutableBlockPos();
+        this.end = new BlockPos.MutableBlockPos();
         disabled = disabledLayers.computeIfAbsent(mapType.getID(), $ -> new LinkedList<>());
     }
 
@@ -164,18 +172,17 @@ public class WorldMapGui extends Screen {
         this.mapWidth = (int) (window.getScreenWidth() / zoom);
         this.mapHeight = (int) (window.getScreenHeight() / zoom);
 
-        int w2 = mapWidth / 2;
-        int h2 = mapHeight / 2;
-        RegionPos begin = new RegionPos(center.offset(-w2, 0, -h2));
-        RegionPos end = new RegionPos(center.offset(w2, 0, h2));
+        int w2 = mapWidth / 2, h2 = mapHeight / 2;
+        RegionPos b = new RegionPos(begin.set(center.offset(-w2, 0, -h2).asLong()));
+        RegionPos e = new RegionPos(end.set(center.offset(w2, 0, h2).asLong()));
 
-        int dx = end.x - begin.x + 1;
-        int dz = end.z - begin.z + 1;
+        int dx = e.x - b.x + 1;
+        int dz = e.z - b.z + 1;
 
         offsets = new RegionPos[dx][dz];
         for(int x = 0; x < dx; x++) {
             for(int z = 0; z < dz; z++) {
-                offsets[x][z] = begin.offset(x - 1, z - 1);
+                offsets[x][z] = b.offset(x, z);
             }
         }
     }
@@ -190,20 +197,33 @@ public class WorldMapGui extends Screen {
 
     @Override
     public void render(PoseStack stack, int i0, int i1, float f0) {
+        float scale = (float) getMinecraft().getWindow().getGuiScale();
         if(needsUpdate) updateTexture();
 
         fillGradient(stack, 0, 0, this.width, this.height, 0xFF333333, 0xFF333333);
 
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
         stack.pushPose();
-        renderTiles(stack, buffers);
-        debugMapInfo(stack, buffers);
+        drawQuad(buffers.getBuffer(renderType), stack.last().pose(), width, height);
+
+        stack.pushPose();
+        stack.scale(1F / scale, 1F / scale, 1);
+        LocalPlayer player = Helpers.getPlayer();
+        renderMarker(buffers, stack, PLAYER, player.blockPosition(), 48, 48, player.getRotationVector().y, false);
+        stack.popPose();
+
+        if(showWidgets){
+            debugMapInfo(stack, buffers);
+        }
+
         stack.popPose();
         buffers.endBatch();
 
-        stack.pushPose();
-        super.render(stack, i0, i1, f0);
-        stack.popPose();
+        if(showWidgets){
+            stack.pushPose();
+            super.render(stack, i0, i1, f0);
+            stack.popPose();
+        }
     }
 
     private void debugMapInfo(PoseStack stack, MultiBufferSource buffers) {
@@ -230,10 +250,6 @@ public class WorldMapGui extends Screen {
         List<String> layers = disabled.stream().map(BlazeRegistry.Key::toString).collect(Collectors.toList());
         BlazeMapConfig.CLIENT.disabledLayers.set(layers);
         super.onClose();
-    }
-
-    private void renderTiles(PoseStack stack, MultiBufferSource.BufferSource buffers) {
-        drawQuad(buffers.getBuffer(renderType), stack.last().pose(), width, height);
     }
 
     private static void drawTexturedQuad(ResourceLocation texture, int color, PoseStack stack, int px, int py, int w, int h) {
@@ -298,10 +314,47 @@ public class WorldMapGui extends Screen {
         needsUpdate = false;
     }
 
+    private void renderMarker(MultiBufferSource buffers, PoseStack stack, ResourceLocation marker, BlockPos position, double width, double height, float rotation, boolean zoom){
+        stack.pushPose();
+        stack.scale((float) this.zoom, (float) this.zoom, 1);
+        int dx = position.getX() - begin.getX();
+        int dy = position.getZ() - begin.getZ();
+        stack.translate(dx, dy, 0);
+        if(!zoom){
+           stack.scale(1F / (float) this.zoom, 1F / (float) this.zoom, 1);
+        }
+        stack.mulPose(Vector3f.ZP.rotationDegrees(rotation));
+        stack.translate(-width/2, -height/2, 0);
+        VertexConsumer vertices = buffers.getBuffer(RenderType.text(marker));
+        drawQuad(vertices, stack.last().pose(), (float) width, (float) height);
+        stack.popPose();
+    }
+
+    private void saveScreenshot(){
+        NativeImage texture = mapTexture.getPixels();
+        if(texture == null) return;
+        try {
+            texture.writeToFile(new File(SCREENSHOT_DIR, "blazemap-"+new Date().getTime())+".png");
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public boolean keyPressed(int key, int x, int y) {
         if(key == BlazeMapFeatures.OPEN_FULL_MAP.getKey().getValue()) {
             this.onClose();
+            return true;
+        }
+
+        if(key == GLFW.GLFW_KEY_F1){
+            showWidgets = !showWidgets;
+            return true;
+        }
+
+        if(key == GLFW.GLFW_KEY_F2){
+            saveScreenshot();
             return true;
         }
 
