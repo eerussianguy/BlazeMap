@@ -296,41 +296,22 @@ public class WorldMapGui extends Screen {
 
     private void updateTexture() {
         NativeImage texture = mapTexture.getPixels();
+        if(texture == null) return;
         int h = texture.getHeight();
         int w = texture.getWidth();
         texture.fillRect(0, 0, w, h, 0);
 
-        BlockPos begin = center.offset(-w / 2, 0, -h / 2);
-        final int cx = (begin.getX() % 512 + 512) % 512;
-        final int cz = (begin.getZ() % 512 + 512) % 512;
-
         RENDER.begin();
-        final AsyncAwaiter jobs = new AsyncAwaiter(offsets.length * offsets[0].length);
+        int cx = (begin.getX() % 512 + 512) % 512;
+        int cz = (begin.getZ() % 512 + 512) % 512;
+        AsyncAwaiter jobs = new AsyncAwaiter(offsets.length * offsets[0].length);
+
         for(int ox = 0; ox < offsets.length; ox++) {
             for(int oz = 0; oz < offsets[ox].length; oz++) {
-                final int rx = ox, rz = oz;
-                BlazeMapEngine.async().runOnDataThread(() -> {
-                    for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
-                        if(!isLayerVisible(layer)) continue;
-                        tileStorage.consumeTile(layer, offsets[rx][rz], source -> {
-                            for(int x = (rx * 512) < begin.getX() ? cx : 0; x < source.getWidth(); x++) {
-                                int tx = (rx * 512) + x - cx;
-                                if(tx < 0 || tx >= w) continue;
-
-                                for(int y = (rz * 512) < begin.getZ() ? cz : 0; y < source.getHeight(); y++) {
-                                    int ty = (rz * 512) + y - cz;
-                                    if(ty < 0 || ty >= h) continue;
-
-                                    int color = Colors.layerBlend(texture.getPixelRGBA(tx, ty), source.getPixelRGBA(x, y));
-                                    texture.setPixelRGBA(tx, ty, color);
-                                }
-                            }
-                        });
-                    }
-                    jobs.done();
-                });
+                generateMapTileAsync(texture, w, h, cx, cz, ox, oz, jobs);
             }
         }
+
         jobs.await();
         RENDER.end();
 
@@ -339,6 +320,33 @@ public class WorldMapGui extends Screen {
         UPLOAD.end();
 
         needsUpdate = false;
+    }
+
+    private void generateMapTileAsync(NativeImage texture, int w, int h, int cx, int cz, int rx, int rz, AsyncAwaiter jobs) {
+        BlazeMapEngine.async().runOnDataThread(() -> {
+            generateMapTile(texture, w, h, cx, cz, rx, rz);
+            jobs.done();
+        });
+    }
+
+    private void generateMapTile(NativeImage texture, int w, int h, int cx, int cz, int rx, int rz) {
+        for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
+            if(!isLayerVisible(layer)) continue;
+            tileStorage.consumeTile(layer, offsets[rx][rz], source -> {
+                for(int x = (rx * 512) < begin.getX() ? cx : 0; x < source.getWidth(); x++) {
+                    int tx = (rx * 512) + x - cx;
+                    if(tx < 0 || tx >= w) continue;
+
+                    for(int y = (rz * 512) < begin.getZ() ? cz : 0; y < source.getHeight(); y++) {
+                        int ty = (rz * 512) + y - cz;
+                        if(ty < 0 || ty >= h) continue;
+
+                        int color = Colors.layerBlend(texture.getPixelRGBA(tx, ty), source.getPixelRGBA(x, y));
+                        texture.setPixelRGBA(tx, ty, color);
+                    }
+                }
+            });
+        }
     }
 
     private void renderMarker(MultiBufferSource buffers, PoseStack stack, ResourceLocation marker, BlockPos position, double width, double height, float rotation, boolean zoom) {
