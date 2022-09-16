@@ -32,6 +32,7 @@ import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.eerussianguy.blazemap.api.waypoint.Waypoint;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
@@ -69,8 +70,8 @@ public class WorldMapGui extends Screen {
     private RegionPos[][] offsets;
     private List<BlazeRegistry.Key<Layer>> disabled;
     private double zoom = 1;
+    private final List<Waypoint> waypoints = new ArrayList<>(16);
 
-    // private int r_regions = 0, r_tiles = 0;
     private static final Profiler.TimeProfilerSync RENDER = new Profiler.TimeProfilerSync(1);
     private static final Profiler.TimeProfilerSync UPLOAD = new Profiler.TimeProfilerSync(1);
 
@@ -97,7 +98,7 @@ public class WorldMapGui extends Screen {
             for(BlazeRegistry.Key<MapType> next : BlazeMapAPI.MAPTYPES.keys()) {
                 MapType type = next.value();
                 if(type.shouldRenderInDimension(dim)) {
-                    setType(type);
+                    setMapType(type);
                     break;
                 }
             }
@@ -116,7 +117,7 @@ public class WorldMapGui extends Screen {
         }
     }
 
-    public void setType(MapType mapType) {
+    public void setMapType(MapType mapType) {
         if(this.mapType == mapType) return;
         if(!mapType.shouldRenderInDimension(getMinecraft().level.dimension())) return;
         this.mapType = mapType;
@@ -178,8 +179,8 @@ public class WorldMapGui extends Screen {
         this.mapHeight = (int) (window.getScreenHeight() / zoom);
 
         int w2 = mapWidth / 2, h2 = mapHeight / 2;
-        RegionPos b = new RegionPos(begin.set(center.offset(-w2, 0, -h2).asLong()));
-        RegionPos e = new RegionPos(end.set(center.offset(w2, 0, h2).asLong()));
+        RegionPos b = new RegionPos(begin.set(center.offset(-w2, 0, -h2)));
+        RegionPos e = new RegionPos(end.set(center.offset(w2, 0, h2)));
 
         int dx = e.x - b.x + 1;
         int dz = e.z - b.z + 1;
@@ -190,6 +191,13 @@ public class WorldMapGui extends Screen {
                 offsets[x][z] = b.offset(x, z);
             }
         }
+
+        updateWaypoints();
+    }
+
+    private void updateWaypoints() {
+        waypoints.clear();
+        waypoints.addAll(BlazeMapAPI.getWaypointStore().getWaypoints(getMinecraft().level.dimension()).stream().filter(w -> inRange(w.getPosition())).collect(Collectors.toList()));
     }
 
     private void createImage() {
@@ -198,6 +206,12 @@ public class WorldMapGui extends Screen {
         getMinecraft().getTextureManager().register(textureResource, mapTexture);
         renderType = RenderType.text(textureResource);
         needsUpdate = true;
+    }
+
+    private boolean inRange(BlockPos pos) {
+        int x = pos.getX();
+        int z = pos.getZ();
+        return x >= begin.getX() && x <= end.getX() && z >= begin.getZ() && z <= end.getZ();
     }
 
     @Override
@@ -213,6 +227,9 @@ public class WorldMapGui extends Screen {
 
         stack.pushPose();
         stack.scale(1F / scale, 1F / scale, 1);
+        for(Waypoint w : waypoints) {
+            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true);
+        }
         LocalPlayer player = Helpers.getPlayer();
         renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false);
         stack.popPose();
@@ -243,11 +260,8 @@ public class WorldMapGui extends Screen {
         BlockPos begin = center.offset(-texture.getWidth() / 2, 0, -texture.getHeight() / 2);
         font.drawInBatch("Center: " + center.toShortString(), 0, 0, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
         font.drawInBatch("Begin: " + begin.toShortString(), 0, 10, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        //font.drawInBatch("Active Regions: " + r_regions + " / " + offsets.length * offsets[0].length, 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        //font.drawInBatch("Rendered tiles: " + r_tiles, 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Map Size: " + mapWidth + " x " + mapHeight, 0, 40, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Zoom Factor: " + zoom + "x", 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-
+        font.drawInBatch("Map Size: " + mapWidth + " x " + mapHeight, 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch("Zoom Factor: " + zoom + "x", 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
 
         double render = RENDER.getAvg() / 1000;
         double upload = UPLOAD.getAvg() / 1000;
@@ -261,8 +275,8 @@ public class WorldMapGui extends Screen {
             upload /= 1000;
             uu = "ms";
         }
-        font.drawInBatch(String.format("Render time: %.2f%s", render, ru), 0, 70, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch(String.format("Upload time: %.2f%s", upload, uu), 0, 80, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch(String.format("Render time: %.2f%s", render, ru), 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch(String.format("Upload time: %.2f%s", upload, uu), 0, 60, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
     }
 
     @Override
@@ -288,7 +302,7 @@ public class WorldMapGui extends Screen {
         RenderSystem.setShaderColor(r, g, b, a);
     }
 
-    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h){
+    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
         drawQuad(vertices, matrix, w, h, Colors.NO_TINT);
     }
 
@@ -423,10 +437,26 @@ public class WorldMapGui extends Screen {
         return super.keyPressed(key, x, y);
     }
 
+    @Override // TODO: this is debug code. Remove later.
+    public boolean mouseClicked(double x, double y, int button) {
+        if(button == GLFW.GLFW_MOUSE_BUTTON_3) {
+            float scale = (float) getMinecraft().getWindow().getGuiScale();
+            BlazeMapAPI.getWaypointStore().addWaypoint(new Waypoint(
+                Helpers.identifier("waypoint-" + System.currentTimeMillis()),
+                getMinecraft().level.dimension(),
+                begin.offset(scale * x / zoom, 0, scale * y / zoom),
+                "Test"
+            ).randomizeColor());
+            updateWaypoints();
+            return true;
+        }
+        return super.mouseClicked(x, y, button);
+    }
+
     private static class Image implements Widget {
         private final int posX, posY, width, height;
         private final ResourceLocation image;
-        private int color = 0xFFFFFFFF;
+        private int color = Colors.NO_TINT;
 
         public Image(ResourceLocation image, int posX, int posY, int width, int height) {
             this.posX = posX;
@@ -453,7 +483,7 @@ public class WorldMapGui extends Screen {
 
         public MapTypeButton(int px, int py, int w, int h, BlazeRegistry.Key<MapType> key) {
             super(px, py, w, h, 0, 0, 0, key.value().getIcon(), w, h, button -> {
-                WorldMapGui.this.setType(key.value());
+                WorldMapGui.this.setMapType(key.value());
             }, key.value().getName());
             this.key = key;
             MapType map = key.value();
@@ -482,10 +512,10 @@ public class WorldMapGui extends Screen {
             else if(key.equals(mapType.getID()))
                 setShaderColor(0xFFFFDD00);
             else
-                setShaderColor(0xFFFFFFFF);
+                setShaderColor(Colors.NO_TINT);
 
             super.render(stack, mx, my, partial);
-            setShaderColor(0xFFFFFFFF);
+            setShaderColor(Colors.NO_TINT);
         }
     }
 
@@ -510,19 +540,16 @@ public class WorldMapGui extends Screen {
             else if(isLayerVisible(key))
                 setShaderColor(0xFFFFDD00);
             else
-                setShaderColor(0xFFFFFFFF);
+                setShaderColor(Colors.NO_TINT);
 
             super.render(stack, mx, my, partial);
-            setShaderColor(0xFFFFFFFF);
+            setShaderColor(Colors.NO_TINT);
         }
 
         @Override
         public void renderToolTip(PoseStack stack, int x, int y) {
             RenderSystem.setShaderColor(1, 1, 1, 1);
             TranslatableComponent component = key.value().getName();
-            if(active) {
-                component.append(Helpers.translate("blazemap.enabled"));
-            }
             WorldMapGui.this.renderTooltip(stack, component, x, y);
         }
 

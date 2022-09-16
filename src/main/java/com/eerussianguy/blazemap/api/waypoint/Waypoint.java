@@ -1,69 +1,97 @@
 package com.eerussianguy.blazemap.api.waypoint;
 
-import java.util.Random;
+import java.awt.*;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.GlobalPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.util.Helpers;
+import com.eerussianguy.blazemap.api.BlazeMapReferences;
 
 public class Waypoint {
-    public static Waypoint deserialize(CompoundTag tag) {
-        final String name = tag.getString("name");
-        final GlobalPos pos = Helpers.decodeCodec(GlobalPos.CODEC, tag, "pos");
-        final int color = tag.getInt("color");
-        return new Waypoint(name, pos, color);
-    }
-
+    private final ResourceLocation id;
+    private final ResourceKey<Level> dimension;
+    private final BlockPos.MutableBlockPos position;
     private String name;
-    private GlobalPos pos;
+    private ResourceLocation icon;
     private int color;
+    private float rotation;
 
-    public Waypoint(String name, GlobalPos pos, Random random) {
-        this(name, pos, Helpers.randomBrightColor(random));
+    public Waypoint(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, String name) {
+        this(id, dimension, position, name, BlazeMapReferences.Icons.WAYPOINT, -1, 0);
     }
 
-    public Waypoint(String name, GlobalPos pos, int color) {
+    public Waypoint(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, String name, ResourceLocation icon) {
+        this(id, dimension, position, name, icon, -1, 0);
+    }
+
+    public Waypoint(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, String name, ResourceLocation icon, int color, float rotation) {
+        this.id = id;
+        this.dimension = dimension;
+        this.position = new BlockPos.MutableBlockPos().set(position);
         this.name = name;
-        this.pos = pos;
+        this.icon = icon;
         this.color = color;
+        this.rotation = rotation;
     }
 
-    public CompoundTag serialize() {
-        CompoundTag tag = new CompoundTag();
-        tag.putString("name", name);
-        Helpers.writeCodec(GlobalPos.CODEC, pos, tag, "pos");
-        return tag;
+    public final ResourceLocation getID() {
+        return id;
+    }
+
+    public final ResourceKey<Level> getDimension() {
+        return dimension;
+    }
+
+    public final BlockPos getPosition() {
+        return position;
     }
 
     public String getName() {
         return name;
     }
 
-    public ResourceKey<Level> getDimension() {
-        return pos.dimension();
-    }
-
-    public BlockPos getPos() {
-        return pos.pos();
+    public ResourceLocation getIcon() {
+        return icon;
     }
 
     public int getColor() {
         return color;
     }
 
-    public void setName(String name) {
+    public float getRotation() {
+        return rotation;
+    }
+
+    public Waypoint setPosition(BlockPos position) {
+        this.position.set(position);
+        return this;
+    }
+
+    public Waypoint setName(String name) {
         this.name = name;
+        return this;
     }
 
-    public void setPos(BlockPos pos) {
-        this.pos = GlobalPos.of(this.pos.dimension(), pos);
+    public Waypoint setIcon(ResourceLocation icon) {
+        this.icon = icon;
+        return this;
     }
 
-    public void setColor(int color) {
+    public Waypoint setColor(int color) {
         this.color = color;
+        return this;
+    }
+
+    public Waypoint setRotation(float rotation) {
+        this.rotation = rotation;
+        return this;
+    }
+
+    public Waypoint randomizeColor() {
+        float hue = ((float) System.nanoTime() % 360) / 360F;
+        this.color = Color.HSBtoRGB(hue, 1, 1);
+        return this;
     }
 }

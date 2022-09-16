@@ -1,5 +1,7 @@
 package com.eerussianguy.blazemap.api;
 
+import net.minecraft.resources.ResourceLocation;
+
 import com.eerussianguy.blazemap.api.mapping.Collector;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
@@ -27,5 +29,9 @@ public class BlazeMapReferences {
         public static final BlazeRegistry.Key<Collector<MasterDatum>> TERRAIN_HEIGHT = new BlazeRegistry.Key<>(BlazeMapAPI.COLLECTORS, MODID, "terrain_height");
         public static final BlazeRegistry.Key<Collector<MasterDatum>> BLOCK_COLOR = new BlazeRegistry.Key<>(BlazeMapAPI.COLLECTORS, MODID, "block_color");
         public static final BlazeRegistry.Key<Collector<MasterDatum>> NETHER = new BlazeRegistry.Key<>(BlazeMapAPI.COLLECTORS, MODID, "nether");
+    }
+
+    public static class Icons {
+        public static final ResourceLocation WAYPOINT = new ResourceLocation(MODID, "textures/waypoint.png");
     }
 }

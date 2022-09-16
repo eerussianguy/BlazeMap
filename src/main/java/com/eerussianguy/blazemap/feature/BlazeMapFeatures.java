@@ -62,6 +62,6 @@ public class BlazeMapFeatures {
     }
 
     public static void initWaypoints() {
-        MinecraftForge.EVENT_BUS.register(WaypointManager.class);
+        BlazeMapAPI.setWaypointStore(new WaypointManager());
     }
 }
