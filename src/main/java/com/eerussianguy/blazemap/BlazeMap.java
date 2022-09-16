@@ -9,7 +9,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
-import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.mojang.logging.LogUtils;
@@ -39,13 +38,7 @@ public class BlazeMap {
 
     public void setup(FMLCommonSetupEvent event) {
         BlazeMapEngine.init();
-
         BlazeMapFeatures.initMapping();
-        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-        bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
-        bus.post(new BlazeRegistryEvent.LayerRegistryEvent());
-        bus.post(new BlazeRegistryEvent.MapTypeRegistryEvent());
-
         BlazeMapFeatures.initFullMap();
         BlazeMapFeatures.initWaypoints();
     }

@@ -26,16 +26,16 @@ import com.eerussianguy.blazemap.api.util.RegionPos;
  * @author LordFokas
  */
 public abstract class Processor implements BlazeRegistry.RegistryEntry {
-    private final BlazeRegistry.Key<Layer> id;
+    private final BlazeRegistry.Key<Processor> id;
     private final Set<BlazeRegistry.Key<Collector<MasterDatum>>> collectors;
 
     @SafeVarargs
-    public Processor(BlazeRegistry.Key<Layer> id, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+    public Processor(BlazeRegistry.Key<Processor> id, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
         this.id = id;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
     }
 
-    public BlazeRegistry.Key<Layer> getID() {
+    public BlazeRegistry.Key<Processor> getID() {
         return id;
     }
 

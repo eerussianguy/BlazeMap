@@ -4,13 +4,10 @@ import net.minecraftforge.eventbus.api.Event;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.mapping.Collector;
-import com.eerussianguy.blazemap.api.mapping.Layer;
-import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.api.mapping.MasterDatum;
+import com.eerussianguy.blazemap.api.mapping.*;
 
 /**
- * Fired when it is a suitable time to register objects.
+ * Fired on the ModEventBus when it is a suitable time to register objects.
  *
  * The use of the event to perform registrations is not mandatory, you can just call the registries whenever you want
  * from your mod setup methods, however at some point the registries are frozen, and registering new objects
@@ -42,6 +39,12 @@ public abstract class BlazeRegistryEvent<T> extends Event {
     public static class MapTypeRegistryEvent extends BlazeRegistryEvent<MapType> {
         public MapTypeRegistryEvent() {
             super(BlazeMapAPI.MAPTYPES);
+        }
+    }
+
+    public static class ProcessorRegistryEvent extends BlazeRegistryEvent<Processor> {
+        public ProcessorRegistryEvent() {
+            super(BlazeMapAPI.PROCESSORS);
         }
     }
 }
