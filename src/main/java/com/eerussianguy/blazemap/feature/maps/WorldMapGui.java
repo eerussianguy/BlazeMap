@@ -111,6 +111,7 @@ public class WorldMapGui extends Screen {
 
         int y = 20;
         for(BlazeRegistry.Key<MapType> key : BlazeMapAPI.MAPTYPES.keys()) {
+            if(!key.value().shouldRenderInDimension(dim)) continue;
             addRenderableWidget(new MapTypeButton(7, y += 20, 16, 16, key));
         }
     }
@@ -463,9 +464,6 @@ public class WorldMapGui extends Screen {
         public void renderToolTip(PoseStack stack, int x, int y) {
             RenderSystem.setShaderColor(1, 1, 1, 1);
             TranslatableComponent component = key.value().getName();
-            if(active) {
-                component.append(Helpers.translate("blazemap.enabled"));
-            }
             WorldMapGui.this.renderTooltip(stack, component, x, y);
         }
 

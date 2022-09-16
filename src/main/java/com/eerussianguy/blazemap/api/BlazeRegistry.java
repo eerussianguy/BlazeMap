@@ -1,18 +1,19 @@
 package com.eerussianguy.blazemap.api;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import net.minecraft.resources.ResourceLocation;
 
 public class BlazeRegistry<T> {
     private final Map<Key<T>, RegistryEntry> objects;
+    private final List<Key<T>> orderedKeys;
+    private final List<Key<T>> orderedKeysView;
     private boolean frozen = false;
 
     public BlazeRegistry() {
         this.objects = new HashMap<>();
+        this.orderedKeys = new ArrayList<>();
+        this.orderedKeysView = Collections.unmodifiableList(orderedKeys);
     }
 
     public boolean exists(Key<? extends T> key) {
@@ -30,6 +31,7 @@ public class BlazeRegistry<T> {
         Key<T> key = (Key<T>) object.getID();
         if(objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is already set!");
         objects.put(key, object);
+        orderedKeys.add(key);
     }
 
     @SuppressWarnings("unchecked")
@@ -40,8 +42,8 @@ public class BlazeRegistry<T> {
         objects.put(key, object);
     }
 
-    public Set<Key<T>> keys() {
-        return objects.keySet();
+    public List<Key<T>> keys() {
+        return orderedKeysView;
     }
 
     public void freeze() {

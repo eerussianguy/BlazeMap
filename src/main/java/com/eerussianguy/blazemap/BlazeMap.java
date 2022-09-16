@@ -1,7 +1,6 @@
 package com.eerussianguy.blazemap;
 
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -42,7 +41,7 @@ public class BlazeMap {
         BlazeMapEngine.init();
 
         BlazeMapFeatures.initMapping();
-        IEventBus bus = MinecraftForge.EVENT_BUS;
+        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
         bus.post(new BlazeRegistryEvent.LayerRegistryEvent());
         bus.post(new BlazeRegistryEvent.MapTypeRegistryEvent());
