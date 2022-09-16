@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -14,7 +13,7 @@ public class NetherCollector extends Collector<TerrainHeightMD> {
     }
 
     @Override
-    public TerrainHeightMD collect(Level level, BlockPos.MutableBlockPos mutable, int minX, int minZ, int maxX, int maxZ) {
+    public TerrainHeightMD collect(Level level, int minX, int minZ, int maxX, int maxZ) {
         final int[][] heightmap = new int[16][16];
 
         for(int x = 0; x < 16; x++) {

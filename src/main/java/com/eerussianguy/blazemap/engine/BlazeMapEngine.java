@@ -57,6 +57,7 @@ public class BlazeMapEngine {
             BlazeMapAPI.MAPTYPES.freeze();
             BlazeMapAPI.LAYERS.freeze();
             BlazeMapAPI.COLLECTORS.freeze();
+            BlazeMapAPI.PROCESSORS.freeze();
             frozenRegistries = true;
         }
 

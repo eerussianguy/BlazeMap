@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.feature.maps;
+package com.eerussianguy.blazemap.feature;
 
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraftforge.client.gui.ForgeIngameGui;
@@ -6,6 +6,7 @@ import net.minecraftforge.client.gui.IIngameOverlay;
 import net.minecraftforge.client.gui.OverlayRegistry;
 
 import com.eerussianguy.blazemap.BlazeMapConfig;
+import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 

@@ -13,6 +13,18 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
+/**
+ * In Blaze Map, maps are composed of several layers superimposed on each others.
+ * Layers read one or more MasterDatum objects previously collected by Collectors and use it
+ * to generate a layer image for the respective chunk. These images are later stitched together
+ * by the engine to generate a layer image for the whole region (LayerRegionTile).
+ *
+ * All operations are thread-safe by default (read data, paint image) and are executed in parallel
+ * in the engine's background threads. Layers are meant exclusively to generate map tiles, for other
+ * forms of data processing and analysis please use a Processor instead.
+ *
+ * @author LordFokas
+ */
 public abstract class Layer implements BlazeRegistry.RegistryEntry {
     protected static final int OPAQUE = 0xFF000000;
 

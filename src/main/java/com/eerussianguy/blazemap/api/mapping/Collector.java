@@ -8,7 +8,14 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 
-
+/**
+ * Collectors collect MasterData from chunks that need updating to be processed later.
+ * This operation is executed synchronously in the main game thread.
+ *
+ * MasterData is consumed by Layers and Processors asynchronously in the data crunching threads.
+ *
+ * @author LordFokas
+ */
 public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.RegistryEntry {
     protected static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
     protected final BlazeRegistry.Key<Collector<MasterDatum>> id;
@@ -21,7 +28,7 @@ public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.
         return id;
     }
 
-    public abstract T collect(Level level, BlockPos.MutableBlockPos mutable, int minX, int minZ, int maxX, int maxZ);
+    public abstract T collect(Level level, int minX, int minZ, int maxX, int maxZ);
 
     protected static boolean isWater(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));

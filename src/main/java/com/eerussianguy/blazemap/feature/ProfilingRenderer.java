@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.feature.maps;
+package com.eerussianguy.blazemap.feature;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -11,6 +11,7 @@ import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.MinecraftForge;
 
 import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profiler;
 import com.eerussianguy.blazemap.util.Profilers;
@@ -30,6 +31,7 @@ public class ProfilingRenderer {
         Profilers.Engine.COLLECTOR_LOAD_PROFILER.ping();
         Profilers.Engine.LAYER_LOAD_PROFILER.ping();
         Profilers.Engine.REGION_LOAD_PROFILER.ping();
+        Profilers.Engine.PROCESSOR_LOAD_PROFILER.ping();
         Profilers.Minimap.TEXTURE_LOAD_PROFILER.ping();
 
         if(Minecraft.getInstance().screen instanceof WorldMapGui) return;
@@ -56,7 +58,7 @@ public class ProfilingRenderer {
 
         // TODO: this is probably very wrong but right now I just need it to work.
         VertexConsumer playerVertices = buffers.getBuffer(RenderType.text(Helpers.identifier("minimap")));
-        float w = 250, h = 270, o = 0;
+        float w = 250, h = 325, o = 0;
         playerVertices.vertex(matrix, o, h, -0.01F).color(0, 0, 0, 120).uv(0.25F, 0.75F).uv2(LightTexture.FULL_BRIGHT).endVertex();
         playerVertices.vertex(matrix, w, h, -0.01F).color(0, 0, 0, 120).uv(0.75F, 0.75F).uv2(LightTexture.FULL_BRIGHT).endVertex();
         playerVertices.vertex(matrix, w, o, -0.01F).color(0, 0, 0, 120).uv(0.75F, 0.25F).uv2(LightTexture.FULL_BRIGHT).endVertex();
@@ -67,13 +69,14 @@ public class ProfilingRenderer {
         fontRenderer.drawInBatch("Player Region: " + new RegionPos(pos), 5F, y += 10, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         drawTimeProfiler(Profilers.Minimap.DEBUG_TIME_PROFILER, y += 10, "Debug Info", fontRenderer, matrix, buffers);
         drawTimeProfiler(Profilers.Minimap.DRAW_TIME_PROFILER, y += 10, "Minimap Draw", fontRenderer, matrix, buffers);
-        y = drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Texture Upload      [ last second ]", fontRenderer, matrix, buffers, "frame load");
+        y = drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Texture Upload         [ last second ]", fontRenderer, matrix, buffers, "frame load");
 
         // Cartography Pipeline Profiling
         fontRenderer.drawInBatch("Cartography Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        y = drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect      [ last second ]", fontRenderer, matrix, buffers, "tick load");
-        y = drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, "Layer Render      [ last second ]", fontRenderer, matrix, buffers, "delay");
-        y = drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save      [ last minute ]", fontRenderer, matrix, buffers, "delay");
+        y = drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect         [ last second ]", fontRenderer, matrix, buffers, "tick load");
+        y = drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, "Layer Render         [ last second ]", fontRenderer, matrix, buffers, "delay");
+        y = drawSubsystem(Profilers.Engine.PROCESSOR_LOAD_PROFILER, Profilers.Engine.PROCESSOR_TIME_PROFILER, y + 10, "Data Processing     [ last second ]", fontRenderer, matrix, buffers, "delay");
+        y = drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save         [ last minute ]", fontRenderer, matrix, buffers, "delay");
     }
 
     public static float drawSubsystem(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {

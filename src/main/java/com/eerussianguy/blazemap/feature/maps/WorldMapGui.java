@@ -53,7 +53,7 @@ public class WorldMapGui extends Screen {
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
     private static final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
     private static final File SCREENSHOT_DIR = new File(Minecraft.getInstance().gameDirectory, "screenshots");
-    private static final double MIN_ZOOM = 0.125, MAX_ZOOM = 16;
+    private static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
     private static final ResourceLocation PLAYER = Helpers.identifier("textures/player.png");
 
     private static DimensionChangedEvent.DimensionTileStorage tileStorage;
@@ -71,8 +71,8 @@ public class WorldMapGui extends Screen {
     private double zoom = 1;
 
     // private int r_regions = 0, r_tiles = 0;
-    private static final Profiler.TimeProfiler RENDER = new Profiler.TimeProfiler(1);
-    private static final Profiler.TimeProfiler UPLOAD = new Profiler.TimeProfiler(1);
+    private static final Profiler.TimeProfilerSync RENDER = new Profiler.TimeProfilerSync(1);
+    private static final Profiler.TimeProfilerSync UPLOAD = new Profiler.TimeProfilerSync(1);
 
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());

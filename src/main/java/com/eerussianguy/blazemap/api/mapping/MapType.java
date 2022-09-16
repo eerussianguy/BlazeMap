@@ -12,6 +12,14 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 
+/**
+ * Each available map in Blaze Map is defined by MapType.
+ * These objects do no processing of any sort and merely define a structure.
+ * The provided list of layers defines what layers are rendered on the screen,
+ * the first layer being rendered on the bottom and the last on top.
+ *
+ * @author LordFokas
+ */
 public abstract class MapType implements BlazeRegistry.RegistryEntry {
     private final BlazeRegistry.Key<MapType> id;
     private final Set<BlazeRegistry.Key<Layer>> layers;
