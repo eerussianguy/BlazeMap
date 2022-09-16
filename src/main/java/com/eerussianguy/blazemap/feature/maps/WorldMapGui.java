@@ -214,7 +214,7 @@ public class WorldMapGui extends Screen {
         stack.pushPose();
         stack.scale(1F / scale, 1F / scale, 1);
         LocalPlayer player = Helpers.getPlayer();
-        renderMarker(buffers, stack, PLAYER, player.blockPosition(), 48, 48, player.getRotationVector().y, false);
+        renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false);
         stack.popPose();
 
         if(showWidgets) {
@@ -288,11 +288,19 @@ public class WorldMapGui extends Screen {
         RenderSystem.setShaderColor(r, g, b, a);
     }
 
-    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
-        vertices.vertex(matrix, 0.0F, h, -0.01F).color(255, 255, 255, 255).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, h, -0.01F).color(255, 255, 255, 255).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, 0.0F, -0.01F).color(255, 255, 255, 255).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(255, 255, 255, 255).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h){
+        drawQuad(vertices, matrix, w, h, Colors.NO_TINT);
+    }
+
+    private static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h, int color) {
+        float a = ((float) ((color >> 24) & 0xFF)) / 255F;
+        float r = ((float) ((color >> 16) & 0xFF)) / 255F;
+        float g = ((float) ((color >> 8) & 0xFF)) / 255F;
+        float b = ((float) ((color) & 0xFF)) / 255F;
+        vertices.vertex(matrix, 0.0F, h, -0.01F).color(r, g, b, a).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, h, -0.01F).color(r, g, b, a).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, 0.0F, -0.01F).color(r, g, b, a).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(r, g, b, a).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
     private void updateTexture() {
@@ -350,7 +358,7 @@ public class WorldMapGui extends Screen {
         }
     }
 
-    private void renderMarker(MultiBufferSource buffers, PoseStack stack, ResourceLocation marker, BlockPos position, double width, double height, float rotation, boolean zoom) {
+    private void renderMarker(MultiBufferSource buffers, PoseStack stack, BlockPos position, ResourceLocation marker, int color, double width, double height, float rotation, boolean zoom) {
         stack.pushPose();
         stack.scale((float) this.zoom, (float) this.zoom, 1);
         int dx = position.getX() - begin.getX();
@@ -362,7 +370,7 @@ public class WorldMapGui extends Screen {
         stack.mulPose(Vector3f.ZP.rotationDegrees(rotation));
         stack.translate(-width / 2, -height / 2, 0);
         VertexConsumer vertices = buffers.getBuffer(RenderType.text(marker));
-        drawQuad(vertices, stack.last().pose(), (float) width, (float) height);
+        drawQuad(vertices, stack.last().pose(), (float) width, (float) height, color);
         stack.popPose();
     }
 

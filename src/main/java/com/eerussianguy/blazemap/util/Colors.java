@@ -3,6 +3,8 @@ package com.eerussianguy.blazemap.util;
 import java.awt.*;
 
 public class Colors {
+    public static final int NO_TINT = -1;
+
     public static int layerBlend(int bottom, int top) {
         if((top & 0xFF000000) == 0xFF000000) return top; // top is opaque, use top
         if((top & 0xFF000000) == 0) return bottom; // top is transparent, use bottom
