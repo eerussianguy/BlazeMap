@@ -1,5 +1,6 @@
 package com.eerussianguy.blazemap.engine.async;
 
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -7,20 +8,26 @@ import com.eerussianguy.blazemap.BlazeMap;
 
 public final class AsyncDataCruncher {
     private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
-    private final Thread thread = new Thread(this::loop);
     private volatile boolean running = true;
     private final Object mutex = new Object();
+    private final LinkedList<Thread> threads = new LinkedList();
 
     public AsyncDataCruncher(String name) {
-        BlazeMap.LOGGER.info("Starting {} AsyncDataCruncher Thread", name);
-        thread.setName(name + " AsyncDataCruncher");
-        thread.setDaemon(true);
-        thread.start();
-        BlazeMap.LOGGER.info("Started {} AsyncDataCruncher Thread", name);
+        int cores = Runtime.getRuntime().availableProcessors();
+        BlazeMap.LOGGER.info("Starting {} {} AsyncDataCruncher Threads", cores, name);
+        for(int i = 0; i < cores; i++) {
+            Thread thread = new Thread(this::loop);
+            thread.setName(name + " AsyncDataCruncher #" + i);
+            thread.setDaemon(true);
+            thread.start();
+            threads.add(thread);
+            BlazeMap.LOGGER.info("Started {}", thread.getName());
+        }
+        BlazeMap.LOGGER.info("Started {} {} AsyncDataCruncher Threads", cores, name);
     }
 
     public void assertIsOnDataCruncherThread() {
-        if(Thread.currentThread() != thread) {
+        if(!threads.contains(Thread.currentThread())) {
             throw new IllegalStateException("Operation can only be performed in the AsyncDataCruncher thread");
         }
     }
@@ -59,6 +66,7 @@ public final class AsyncDataCruncher {
     private void work() {
         while(!tasks.isEmpty()) {
             Runnable task = tasks.poll();
+            if(task == null) continue;
             try {task.run();}
             catch(Throwable t) {t.printStackTrace();}
         }

@@ -36,11 +36,14 @@ public abstract class Profiler {
         }
     }
 
-    public static class TimeProfiler extends Profiler {
-        private boolean populated = false;
+    public static abstract class TimeProfiler extends Profiler {
+        protected boolean populated = false;
+    }
+
+    public static class TimeProfilerSync extends TimeProfiler {
         private long start;
 
-        public TimeProfiler(int rollSize) {
+        public TimeProfilerSync(int rollSize) {
             this.roll = new long[rollSize];
         }
 
@@ -60,6 +63,32 @@ public abstract class Profiler {
                 synchronized(this) {
                     avg = min = max = delta;
                 }
+                populated = true;
+            }
+        }
+    }
+
+    public static class TimeProfilerAsync extends TimeProfiler {
+        private final ThreadLocal<Long> start = new ThreadLocal<>();
+
+        public TimeProfilerAsync(int rollSize) {
+            this.roll = new long[rollSize];
+        }
+
+        public void begin() {
+            start.set(System.nanoTime());
+        }
+
+        public synchronized void end() {
+            if(populated) {
+                roll[idx] = System.nanoTime() - start.get();
+                idx = (idx + 1) % roll.length;
+                recalculate();
+            }
+            else {
+                long delta = System.nanoTime() - start.get();
+                Arrays.fill(roll, delta);
+                avg = min = max = delta;
                 populated = true;
             }
         }

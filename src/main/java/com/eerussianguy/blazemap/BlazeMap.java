@@ -38,9 +38,7 @@ public class BlazeMap {
 
     public void setup(FMLCommonSetupEvent event) {
         BlazeMapEngine.init();
-
         BlazeMapFeatures.initMapping();
-
         BlazeMapFeatures.initFullMap();
         BlazeMapFeatures.initWaypoints();
     }

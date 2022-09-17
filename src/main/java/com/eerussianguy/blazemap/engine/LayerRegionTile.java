@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.function.Consumer;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -16,9 +17,10 @@ public class LayerRegionTile {
     private final PriorityLock lock = new PriorityLock();
     private final File file;
     private NativeImage image;
+    private boolean isEmpty = true;
 
-    public LayerRegionTile(ResourceLocation layer, RegionPos region, File worldDir) {
-        File layerDir = new File(worldDir, layer.toString().replace(':', '+'));
+    public LayerRegionTile(BlazeRegistry.Key<Layer> layer, RegionPos region, File worldDir) {
+        File layerDir = new File(worldDir, layer.location.toString().replace(':', '+'));
         this.file = new File(layerDir, region.toString() + ".png");
         image = new NativeImage(NativeImage.Format.RGBA, 512, 512, false);
     }
@@ -28,6 +30,7 @@ public class LayerRegionTile {
             try {
                 lock.lockPriority();
                 image = NativeImage.read(Files.newInputStream(file.toPath()));
+                isEmpty = false;
             }
             catch(IOException e) {
                 e.printStackTrace();
@@ -45,6 +48,7 @@ public class LayerRegionTile {
     }
 
     public void save() {
+        if(isEmpty) return;
         try {
             lock.lock();
             image.writeToFile(file);
@@ -71,6 +75,7 @@ public class LayerRegionTile {
                     image.setPixelRGBA(xOffset + x, zOffset + z, tile.getPixelRGBA(x, z));
                 }
             }
+            isEmpty = false;
         }
         finally {
             lock.unlock();
@@ -78,6 +83,7 @@ public class LayerRegionTile {
     }
 
     public void consume(Consumer<NativeImage> consumer) {
+        if(isEmpty) return;
         try {
             lock.lockPriority();
             consumer.accept(image);

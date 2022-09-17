@@ -2,8 +2,6 @@ package com.eerussianguy.blazemap.feature.mapping;
 
 import java.awt.*;
 
-import net.minecraft.network.chat.TextComponent;
-
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.BlockColorMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
@@ -16,7 +14,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class BlockColorLayer extends Layer {
 
     public BlockColorLayer() {
-        super(BlazeMapReferences.Layers.BLOCK_COLOR, Helpers.translate("blazemap.block_color"), BlazeMapReferences.Collectors.BLOCK_COLOR, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(BlazeMapReferences.Layers.BLOCK_COLOR, Helpers.translate("blazemap.block_color"), Helpers.identifier("textures/map_icons/default.png"), BlazeMapReferences.Collectors.BLOCK_COLOR, BlazeMapReferences.Collectors.WATER_LEVEL);
     }
 
     @Override

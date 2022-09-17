@@ -14,9 +14,12 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.BlazeMap;
+import com.eerussianguy.blazemap.api.BlazeMapAPI;
+import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
@@ -29,14 +32,16 @@ public class BlazeMapEngine {
     private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
     private static DebouncingThread debouncer;
+    private static AsyncDataCruncher dataCruncher;
     private static AsyncChain.Root async;
     private static CartographyPipeline activePipeline;
     private static String serverID;
     private static File serverDir;
+    private static boolean frozenRegistries = false;
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
-        AsyncDataCruncher dataCruncher = new AsyncDataCruncher("Blaze Map");
+        dataCruncher = new AsyncDataCruncher("Blaze Map");
         async = new AsyncChain.Root(dataCruncher, Helpers::runOnMainThread);
         debouncer = new DebouncingThread("Blaze Map Engine");
     }
@@ -45,12 +50,29 @@ public class BlazeMapEngine {
         return async;
     }
 
+    public static AsyncDataCruncher cruncher() {
+        return dataCruncher;
+    }
+
     public static DebouncingThread debouncer() {
         return debouncer;
     }
 
     @SubscribeEvent
     public static void onJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
+        if(!frozenRegistries) {
+            IEventBus bus = MinecraftForge.EVENT_BUS;
+            bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
+            bus.post(new BlazeRegistryEvent.LayerRegistryEvent());
+            bus.post(new BlazeRegistryEvent.MapTypeRegistryEvent());
+            bus.post(new BlazeRegistryEvent.ProcessorRegistryEvent());
+            BlazeMapAPI.MAPTYPES.freeze();
+            BlazeMapAPI.LAYERS.freeze();
+            BlazeMapAPI.COLLECTORS.freeze();
+            BlazeMapAPI.PROCESSORS.freeze();
+            frozenRegistries = true;
+        }
+
         LocalPlayer player = event.getPlayer();
         if(player == null) return;
         serverID = Helpers.getServerID();

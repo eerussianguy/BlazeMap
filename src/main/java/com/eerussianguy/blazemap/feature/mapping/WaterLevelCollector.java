@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -16,7 +15,7 @@ public class WaterLevelCollector extends Collector<WaterLevelMD> {
 
 
     @Override
-    public WaterLevelMD collect(Level level, BlockPos.MutableBlockPos mutable, int minX, int minZ, int maxX, int maxZ) {
+    public WaterLevelMD collect(Level level, int minX, int minZ, int maxX, int maxZ) {
 
         final int[][] water = new int[16][16];
 

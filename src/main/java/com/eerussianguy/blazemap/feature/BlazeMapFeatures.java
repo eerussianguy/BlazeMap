@@ -13,11 +13,11 @@ import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.feature.mapping.*;
+import com.eerussianguy.blazemap.feature.maps.MapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
-import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {
@@ -42,7 +42,7 @@ public class BlazeMapFeatures {
     }
 
     public static void initMiniMap() {
-        MinimapRenderer.INSTANCE.setMapType(BlazeMapAPI.MAPTYPES.get(BlazeMapReferences.MapTypes.TOPOGRAPHY));
+        MinecraftForge.EVENT_BUS.addListener(MinimapRenderer::onDimensionChange);
     }
 
     public static void initFullMap() {
@@ -50,12 +50,12 @@ public class BlazeMapFeatures {
         ClientRegistry.registerKeyBinding(CYCLE_ZOOM);
 
         IEventBus bus = MinecraftForge.EVENT_BUS;
-        bus.addListener(WorldMapGui::onDimensionChange);
+        bus.addListener(MapRenderer::onDimensionChange);
         bus.addListener((InputEvent.KeyInputEvent evt) -> {
             if(OPEN_FULL_MAP.isDown()) {
                 WorldMapGui.open();
             }
-            if (CYCLE_ZOOM.isDown()) {
+            if(CYCLE_ZOOM.isDown()) {
                 MinimapZoom zoom = BlazeMapConfig.CLIENT.minimapZoom.get();
                 BlazeMapConfig.CLIENT.minimapZoom.set(zoom.next());
             }
@@ -63,6 +63,6 @@ public class BlazeMapFeatures {
     }
 
     public static void initWaypoints() {
-        MinecraftForge.EVENT_BUS.register(WaypointManager.class);
+        BlazeMapAPI.setWaypointStore(new WaypointManager());
     }
 }
