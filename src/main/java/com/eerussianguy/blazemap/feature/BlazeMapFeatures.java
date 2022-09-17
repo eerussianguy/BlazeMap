@@ -13,6 +13,7 @@ import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.feature.mapping.*;
+import com.eerussianguy.blazemap.feature.maps.MapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
@@ -41,7 +42,7 @@ public class BlazeMapFeatures {
     }
 
     public static void initMiniMap() {
-        MinimapRenderer.INSTANCE.setMapType(BlazeMapAPI.MAPTYPES.get(BlazeMapReferences.MapTypes.TOPOGRAPHY));
+        MinecraftForge.EVENT_BUS.addListener(MinimapRenderer::onDimensionChange);
     }
 
     public static void initFullMap() {
@@ -49,7 +50,7 @@ public class BlazeMapFeatures {
         ClientRegistry.registerKeyBinding(CYCLE_ZOOM);
 
         IEventBus bus = MinecraftForge.EVENT_BUS;
-        bus.addListener(WorldMapGui::onDimensionChange);
+        bus.addListener(MapRenderer::onDimensionChange);
         bus.addListener((InputEvent.KeyInputEvent evt) -> {
             if(OPEN_FULL_MAP.isDown()) {
                 WorldMapGui.open();
