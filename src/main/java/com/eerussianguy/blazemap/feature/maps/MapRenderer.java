@@ -51,8 +51,8 @@ public class MapRenderer implements AutoCloseable {
     // =================================================================================================================
 
 
-    private final Profiler.TimeProfilerSync renderTimer = new Profiler.TimeProfilerSync(1);
-    private final Profiler.TimeProfilerSync uploadTimer = new Profiler.TimeProfilerSync(1);
+    private Profiler.TimeProfiler renderTimer = new Profiler.TimeProfiler.Dummy();
+    private Profiler.TimeProfiler uploadTimer = new Profiler.TimeProfiler.Dummy();
 
     private MapType mapType;
     private List<BlazeRegistry.Key<Layer>> disabled;
@@ -174,7 +174,6 @@ public class MapRenderer implements AutoCloseable {
         stack.popPose();
 
         stack.popPose();
-        //buffers.endBatch();
     }
 
     private void updateTexture() {
@@ -271,6 +270,12 @@ public class MapRenderer implements AutoCloseable {
 
     public MapType getMapType(){
         return mapType;
+    }
+
+    public MapRenderer setProfilers(Profiler.TimeProfiler render, Profiler.TimeProfiler upload){
+        this.renderTimer = render;
+        this.uploadTimer = upload;
+        return this;
     }
 
     public boolean setZoom(double zoom) {

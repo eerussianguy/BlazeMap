@@ -38,6 +38,17 @@ public abstract class Profiler {
 
     public static abstract class TimeProfiler extends Profiler {
         protected boolean populated = false;
+
+        public abstract void begin();
+        public abstract void end();
+
+        public static class Dummy extends TimeProfiler {
+            @Override
+            public void begin() {}
+
+            @Override
+            public void end() {}
+        }
     }
 
     public static class TimeProfilerSync extends TimeProfiler {
@@ -47,10 +58,12 @@ public abstract class Profiler {
             this.roll = new long[rollSize];
         }
 
+        @Override
         public void begin() {
             start = System.nanoTime();
         }
 
+        @Override
         public void end() {
             if(populated) {
                 roll[idx] = System.nanoTime() - start;
@@ -75,10 +88,12 @@ public abstract class Profiler {
             this.roll = new long[rollSize];
         }
 
+        @Override
         public void begin() {
             start.set(System.nanoTime());
         }
 
+        @Override
         public synchronized void end() {
             if(populated) {
                 roll[idx] = System.nanoTime() - start.get();
