@@ -79,4 +79,12 @@ public class Helpers {
     public static TranslatableComponent translate(String key) {
         return new TranslatableComponent(key);
     }
+
+    public static int clamp(int min, int var, int max){
+        return Math.max(min, Math.min(var, max));
+    }
+
+    public static double clamp(double min, double var, double max){
+        return Math.max(min, Math.min(var, max));
+    }
 }

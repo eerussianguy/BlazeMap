@@ -12,7 +12,12 @@ import com.mojang.blaze3d.platform.NativeImage;
 
 public class NetherLayer extends Layer {
     public NetherLayer() {
-        super(BlazeMapReferences.Layers.NETHER, Helpers.translate("blazemap.nether_terrain"), Helpers.identifier("textures/map_icons/default.png"), BlazeMapReferences.Collectors.NETHER);
+        super(
+            BlazeMapReferences.Layers.NETHER,
+            Helpers.translate("blazemap.nether_terrain"),
+
+            BlazeMapReferences.Collectors.NETHER
+        );
     }
 
     private enum Gradient {

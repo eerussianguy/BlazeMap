@@ -30,21 +30,53 @@ public class RenderHelper {
     }
 
     public static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h) {
-        drawQuad(vertices, matrix, w, h, Colors.NO_TINT);
+        drawQuad(vertices, matrix, w, h, Colors.NO_TINT, 0F, 1F, 0F, 1F);
     }
 
     public static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h, int color) {
+        drawQuad(vertices, matrix, w, h, color, 0F, 1F, 0F, 1F);
+    }
+
+    public static void drawQuad(VertexConsumer vertices, Matrix4f matrix, float w, float h, int color, float u0, float u1, float v0, float v1) {
         float a = ((float) ((color >> 24) & 0xFF)) / 255F;
         float r = ((float) ((color >> 16) & 0xFF)) / 255F;
         float g = ((float) ((color >> 8) & 0xFF)) / 255F;
         float b = ((float) ((color) & 0xFF)) / 255F;
-        vertices.vertex(matrix, 0.0F, h, -0.01F).color(r, g, b, a).uv(0.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, h, -0.01F).color(r, g, b, a).uv(1.0F, 1.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, w, 0.0F, -0.01F).color(r, g, b, a).uv(1.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
-        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(r, g, b, a).uv(0.0F, 0.0F).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, h, -0.01F).color(r, g, b, a).uv(u0, v1).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, h, -0.01F).color(r, g, b, a).uv(u1, v1).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, w, 0.0F, -0.01F).color(r, g, b, a).uv(u1, v0).uv2(LightTexture.FULL_BRIGHT).endVertex();
+        vertices.vertex(matrix, 0.0F, 0.0F, -0.01F).color(r, g, b, a).uv(u0, v0).uv2(LightTexture.FULL_BRIGHT).endVertex();
     }
 
     public static void fillRect(MultiBufferSource buffers, Matrix4f matrix, float w, float h, int color) {
         drawQuad(buffers.getBuffer(SOLID), matrix, w, h, color);
+    }
+
+    public static void drawFrame(VertexConsumer vertices, PoseStack stack, int width, int height, int border) {
+        stack.pushPose();
+
+        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0F, 0.25F, 0F, 0.25F);
+        stack.translate(border, 0, 0);
+        drawQuad(vertices, stack.last().pose(), width - (border*2), border, Colors.NO_TINT, 0.25F, 0.75F, 0F, 0.25F);
+        stack.translate(width - (border*2), 0, 0);
+        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0.75F, 1F, 0F, 0.25F);
+
+        stack.translate(-width + border, border, 0);
+
+        drawQuad(vertices, stack.last().pose(), border, height - (border*2), Colors.NO_TINT, 0F, 0.25F, 0.25F, 0.75F);
+        stack.translate(border, 0, 0);
+        drawQuad(vertices, stack.last().pose(), width - (border*2), height - (border*2), Colors.NO_TINT, 0.25F, 0.75F, 0.25F, 0.75F);
+        stack.translate(width - (border*2), 0, 0);
+        drawQuad(vertices, stack.last().pose(), border, height - (border*2), Colors.NO_TINT, 0.75F, 1F, 0.25F, 0.75F);
+
+        stack.translate(-width + border, height - (border*2), 0);
+
+        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0F, 0.25F, 0.75F, 1F);
+        stack.translate(border, 0, 0);
+        drawQuad(vertices, stack.last().pose(), width - (border*2), border, Colors.NO_TINT, 0.25F, 0.75F, 0.75F, 1F);
+        stack.translate(width - (border*2), 0, 0);
+        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0.75F, 1F, 0.75F, 1F);
+
+        stack.popPose();
     }
 }

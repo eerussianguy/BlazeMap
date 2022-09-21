@@ -14,10 +14,9 @@ import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 import com.eerussianguy.blazemap.BlazeMapConfig;
-import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profilers;
 import com.eerussianguy.blazemap.util.RenderHelper;
@@ -45,11 +44,7 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     public static final MinimapRenderer INSTANCE = new MinimapRenderer();
-    private static final int SIZE = 512;
-
-    public static void onDimensionChange(DimensionChangedEvent evt) {
-        INSTANCE.setMapType(BlazeMapReferences.MapTypes.AERIAL_VIEW.value());
-    }
+    public static final int SIZE = 512;
 
     private final RenderType backgroundRenderType;
     private MapType mapType;
@@ -72,7 +67,7 @@ public class MinimapRenderer implements AutoCloseable {
     }
 
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
-        if(Minecraft.getInstance().screen instanceof WorldMapGui) return;
+        if(Minecraft.getInstance().screen instanceof IScreenSkipsMinimap) return;
 
         LocalPlayer player = Helpers.getPlayer();
         if(player == null) return;

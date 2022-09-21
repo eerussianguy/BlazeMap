@@ -7,6 +7,7 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.TextComponent;
@@ -20,6 +21,7 @@ import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.api.waypoint.Waypoint;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.util.Colors;
@@ -29,11 +31,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 
-public class WorldMapGui extends Screen {
+public class WorldMapGui extends Screen implements IScreenSkipsMinimap {
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
-    private static final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
+    // private static final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
     private static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
     private static boolean showWidgets = true;
 
@@ -82,7 +84,7 @@ public class WorldMapGui extends Screen {
     public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
         // zoom in or out by a factor of 2, and clamp the value between min and max zoom.
         double prevZoom = zoom;
-        zoom = Math.max(MIN_ZOOM, Math.min(zoom * (scroll > 0 ? 2 : 0.5), MAX_ZOOM));
+        zoom = Helpers.clamp(MIN_ZOOM, zoom * (scroll > 0 ? 2 : 0.5), MAX_ZOOM);
         if(prevZoom == zoom) return false;
         return mapRenderer.setZoom(zoom);
     }
@@ -106,39 +108,6 @@ public class WorldMapGui extends Screen {
         }
     }
 
-    /*
-    private void debugMapInfo(PoseStack stack, MultiBufferSource buffers) {
-        if(!BlazeMapConfig.CLIENT.enableDebug.get()) return;
-
-        stack.translate(150, 10, 0);
-        stack.scale(0.5F, 0.5F, 0.5F);
-        Matrix4f matrix = stack.last().pose();
-        Font font = getMinecraft().font;
-
-        NativeImage texture = mapTexture.getPixels();
-        BlockPos begin = center.offset(-texture.getWidth() / 2, 0, -texture.getHeight() / 2);
-        font.drawInBatch("Center: " + center.toShortString(), 0, 0, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Begin: " + begin.toShortString(), 0, 10, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Map Size: " + mapWidth + " x " + mapHeight, 0, 20, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch("Zoom Factor: " + zoom + "x", 0, 30, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-
-        double render = RENDER.getAvg() / 1000;
-        double upload = UPLOAD.getAvg() / 1000;
-        String ru = "\u03BCs";
-        String uu = "\u03BCs";
-        if(render > 1000) {
-            render /= 1000;
-            ru = "ms";
-        }
-        if(upload > 1000) {
-            upload /= 1000;
-            uu = "ms";
-        }
-        font.drawInBatch(String.format("Render time: %.2f%s", render, ru), 0, 50, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-        font.drawInBatch(String.format("Upload time: %.2f%s", upload, uu), 0, 60, 0xFFFF0000, false, matrix, buffers, true, 0, LightTexture.FULL_BRIGHT);
-    }
-    */
-
     @Override
     public void onClose() {
         MinimapRenderer.INSTANCE.setMapType(mapRenderer.getMapType());
@@ -150,7 +119,7 @@ public class WorldMapGui extends Screen {
 
     @Override
     public boolean keyPressed(int key, int x, int y) {
-        if(key == BlazeMapFeatures.OPEN_FULL_MAP.getKey().getValue()) {
+        if(key == BlazeMapFeatures.KEY_MAPS.getKey().getValue()) {
             this.onClose();
             return true;
         }
@@ -233,6 +202,11 @@ public class WorldMapGui extends Screen {
         public MapTypeButton(int px, int py, int w, int h, BlazeRegistry.Key<MapType> key) {
             super(px, py, w, h, 0, 0, 0, key.value().getIcon(), w, h, button -> {
                 mapRenderer.setMapType(key.value());
+                for(GuiEventListener widget : WorldMapGui.this.children()){
+                    if(widget instanceof LayerButton lb){
+                        lb.checkVisible();
+                    }
+                }
             }, key.value().getName());
             this.key = key;
             MapType map = key.value();
@@ -240,6 +214,7 @@ public class WorldMapGui extends Screen {
 
             int layerX = px + 20;
             for(BlazeRegistry.Key<Layer> layer : map.getLayers()) {
+                if(layer.value().isOpaque()) continue;
                 LayerButton lb = new LayerButton(layerX, py, 16, 16, layer, map);
                 layers.add(lb);
                 layerX += 20;
