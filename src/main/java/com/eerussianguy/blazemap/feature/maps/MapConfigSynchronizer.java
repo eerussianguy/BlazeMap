@@ -1,6 +1,8 @@
 package com.eerussianguy.blazemap.feature.maps;
 
 import com.eerussianguy.blazemap.ClientConfig.MapConfig;
+import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
+import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 
 public class MapConfigSynchronizer {
@@ -31,6 +33,12 @@ public class MapConfigSynchronizer {
     public boolean setMapType(MapType mapType) {
         if(!current.setMapType(mapType)) return false;
         config.activeMap.set(current.getMapType().getID());
+        return true;
+    }
+
+    public boolean toggleLayer(Key<Layer> layerID) {
+        if(!current.toggleLayer(layerID)) return false;
+        config.disabledLayers.set(current.getDisabledLayers());
         return true;
     }
 

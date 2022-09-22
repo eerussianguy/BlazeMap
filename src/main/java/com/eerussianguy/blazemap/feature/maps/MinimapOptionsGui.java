@@ -37,7 +37,7 @@ public class MinimapOptionsGui extends BlazeGui implements IScreenSkipsMinimap, 
 
     @Override
     public void toggleLayer(Key<Layer> layerID) {
-        mapRenderer.toggleLayer(layerID);
+        synchronizer.toggleLayer(layerID);
     }
 
     @Override

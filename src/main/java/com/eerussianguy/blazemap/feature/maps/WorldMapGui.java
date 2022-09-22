@@ -54,7 +54,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     @Override
     public void toggleLayer(BlazeRegistry.Key<Layer> layerID) {
-        mapRenderer.toggleLayer(layerID);
+        synchronizer.toggleLayer(layerID);
     }
 
     @Override
@@ -102,9 +102,10 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
         boolean zoomed;
-        if(scroll > 0){
+        if(scroll > 0) {
             zoomed = synchronizer.zoomIn();
-        }else{
+        }
+        else {
             zoomed = synchronizer.zoomOut();
         }
         zoom = mapRenderer.getZoom();

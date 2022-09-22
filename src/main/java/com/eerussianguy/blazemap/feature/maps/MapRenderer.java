@@ -294,7 +294,7 @@ public class MapRenderer implements AutoCloseable {
         zoom = Helpers.clamp(minZoom, zoom, maxZoom);
         if(prevZoom == zoom) return false;
         this.zoom = zoom;
-        if(width > 0 && height > 0){
+        if(width > 0 && height > 0) {
             createImage();
         }
         return true;
@@ -304,10 +304,12 @@ public class MapRenderer implements AutoCloseable {
         return zoom;
     }
 
-    public void toggleLayer(BlazeRegistry.Key<Layer> layer) {
+    public boolean toggleLayer(BlazeRegistry.Key<Layer> layer) {
+        if(!mapType.getLayers().contains(layer)) return false;
         if(disabled.contains(layer)) disabled.remove(layer);
         else disabled.add(layer);
         needsUpdate = true;
+        return true;
     }
 
     public boolean isLayerVisible(BlazeRegistry.Key<Layer> layer) {
