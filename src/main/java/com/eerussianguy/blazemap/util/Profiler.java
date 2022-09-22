@@ -40,6 +40,7 @@ public abstract class Profiler {
         protected boolean populated = false;
 
         public abstract void begin();
+
         public abstract void end();
 
         public static class Dummy extends TimeProfiler {

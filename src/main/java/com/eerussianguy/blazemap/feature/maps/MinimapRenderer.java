@@ -1,7 +1,5 @@
 package com.eerussianguy.blazemap.feature.maps;
 
-import java.util.List;
-
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.player.LocalPlayer;
@@ -11,10 +9,8 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.ForgeIngameGui;
-import net.minecraftforge.common.ForgeConfigSpec;
 
 import com.eerussianguy.blazemap.BlazeMapConfig;
-import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -24,46 +20,28 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 
 public class MinimapRenderer implements AutoCloseable {
-    public static void enableLayer(BlazeRegistry.Key<?> key) {
-        ForgeConfigSpec.ConfigValue<List<? extends String>> opt = BlazeMapConfig.CLIENT.disabledLayers;
-        List<? extends String> list = opt.get();
-        if(list.contains(key.toString())) {
-            list.remove(key.toString());
-            opt.set(list);
-        }
-    }
-
-    public static void disableLayer(BlazeRegistry.Key<?> key) {
-        ForgeConfigSpec.ConfigValue<List<? extends String>> opt = BlazeMapConfig.CLIENT.disabledLayers;
-        // noinspection unchecked
-        List<String> list = (List<String>) opt.get();
-        if(!list.contains(key.toString())) {
-            list.add(key.toString());
-            opt.set(list);
-        }
-    }
-
     public static final MinimapRenderer INSTANCE = new MinimapRenderer();
     public static final int SIZE = 512;
+    public static final double MIN_ZOOM = 0.5, MAX_ZOOM = 8;
 
     private final RenderType backgroundRenderType;
-    private MapType mapType;
     private BlockPos last = BlockPos.ZERO;
+    public final MapConfigSynchronizer synchronizer;
     private final MapRenderer mapRenderer;
 
     public MinimapRenderer() {
         ResourceLocation mapBackground = Helpers.identifier("textures/map.png");
         this.backgroundRenderType = RenderType.text(mapBackground);
-        mapRenderer = new MapRenderer(SIZE, SIZE, Helpers.identifier("dynamic/map/minimap"), 0.5, 8);
+        this.mapRenderer = new MapRenderer(SIZE, SIZE, Helpers.identifier("dynamic/map/minimap"), MIN_ZOOM, MAX_ZOOM);
+        this.synchronizer = new MapConfigSynchronizer(mapRenderer, BlazeMapConfig.CLIENT.minimap);
     }
 
-    public void setMapType(MapType type) {
-        mapType = type;
-        mapRenderer.setMapType(mapType);
+    public void setMapType(MapType mapType) {
+        synchronizer.setMapType(mapType);
     }
 
     public MapType getMapType() {
-        return mapType;
+        return mapRenderer.getMapType();
     }
 
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
@@ -85,7 +63,7 @@ public class MinimapRenderer implements AutoCloseable {
 
         int w = 136, h = 148, m = 8;
 
-        final MinimapSize size = BlazeMapConfig.CLIENT.minimapSize.get();
+        final MinimapSize size = BlazeMapConfig.CLIENT.minimap.overlaySize.get();
         // Translate to corner and apply scale
         stack.translate(width, 0, 0);
         stack.scale(size.scale, size.scale, 0);
@@ -123,5 +101,6 @@ public class MinimapRenderer implements AutoCloseable {
     @Override
     public void close() {
         mapRenderer.close();
+        synchronizer.save();
     }
 }

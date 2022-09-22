@@ -23,7 +23,8 @@ public class MinimapOptionsGui extends BlazeGui implements IScreenSkipsMinimap, 
         Minecraft.getInstance().setScreen(new MinimapOptionsGui());
     }
 
-    private final MapRenderer mapRenderer = new MapRenderer(MinimapRenderer.SIZE, MinimapRenderer.SIZE, Helpers.identifier("dynamic/map/minimap_preview"), 0.5, 8);
+    private final MapRenderer mapRenderer = new MapRenderer(MinimapRenderer.SIZE, MinimapRenderer.SIZE, Helpers.identifier("dynamic/map/minimap_preview"), MinimapRenderer.MIN_ZOOM, MinimapRenderer.MAX_ZOOM);
+    private final MapConfigSynchronizer synchronizer = MinimapRenderer.INSTANCE.synchronizer;
 
     public MinimapOptionsGui() {
         super(Helpers.translate("blazemap.gui.minimap_options.title"), 270, 154);
@@ -52,22 +53,23 @@ public class MinimapOptionsGui extends BlazeGui implements IScreenSkipsMinimap, 
     @Override
     protected void init() {
         super.init();
+        synchronizer.override(mapRenderer);
         ResourceKey<Level> dimension = getMinecraft().level.dimension();
 
         int px = 15, py = 38;
-        for(Key<MapType> mapID : BlazeMapAPI.MAPTYPES.keys()){
+        for(Key<MapType> mapID : BlazeMapAPI.MAPTYPES.keys()) {
             if(!mapID.value().shouldRenderInDimension(dimension)) continue;
-            if(px > 96){
+            if(px > 96) {
                 px = 15;
                 py += 20;
             }
             addRenderableWidget(new MapTypeButton(left + px, top + py, 18, 18, mapID, this));
             MapType map = mapID.value();
             int lpx = 15, lpy = 99;
-            for(Key<Layer> layerID : map.getLayers()){
+            for(Key<Layer> layerID : map.getLayers()) {
                 Layer layer = layerID.value();
                 if(!layer.shouldRenderInDimension(dimension) || layer.isOpaque()) continue;
-                if(lpx > 96){
+                if(lpx > 96) {
                     lpx = 15;
                     lpy += 20;
                 }
@@ -91,12 +93,20 @@ public class MinimapOptionsGui extends BlazeGui implements IScreenSkipsMinimap, 
         renderMap(stack, buffers);
     }
 
-    private void renderMap(PoseStack stack, MultiBufferSource buffers){
+    private void renderMap(PoseStack stack, MultiBufferSource buffers) {
         stack.pushPose();
         stack.translate(guiWidth - 141, 13, 0);
         renderSlot(stack, buffers, -1, -1, 130, 130);
         stack.scale(0.25F, 0.25F, 1);
         mapRenderer.render(stack, buffers);
         stack.popPose();
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        mapRenderer.close();
+        synchronizer.save();
+        synchronizer.clear();
     }
 }

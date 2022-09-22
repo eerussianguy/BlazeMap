@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
+import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Layer;
@@ -25,7 +26,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
-    private static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
+    public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
     private static boolean showWidgets = true;
 
     public static void open() {
@@ -38,10 +39,12 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     private double zoom = 1;
     private final MapRenderer mapRenderer;
+    private final MapConfigSynchronizer synchronizer;
 
     public WorldMapGui() {
         super(EMPTY);
         mapRenderer = new MapRenderer(-1, -1, Helpers.identifier("dynamic/map/worldmap"), MIN_ZOOM, MAX_ZOOM);
+        synchronizer = new MapConfigSynchronizer(mapRenderer, BlazeMapConfig.CLIENT.worldMap);
     }
 
     @Override
@@ -61,7 +64,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     @Override
     public void setMapType(MapType map) {
-        mapRenderer.setMapType(map);
+        synchronizer.setMapType(map);
     }
 
     @Override
@@ -75,7 +78,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         int y = 20;
         for(BlazeRegistry.Key<MapType> key : BlazeMapAPI.MAPTYPES.keys()) {
             if(!key.value().shouldRenderInDimension(dim)) continue;
-            int px = 7, py = (y+=20);
+            int px = 7, py = (y += 20);
             addRenderableWidget(new MapTypeButton(px, py, 16, 16, key, this));
             MapType map = key.value();
             int layerX = px + 20;
@@ -92,17 +95,20 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     @Override
     public boolean mouseDragged(double cx, double cy, int button, double dx, double dy) {
         double scale = getMinecraft().getWindow().getGuiScale();
-        mapRenderer.moveCenter(- (int) (dx * scale / zoom), - (int) (dy * scale / zoom));
+        mapRenderer.moveCenter(-(int) (dx * scale / zoom), -(int) (dy * scale / zoom));
         return super.mouseDragged(cx, cy, button, dx, dy);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
-        // zoom in or out by a factor of 2, and clamp the value between min and max zoom.
-        double prevZoom = zoom;
-        zoom = Helpers.clamp(MIN_ZOOM, zoom * (scroll > 0 ? 2 : 0.5), MAX_ZOOM);
-        if(prevZoom == zoom) return false;
-        return mapRenderer.setZoom(zoom);
+        boolean zoomed;
+        if(scroll > 0){
+            zoomed = synchronizer.zoomIn();
+        }else{
+            zoomed = synchronizer.zoomOut();
+        }
+        zoom = mapRenderer.getZoom();
+        return zoomed;
     }
 
     @Override
@@ -126,10 +132,8 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     @Override
     public void onClose() {
-        // MinimapRenderer.INSTANCE.setMapType(mapRenderer.getMapType());
-        // List<String> layers = disabled.stream().map(BlazeRegistry.Key::toString).collect(Collectors.toList());
-        // BlazeMapConfig.CLIENT.disabledLayers.set(layers);
         mapRenderer.close();
+        synchronizer.save();
         super.onClose();
     }
 

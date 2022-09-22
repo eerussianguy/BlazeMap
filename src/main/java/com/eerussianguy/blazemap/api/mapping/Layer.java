@@ -64,7 +64,7 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
         return true;
     }
 
-    public boolean isOpaque(){
+    public boolean isOpaque() {
         return opaque;
     }
 

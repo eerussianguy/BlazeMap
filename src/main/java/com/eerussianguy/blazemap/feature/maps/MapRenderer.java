@@ -87,7 +87,7 @@ public class MapRenderer implements AutoCloseable {
         }
     }
 
-    private void selectMapType(){
+    private void selectMapType() {
         if(dimension != null && (mapType == null || !mapType.shouldRenderInDimension(dimension))) {
             for(BlazeRegistry.Key<MapType> next : BlazeMapAPI.MAPTYPES.keys()) {
                 MapType type = next.value();
@@ -260,19 +260,30 @@ public class MapRenderer implements AutoCloseable {
     // =================================================================================================================
 
 
-    public void setMapType(MapType mapType) {
-        if(this.mapType == mapType || dimension == null) return;
-        if(!mapType.shouldRenderInDimension(dimension)) return;
+    public boolean setMapType(MapType mapType) {
+        if(this.mapType == mapType || dimension == null) return false;
+        if(!mapType.shouldRenderInDimension(dimension)) return false;
         this.mapType = mapType;
         this.disabled = disabledLayers.computeIfAbsent(mapType.getID(), $ -> new LinkedList<>());
         this.needsUpdate = true;
+        return true;
     }
 
-    public MapType getMapType(){
+    public MapType getMapType() {
         return mapType;
     }
 
-    public MapRenderer setProfilers(Profiler.TimeProfiler render, Profiler.TimeProfiler upload){
+    List<BlazeRegistry.Key<Layer>> getDisabledLayers() {
+        return this.disabled;
+    }
+
+    void setDisabledLayers(List<BlazeRegistry.Key<Layer>> layers) {
+        this.disabled.clear();
+        this.disabled.addAll(layers);
+        this.needsUpdate = true;
+    }
+
+    public MapRenderer setProfilers(Profiler.TimeProfiler render, Profiler.TimeProfiler upload) {
         this.renderTimer = render;
         this.uploadTimer = upload;
         return this;
@@ -280,11 +291,17 @@ public class MapRenderer implements AutoCloseable {
 
     public boolean setZoom(double zoom) {
         double prevZoom = this.zoom;
-        zoom = Math.max(minZoom, Math.min(zoom, maxZoom));
+        zoom = Helpers.clamp(minZoom, zoom, maxZoom);
         if(prevZoom == zoom) return false;
         this.zoom = zoom;
-        createImage();
+        if(width > 0 && height > 0){
+            createImage();
+        }
         return true;
+    }
+
+    public double getZoom() {
+        return zoom;
     }
 
     public void toggleLayer(BlazeRegistry.Key<Layer> layer) {
@@ -309,7 +326,7 @@ public class MapRenderer implements AutoCloseable {
 
     public void centerOnPlayer() {
         LocalPlayer player = Helpers.getPlayer();
-        if(player == null){
+        if(player == null) {
             BlazeMap.LOGGER.warn("Ignoring request to center on player because LocalPlayer is null");
             return;
         }

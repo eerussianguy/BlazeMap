@@ -2,7 +2,6 @@
   "blazemap.key.maps": "Open Full Map / [Shift] Edit Minimap",
   "blazemap.key.waypoints": "Create Waypoint / [Shift] Manage Waypoints",
   "blazemap.key.zoom": "Zoom In / [Shift] Zoom Out",
-
   "blazemap.terrain_isolines": "Terrain Isolines",
   "blazemap.water_depth": "Water Depth",
   "blazemap.block_color": "Block Color",
@@ -11,9 +10,7 @@
   "blazemap.aerial_view": "Aerial View",
   "blazemap.nether": "Nether",
   "blazemap.topography": "Topography",
-
   "blazemap.enabled": " §aENABLED",
-
   "blazemap.gui.minimap_options.title": "Minimap Options",
   "blazemap.gui.minimap_options.map_types": "Active Map",
   "blazemap.gui.minimap_options.layers": "Active Layers"

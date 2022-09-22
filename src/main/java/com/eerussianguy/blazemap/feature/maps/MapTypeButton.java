@@ -18,8 +18,8 @@ public class MapTypeButton extends ImageButton {
     public MapTypeButton(int px, int py, int w, int h, Key<MapType> key, IMapHost host) {
         super(px, py, w, h, 0, 0, 0, key.value().getIcon(), w, h, button -> {
             host.setMapType(key.value());
-            for(GuiEventListener widget : host.children()){
-                if(widget instanceof LayerButton lb){
+            for(GuiEventListener widget : host.children()) {
+                if(widget instanceof LayerButton lb) {
                     lb.checkVisible();
                 }
             }

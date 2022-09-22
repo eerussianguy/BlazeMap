@@ -10,12 +10,11 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import com.eerussianguy.blazemap.BlazeMap;
-import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.feature.mapping.*;
 import com.eerussianguy.blazemap.feature.maps.MapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
-import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
+import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -67,8 +66,12 @@ public class BlazeMapFeatures {
                 }
             }
             if(KEY_ZOOM.isDown()) {
-                MinimapZoom zoom = BlazeMapConfig.CLIENT.minimapZoom.get();
-                BlazeMapConfig.CLIENT.minimapZoom.set(Screen.hasShiftDown() ? zoom.next() : zoom.prev());
+                if(Screen.hasShiftDown()) {
+                    MinimapRenderer.INSTANCE.synchronizer.zoomOut();
+                }
+                else {
+                    MinimapRenderer.INSTANCE.synchronizer.zoomIn();
+                }
             }
         });
     }

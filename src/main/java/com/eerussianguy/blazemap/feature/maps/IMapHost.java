@@ -10,9 +10,14 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 public interface IMapHost {
     void renderTooltip(PoseStack stack, Component component, int x, int y);
+
     boolean isLayerVisible(Key<Layer> layerID);
+
     void toggleLayer(Key<Layer> layerID);
+
     MapType getMapType();
+
     void setMapType(MapType map);
+
     Iterable<? extends GuiEventListener> children();
 }

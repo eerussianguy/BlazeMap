@@ -42,6 +42,14 @@ public class BlazeRegistry<T> {
         objects.put(key, object);
     }
 
+    public Key<T> findOrCreate(String path) {
+        ResourceLocation location = new ResourceLocation(path);
+        for(Key<T> key : orderedKeys) {
+            if(key.location.equals(location)) return key;
+        }
+        return new Key(this, location);
+    }
+
     public List<Key<T>> keys() {
         return orderedKeysView;
     }
@@ -65,15 +73,16 @@ public class BlazeRegistry<T> {
         private T cached = null;
 
         public Key(BlazeRegistry<T> registry, String path) {
-            Objects.requireNonNull(registry);
-            this.registry = registry;
-            this.location = new ResourceLocation(path);
+            this(registry, new ResourceLocation(path));
         }
 
         public Key(BlazeRegistry<T> registry, String namespace, String path) {
-            Objects.requireNonNull(registry);
-            this.registry = registry;
-            this.location = new ResourceLocation(namespace, path);
+            this(registry, new ResourceLocation(namespace, path));
+        }
+
+        public Key(BlazeRegistry<T> registry, ResourceLocation location) {
+            this.registry = Objects.requireNonNull(registry);
+            this.location = Objects.requireNonNull(location);
         }
 
         public T value() {

@@ -53,7 +53,7 @@ public abstract class BlazeGui extends Screen {
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
         renderFrame(stack, buffers);
         stack.translate(left, top, 0.05F);
-        if(title != EMPTY){
+        if(title != EMPTY) {
             renderLabel(stack, buffers, title, 12, 12, true);
         }
         renderComponents(stack, buffers);
@@ -75,13 +75,13 @@ public abstract class BlazeGui extends Screen {
 
     protected abstract void renderComponents(PoseStack stack, MultiBufferSource buffers);
 
-    protected void renderLabel(PoseStack stack, MultiBufferSource buffers, Component text, int x, int y, boolean shadow){
+    protected void renderLabel(PoseStack stack, MultiBufferSource buffers, Component text, int x, int y, boolean shadow) {
         this.font.drawInBatch(text, x, y, shadow ? Colors.WHITE : Colors.LABEL_COLOR, shadow, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);
     }
 
-    protected void renderSlot(PoseStack stack, MultiBufferSource buffers, int x, int y, int width, int height){
+    protected void renderSlot(PoseStack stack, MultiBufferSource buffers, int x, int y, int width, int height) {
         stack.pushPose();
-        stack.translate(x, y,0);
+        stack.translate(x, y, 0);
         RenderHelper.drawFrame(buffers.getBuffer(slot), stack, width, height, 1);
         stack.popPose();
     }
