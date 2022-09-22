@@ -17,7 +17,7 @@ public class Overlays {
     public static final IIngameOverlay PROFILER = OverlayRegistry.registerOverlayTop(MOD_NAME + " Profiler", Overlays::renderProfiler);
 
     public static void reload() {
-        OverlayRegistry.enableOverlay(MINIMAP, BlazeMapConfig.CLIENT.enableMinimap.get());
+        OverlayRegistry.enableOverlay(MINIMAP, BlazeMapConfig.CLIENT.minimap.enabled.get());
         OverlayRegistry.enableOverlay(PROFILER, BlazeMapConfig.CLIENT.enableDebug.get());
     }
 

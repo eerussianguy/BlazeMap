@@ -1,6 +1,8 @@
 package com.eerussianguy.blazemap.engine;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,7 +24,12 @@ import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
+import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
+import com.eerussianguy.blazemap.api.markers.IStorageFactory;
+import com.eerussianguy.blazemap.api.markers.MapLabel;
+import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
+import com.eerussianguy.blazemap.api.util.MinecraftStreams;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
@@ -31,10 +38,16 @@ import com.eerussianguy.blazemap.util.Helpers;
 public class BlazeMapEngine {
     private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
+    private static final Map<ResourceKey<Level>, IMarkerStorage.Layered<MapLabel>> LABELS = new HashMap<>();
+    private static final Map<ResourceKey<Level>, IMarkerStorage<Waypoint>> WAYPOINTS = new HashMap<>();
+
     private static DebouncingThread debouncer;
     private static AsyncDataCruncher dataCruncher;
     private static AsyncChain.Root async;
     private static CartographyPipeline activePipeline;
+    private static IMarkerStorage.Layered<MapLabel> activeLabels;
+    private static IMarkerStorage<Waypoint> activeWaypoints;
+    private static IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
     private static String serverID;
     private static File serverDir;
     private static boolean frozenRegistries = false;
@@ -78,19 +91,26 @@ public class BlazeMapEngine {
         serverID = Helpers.getServerID();
         serverDir = Helpers.getClientSideStorageDir();
         serverDir.mkdirs();
-        MinecraftForge.EVENT_BUS.post(new ServerJoinedEvent(serverID, serverDir));
+        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, serverDir);
+        MinecraftForge.EVENT_BUS.post(serverJoined);
+        waypointStorageFactory = serverJoined.getWaypointStorageFactory();
         switchToPipeline(player.level.dimension());
     }
 
     @SubscribeEvent
     public static void onLeaveServer(ClientPlayerNetworkEvent.LoggedOutEvent event) {
         PIPELINES.clear();
+        LABELS.clear();
+        WAYPOINTS.clear();
         if(activePipeline != null) {
             activePipeline.shutdown();
             activePipeline = null;
         }
+        activeLabels = null;
+        activeWaypoints = null;
         serverID = null;
         serverDir = null;
+        waypointStorageFactory = null;
     }
 
     @SubscribeEvent
@@ -104,6 +124,14 @@ public class BlazeMapEngine {
             activePipeline.shutdown();
         }
         activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
+        activeLabels = LABELS.computeIfAbsent(dimension, LabelStorage::new);
+        activeWaypoints = WAYPOINTS.computeIfAbsent(dimension, d -> {
+            File waypoints = new File(activePipeline.dimensionDir, "waypoints.bin");
+            return waypointStorageFactory.create(
+                () -> new MinecraftStreams.Input(new FileInputStream(waypoints)),
+                () -> new MinecraftStreams.Output(new FileOutputStream(waypoints))
+            );
+        });
 
         TILE_CHANGE_LISTENERS.clear();
         DimensionChangedEvent event = new DimensionChangedEvent(
@@ -112,6 +140,8 @@ public class BlazeMapEngine {
             activePipeline.availableLayers,
             TILE_CHANGE_LISTENERS::add,
             activePipeline::consumeTile,
+            activeLabels,
+            activeWaypoints,
             activePipeline.dimensionDir
         );
         MinecraftForge.EVENT_BUS.post(event);

@@ -4,6 +4,8 @@ import java.awt.*;
 
 public class Colors {
     public static final int NO_TINT = -1;
+    public static final int WHITE = 0xFFFFFFFF;
+    public static final int LABEL_COLOR = 0xFF404040;
 
     public static int layerBlend(int bottom, int top) {
         if((top & 0xFF000000) == 0xFF000000) return top; // top is opaque, use top

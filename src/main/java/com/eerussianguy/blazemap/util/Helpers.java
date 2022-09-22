@@ -1,9 +1,7 @@
 package com.eerussianguy.blazemap.util;
 
-import java.awt.*;
 import java.io.File;
 import java.util.Objects;
-import java.util.Random;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -25,10 +23,6 @@ public class Helpers {
 
     public static ResourceLocation identifier(String name) {
         return new ResourceLocation(MOD_ID, name);
-    }
-
-    public static int randomBrightColor(Random random) {
-        return new Color(random.nextFloat(), random.nextFloat(), random.nextFloat()).brighter().getRGB();
     }
 
     public static ClientLevel levelOrThrow() {
@@ -78,5 +72,13 @@ public class Helpers {
 
     public static TranslatableComponent translate(String key) {
         return new TranslatableComponent(key);
+    }
+
+    public static int clamp(int min, int var, int max) {
+        return Math.max(min, Math.min(var, max));
+    }
+
+    public static double clamp(double min, double var, double max) {
+        return Math.max(min, Math.min(var, max));
     }
 }

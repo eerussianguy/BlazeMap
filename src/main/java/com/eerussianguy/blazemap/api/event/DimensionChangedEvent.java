@@ -11,6 +11,9 @@ import net.minecraftforge.eventbus.api.Event;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
+import com.eerussianguy.blazemap.api.markers.MapLabel;
+import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -56,16 +59,37 @@ public class DimensionChangedEvent extends Event {
     public final DimensionTileStorage tileStorage;
 
     /**
+     * Volatile storage containing all the addon map labels for this dimension
+     */
+    public final IMarkerStorage.Layered<MapLabel> labels;
+
+    /**
+     * Permanent storage containing all the player waypoints for this dimension
+     */
+    public final IMarkerStorage<Waypoint> waypoints;
+
+    /**
      * Directory in the client where all map data for this dimension is stored
      */
     public final File dimensionStorageDir;
 
-    public DimensionChangedEvent(ResourceKey<Level> dimension, Set<BlazeRegistry.Key<MapType>> mapTypes, Set<BlazeRegistry.Key<Layer>> layers, DimensionTileNotifications notifications, DimensionTileStorage tiles, File dir) {
+    public DimensionChangedEvent(
+        ResourceKey<Level> dimension,
+        Set<BlazeRegistry.Key<MapType>> mapTypes,
+        Set<BlazeRegistry.Key<Layer>> layers,
+        DimensionTileNotifications notifications,
+        DimensionTileStorage tiles,
+        IMarkerStorage.Layered<MapLabel> labels,
+        IMarkerStorage<Waypoint> waypoints,
+        File dir
+    ) {
         this.dimension = dimension;
         this.availableMapTypes = mapTypes;
         this.availableLayers = layers;
         this.tileNotifications = notifications;
         this.tileStorage = tiles;
+        this.labels = labels;
+        this.waypoints = waypoints;
         this.dimensionStorageDir = dir;
     }
 

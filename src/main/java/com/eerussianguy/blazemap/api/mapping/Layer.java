@@ -32,6 +32,16 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
     private final Set<BlazeRegistry.Key<Collector<MasterDatum>>> collectors;
     private final TranslatableComponent name;
     private final ResourceLocation icon;
+    private final boolean opaque;
+
+    @SafeVarargs
+    public Layer(BlazeRegistry.Key<Layer> id, TranslatableComponent name, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+        this.id = id;
+        this.name = name;
+        this.icon = null;
+        this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
+        this.opaque = true;
+    }
 
     @SafeVarargs
     public Layer(BlazeRegistry.Key<Layer> id, TranslatableComponent name, ResourceLocation icon, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
@@ -39,6 +49,7 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
         this.name = name;
         this.icon = icon;
         this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
+        this.opaque = false;
     }
 
     public BlazeRegistry.Key<Layer> getID() {
@@ -51,6 +62,10 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
 
     public boolean shouldRenderInDimension(ResourceKey<Level> dimension) {
         return true;
+    }
+
+    public boolean isOpaque() {
+        return opaque;
     }
 
     public abstract boolean renderTile(NativeImage tile, IDataSource data);

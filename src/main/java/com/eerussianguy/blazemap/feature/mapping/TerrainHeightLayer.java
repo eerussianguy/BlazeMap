@@ -14,7 +14,13 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class TerrainHeightLayer extends Layer {
 
     public TerrainHeightLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_HEIGHT, Helpers.translate("blazemap.terrain_height"), Helpers.identifier("textures/map_icons/default.png"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(
+            BlazeMapReferences.Layers.TERRAIN_HEIGHT,
+            Helpers.translate("blazemap.terrain_height"),
+
+            BlazeMapReferences.Collectors.TERRAIN_HEIGHT,
+            BlazeMapReferences.Collectors.WATER_LEVEL
+        );
     }
 
     /**

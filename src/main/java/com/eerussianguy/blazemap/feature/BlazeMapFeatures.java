@@ -2,27 +2,29 @@ package com.eerussianguy.blazemap.feature;
 
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import com.eerussianguy.blazemap.BlazeMap;
-import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
-import com.eerussianguy.blazemap.api.BlazeMapReferences;
+import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.feature.mapping.*;
 import com.eerussianguy.blazemap.feature.maps.MapRenderer;
+import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
-import com.eerussianguy.blazemap.feature.maps.MinimapZoom;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
-import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointStore;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {
-    public static final KeyMapping OPEN_FULL_MAP = new KeyMapping("blazemap.key.open_full_map", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, BlazeMap.MOD_NAME);
-    public static final KeyMapping CYCLE_ZOOM = new KeyMapping("blazemap.key.cycle_zoom", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, BlazeMap.MOD_NAME);
+    public static final KeyMapping KEY_MAPS = new KeyMapping("blazemap.key.maps", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, BlazeMap.MOD_NAME);
+    public static final KeyMapping KEY_ZOOM = new KeyMapping("blazemap.key.zoom", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, BlazeMap.MOD_NAME);
+    public static final KeyMapping KEY_WAYPOINTS = new KeyMapping("blazemap.key.waypoints", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, BlazeMap.MOD_NAME);
 
     public static void initMapping() {
         BlazeMapAPI.COLLECTORS.register(new TerrainHeightCollector());
@@ -41,28 +43,44 @@ public class BlazeMapFeatures {
         BlazeMapAPI.MAPTYPES.register(new NetherMapType());
     }
 
-    public static void initMiniMap() {
-        MinecraftForge.EVENT_BUS.addListener(MinimapRenderer::onDimensionChange);
-    }
-
-    public static void initFullMap() {
-        ClientRegistry.registerKeyBinding(OPEN_FULL_MAP);
-        ClientRegistry.registerKeyBinding(CYCLE_ZOOM);
+    public static void initMaps() {
+        ClientRegistry.registerKeyBinding(KEY_MAPS);
+        ClientRegistry.registerKeyBinding(KEY_ZOOM);
+        ClientRegistry.registerKeyBinding(KEY_WAYPOINTS);
 
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(MapRenderer::onDimensionChange);
         bus.addListener((InputEvent.KeyInputEvent evt) -> {
-            if(OPEN_FULL_MAP.isDown()) {
-                WorldMapGui.open();
+            if(KEY_MAPS.isDown()) {
+                if(Screen.hasShiftDown()) {
+                    MinimapOptionsGui.open();
+                }
+                else {
+                    WorldMapGui.open();
+                }
             }
-            if(CYCLE_ZOOM.isDown()) {
-                MinimapZoom zoom = BlazeMapConfig.CLIENT.minimapZoom.get();
-                BlazeMapConfig.CLIENT.minimapZoom.set(zoom.next());
+            if(KEY_WAYPOINTS.isDown()) {
+                if(Screen.hasShiftDown()) {
+                    // Open Waypoint Manager
+                }
+                else {
+                    // Open Waypoint Creator
+                }
+            }
+            if(KEY_ZOOM.isDown()) {
+                if(Screen.hasShiftDown()) {
+                    MinimapRenderer.INSTANCE.synchronizer.zoomOut();
+                }
+                else {
+                    MinimapRenderer.INSTANCE.synchronizer.zoomIn();
+                }
             }
         });
     }
 
     public static void initWaypoints() {
-        BlazeMapAPI.setWaypointStore(new WaypointManager());
+        IEventBus bus = MinecraftForge.EVENT_BUS;
+        bus.addListener(WorldMapGui::onDimensionChanged); // TODO: remove, debug
+        bus.addListener(EventPriority.HIGHEST, (ServerJoinedEvent evt) -> evt.setWaypointStorageFactory(WaypointStore::new));
     }
 }
