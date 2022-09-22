@@ -23,8 +23,9 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.util.RegionPos;
-import com.eerussianguy.blazemap.api.waypoint.Waypoint;
+import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
 import com.eerussianguy.blazemap.util.Colors;
@@ -41,10 +42,12 @@ public class MapRenderer implements AutoCloseable {
     private static final ResourceLocation PLAYER = Helpers.identifier("textures/player.png");
     private static DimensionChangedEvent.DimensionTileStorage tileStorage;
     private static ResourceKey<Level> dimension;
+    private static IMarkerStorage<Waypoint> waypointStorage;
 
     public static void onDimensionChange(DimensionChangedEvent evt) {
         tileStorage = evt.tileStorage;
         dimension = evt.dimension;
+        waypointStorage = evt.waypoints;
     }
 
 
@@ -143,7 +146,7 @@ public class MapRenderer implements AutoCloseable {
 
     public void updateWaypoints() {
         waypoints.clear();
-        waypoints.addAll(BlazeMapAPI.getWaypointStore().getWaypoints(dimension).stream().filter(w -> inRange(w.getPosition())).collect(Collectors.toList()));
+        waypoints.addAll(waypointStorage.getAll().stream().filter(w -> inRange(w.getPosition())).collect(Collectors.toList()));
     }
 
     private boolean inRange(BlockPos pos) {

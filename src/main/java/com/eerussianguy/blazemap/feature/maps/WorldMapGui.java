@@ -12,10 +12,12 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
-import com.eerussianguy.blazemap.api.waypoint.Waypoint;
+import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.gui.Image;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -28,9 +30,15 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
     public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
     private static boolean showWidgets = true;
+    private static IMarkerStorage<Waypoint> waypointStorage;
 
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());
+    }
+
+    // TODO: remove, debug
+    public static void onDimensionChanged(DimensionChangedEvent event){
+        waypointStorage = event.waypoints;
     }
 
 
@@ -175,7 +183,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     public boolean mouseClicked(double x, double y, int button) {
         if(button == GLFW.GLFW_MOUSE_BUTTON_3) {
             float scale = (float) getMinecraft().getWindow().getGuiScale();
-            BlazeMapAPI.getWaypointStore().addWaypoint(new Waypoint(
+            waypointStorage.add(new Waypoint(
                 Helpers.identifier("waypoint-" + System.currentTimeMillis()),
                 getMinecraft().level.dimension(),
                 mapRenderer.fromBegin((int) (scale * x / zoom), 0, (int) (scale * y / zoom)),

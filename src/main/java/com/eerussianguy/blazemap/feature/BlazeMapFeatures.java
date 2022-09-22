@@ -7,16 +7,18 @@ import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
+import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.feature.mapping.*;
 import com.eerussianguy.blazemap.feature.maps.MapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
-import com.eerussianguy.blazemap.feature.waypoints.WaypointManager;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointStore;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {
@@ -77,6 +79,8 @@ public class BlazeMapFeatures {
     }
 
     public static void initWaypoints() {
-        BlazeMapAPI.setWaypointStore(new WaypointManager());
+        IEventBus bus = MinecraftForge.EVENT_BUS;
+        bus.addListener(WorldMapGui::onDimensionChanged); // TODO: remove, debug
+        bus.addListener(EventPriority.HIGHEST, (ServerJoinedEvent evt) -> evt.setWaypointStorageFactory(WaypointStore::new));
     }
 }
