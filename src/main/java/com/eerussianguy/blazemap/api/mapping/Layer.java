@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.minecraft.client.gui.components.Widget;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -64,7 +65,7 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
         return true;
     }
 
-    public boolean isOpaque() {
+    public final boolean isOpaque() {
         return opaque;
     }
 
@@ -76,5 +77,19 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
 
     public ResourceLocation getIcon() {
         return icon;
+    }
+
+    /**
+     * Used by the World Map (fullscreen map) to display a legend in the bottom right corner.
+     * The widget will be asked to render while translated to the corner of the screen,
+     * so it must render backwards (towards the left and up) in order to stay inside the screen.
+     *
+     * The translation to the corner may subtract a small margin to make all legends have a consistent margin with the border.
+     *
+     * This only applies to opaque (bottom) layers, which are the first layer of the current map type,
+     * however not all such layers must have one and returning null is the default action.
+     */
+    public Widget getLegendWidget(){
+        return null;
     }
 }

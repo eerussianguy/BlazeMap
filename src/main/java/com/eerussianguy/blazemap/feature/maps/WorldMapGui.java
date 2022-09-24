@@ -2,6 +2,7 @@ package com.eerussianguy.blazemap.feature.maps;
 
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.TextComponent;
@@ -48,6 +49,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private double zoom = 1;
     private final MapRenderer mapRenderer;
     private final MapConfigSynchronizer synchronizer;
+    private Widget legend;
 
     public WorldMapGui() {
         super(EMPTY);
@@ -73,6 +75,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     @Override
     public void setMapType(MapType map) {
         synchronizer.setMapType(map);
+        updateLegend();
     }
 
     @Override
@@ -98,6 +101,12 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
                 addRenderableWidget(lb);
             }
         }
+
+        updateLegend();
+    }
+
+    private void updateLegend(){
+        legend = mapRenderer.getMapType().getLayers().iterator().next().value().getLegendWidget();
     }
 
     @Override
@@ -131,6 +140,13 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         mapRenderer.render(stack, buffers);
         buffers.endBatch();
         stack.popPose();
+
+        if(legend != null){
+            stack.pushPose();
+            stack.translate(width - 5, height - 5, 0);
+            legend.render(stack, -1, -1, 0);
+            stack.popPose();
+        }
 
         if(showWidgets) {
             stack.pushPose();
