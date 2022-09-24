@@ -24,6 +24,7 @@ import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
+import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
@@ -43,11 +44,13 @@ public class MapRenderer implements AutoCloseable {
     private static DimensionChangedEvent.DimensionTileStorage tileStorage;
     private static ResourceKey<Level> dimension;
     private static IMarkerStorage<Waypoint> waypointStorage;
+    private static IMarkerStorage.Layered<MapLabel> labelStorage;
 
     public static void onDimensionChange(DimensionChangedEvent evt) {
         tileStorage = evt.tileStorage;
         dimension = evt.dimension;
         waypointStorage = evt.waypoints;
+        labelStorage = evt.labels;
     }
 
 
@@ -58,9 +61,10 @@ public class MapRenderer implements AutoCloseable {
     private Profiler.TimeProfiler uploadTimer = new Profiler.TimeProfiler.Dummy();
 
     private MapType mapType;
-    private List<BlazeRegistry.Key<Layer>> disabled;
+    private List<BlazeRegistry.Key<Layer>> disabled, visible;
     private final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
     private final List<Waypoint> waypoints = new ArrayList<>(16);
+    private final List<MapLabel> labels = new ArrayList<>(16);
 
     private final ResourceLocation textureResource;
     private DynamicTexture mapTexture;
@@ -142,11 +146,22 @@ public class MapRenderer implements AutoCloseable {
         }
 
         updateWaypoints();
+        updateLabels();
     }
 
     public void updateWaypoints() {
         waypoints.clear();
         waypoints.addAll(waypointStorage.getAll().stream().filter(w -> inRange(w.getPosition())).collect(Collectors.toList()));
+    }
+
+    private void updateLabels(){
+        labels.clear();
+        visible.forEach(layer -> labels.addAll(labelStorage.getInLayer(layer).stream().filter(l -> inRange(l.getPosition())).collect(Collectors.toList())));
+    }
+
+    private void updateVisibleLayers(){
+        visible = mapType.getLayers().stream().filter(l -> !disabled.contains(l)).collect(Collectors.toList());
+        updateLabels();
     }
 
     private boolean inRange(BlockPos pos) {
@@ -169,6 +184,9 @@ public class MapRenderer implements AutoCloseable {
         RenderHelper.drawQuad(buffers.getBuffer(renderType), matrix, width, height);
 
         stack.pushPose();
+        for(MapLabel l : labels){
+            renderMarker(buffers, stack, l.getPosition(), l.getIcon(), l.getColor(), l.getWidth(), l.getHeight(), l.getRotation(), l.getUsesZoom());
+        }
         for(Waypoint w : waypoints) {
             renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true);
         }
@@ -268,6 +286,7 @@ public class MapRenderer implements AutoCloseable {
         if(!mapType.shouldRenderInDimension(dimension)) return false;
         this.mapType = mapType;
         this.disabled = disabledLayers.computeIfAbsent(mapType.getID(), $ -> new LinkedList<>());
+        updateVisibleLayers();
         this.needsUpdate = true;
         return true;
     }
@@ -283,6 +302,7 @@ public class MapRenderer implements AutoCloseable {
     void setDisabledLayers(List<BlazeRegistry.Key<Layer>> layers) {
         this.disabled.clear();
         this.disabled.addAll(layers);
+        updateVisibleLayers();
         this.needsUpdate = true;
     }
 
@@ -311,6 +331,7 @@ public class MapRenderer implements AutoCloseable {
         if(!mapType.getLayers().contains(layer)) return false;
         if(disabled.contains(layer)) disabled.remove(layer);
         else disabled.add(layer);
+        updateVisibleLayers();
         needsUpdate = true;
         return true;
     }

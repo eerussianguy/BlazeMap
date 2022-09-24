@@ -2,11 +2,14 @@ package com.eerussianguy.blazemap.feature.mapping;
 
 import java.awt.*;
 
+import net.minecraft.client.gui.components.Widget;
+
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
+import com.eerussianguy.blazemap.feature.maps.TerrainHeightLegendWidget;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -31,9 +34,8 @@ public class TerrainHeightLayer extends Layer {
         CLOUDS(.75F, new Color(0xAADDFF)),
         MOUNTAINS(.5F, new Color(0X666688)),
         HILLS(.25F, new Color(0x00AA00)),
-        SEA_LEVEL(0, new Color(0xCCFF00)),
-        UNDERGROUND(-.05F, new Color(0XFFCC00)),
-        DEEPSLATE(-.5F, new Color(0x990000)),
+        SEA_LEVEL(0, new Color(0xFFFF00)),
+        DEEPSLATE(-.5F, new Color(0xCC4400)),
         BEDROCK(-1F, new Color(0x222222));
 
         public static final Gradient[] VALUES = values();
@@ -55,29 +57,49 @@ public class TerrainHeightLayer extends Layer {
         float down = -1.0F / ((float) terrain.sea - terrain.minY);
         float up = 1.0F / ((float) terrain.maxY - terrain.sea);
         for(int x = 0; x < 16; x++) {
-            next_pixel:
             for(int z = 0; z < 16; z++) {
                 int h = terrain.heightmap[x][z] - water.level[x][z];
-                int height = h - terrain.sea;
-                int depth = terrain.sea - h;
-                float point = h == terrain.sea ? 0 : h < terrain.sea ? down * (depth) : up * (height);
-                Gradient top = Gradient.WORLD_TOP;
-                for(Gradient bottom : Gradient.VALUES) {
-                    float epsilon = bottom.keypoint - point;
-                    if(epsilon < 0.005F && epsilon > -0.005F) {
-                        tile.setPixelRGBA(x, z, bottom.color);
-                        continue next_pixel;
-                    }
-                    if(point > bottom.keypoint) {
-                        tile.setPixelRGBA(x, z, Colors.interpolate(bottom.color, bottom.keypoint, top.color, top.keypoint, point));
-                        break;
-                    }
-                    else {
-                        top = bottom;
-                    }
-                }
+                paintGradient(tile, x, z, h, terrain.sea, down, up);
             }
         }
         return true;
+    }
+
+    @Override
+    public Widget getLegendWidget() {
+        return new TerrainHeightLegendWidget();
+    }
+
+    private static final int DOWNSIZE = 4;
+    public static NativeImage getLegend(int min, int sea, int max){
+        int delta = (max - min) / DOWNSIZE;
+        float down = -1.0F / ((float) sea - min);
+        float up = 1.0F / ((float) max - sea);
+        NativeImage legend = new NativeImage(1, delta, true);
+        for(int y = 0; y < delta; y++){
+            paintGradient(legend, 0, (delta - y) - 1, (y * DOWNSIZE) + min, sea, down, up);
+        }
+        return legend;
+    }
+
+    private static void paintGradient(NativeImage tile, int x, int y, int h, int sea, float down, float up){
+        int height = h - sea;
+        int depth = sea - h;
+        float point = h == sea ? 0 : h < sea ? down * (depth) : up * (height);
+        Gradient top = Gradient.WORLD_TOP;
+        for(Gradient bottom : Gradient.VALUES) {
+            float epsilon = bottom.keypoint - point;
+            if(epsilon < 0.005F && epsilon > -0.005F) {
+                tile.setPixelRGBA(x, y, bottom.color);
+                return;
+            }
+            if(point > bottom.keypoint) {
+                tile.setPixelRGBA(x, y, Colors.interpolate(bottom.color, bottom.keypoint, top.color, top.keypoint, point));
+                break;
+            }
+            else {
+                top = bottom;
+            }
+        }
     }
 }
