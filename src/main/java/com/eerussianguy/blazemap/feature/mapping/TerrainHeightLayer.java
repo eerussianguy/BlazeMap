@@ -30,12 +30,13 @@ public class TerrainHeightLayer extends Layer {
      */
     private enum Gradient {
         WORLD_TOP(1, new Color(0xFFFFFF)),
-        CLOUDS(.75F, new Color(0xAADDFF)),
-        MOUNTAINS(.5F, new Color(0X666688)),
-        HILLS(.25F, new Color(0x00AA00)),
-        SEA_LEVEL(0, new Color(0xFFFF00)),
-        DEEPSLATE(-.5F, new Color(0xCC4400)),
-        BEDROCK(-1F, new Color(0x222222));
+        CLOUDS(.75F, new Color(0xFFFFFF)),
+        MOUNTAINS(.5F, new Color(0xAADDFF)),
+        HILLS(.25F, new Color(0X666688)),
+        SEA_LEVEL(.05F, new Color(0x00AA00)),
+        UNDERGROUND(-.05F, new Color(0xFFFF00)),
+        DEEPSLATE(-.5F, new Color(0xFF4400)),
+        BEDROCK(-1F, new Color(0x990000));
 
         public static final Gradient[] VALUES = values();
 
