@@ -241,28 +241,28 @@ public class MapRenderer implements AutoCloseable {
     private void updateTexture() {
         NativeImage texture = mapTexture.getPixels();
         if(texture == null) return;
-        int h = texture.getHeight();
-        int w = texture.getWidth();
-        texture.fillRect(0, 0, w, h, 0);
+        int textureH = texture.getHeight();
+        int textureW = texture.getWidth();
+        texture.fillRect(0, 0, textureW, textureH, 0);
 
-        int cx = (begin.getX() % 512 + 512) % 512;
-        int cz = (begin.getZ() % 512 + 512) % 512;
-        int count = offsets.length * offsets[0].length;
+        int cornerXOffset = ((begin.getX() % 512) + 512) % 512;
+        int cornerZOffset = ((begin.getZ() % 512) + 512) % 512;
+        int regionCount = offsets.length * offsets[0].length;
 
         renderTimer.begin();
-        if(count > 24) {
-            AsyncAwaiter jobs = new AsyncAwaiter(count);
-            for(int ox = 0; ox < offsets.length; ox++) {
-                for(int oz = 0; oz < offsets[ox].length; oz++) {
-                    generateMapTileAsync(texture, w, h, cx, cz, ox, oz, jobs);
+        if(regionCount > 24) {
+            AsyncAwaiter jobs = new AsyncAwaiter(regionCount);
+            for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
+                for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
+                    generateMapTileAsync(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ, jobs);
                 }
             }
             jobs.await();
         }
         else {
-            for(int ox = 0; ox < offsets.length; ox++) {
-                for(int oz = 0; oz < offsets[ox].length; oz++) {
-                    generateMapTile(texture, w, h, cx, cz, ox, oz);
+            for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
+                for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
+                    generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
                 }
             }
         }
@@ -275,27 +275,29 @@ public class MapRenderer implements AutoCloseable {
         needsUpdate = false;
     }
 
-    private void generateMapTileAsync(NativeImage texture, int w, int h, int cx, int cz, int rx, int rz, AsyncAwaiter jobs) {
+    // Run generateMapTile in an engine background thread. Useful for parallelizing massive workloads.
+    private void generateMapTileAsync(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ, AsyncAwaiter jobs) {
         BlazeMapEngine.async().runOnDataThread(() -> {
-            generateMapTile(texture, w, h, cx, cz, rx, rz);
+            generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
             jobs.done();
         });
     }
 
-    private void generateMapTile(NativeImage texture, int w, int h, int cx, int cz, int rx, int rz) {
+    private void generateMapTile(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ) {
         for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
             if(!isLayerVisible(layer)) continue;
-            tileStorage.consumeTile(layer, offsets[rx][rz], source -> {
-                for(int x = (rx * 512) < begin.getX() ? cx : 0; x < source.getWidth(); x++) {
-                    int tx = (rx * 512) + x - cx;
-                    if(tx < 0 || tx >= w) continue;
+            final RegionPos region = offsets[regionIndexX][regionIndexZ];
+            tileStorage.consumeTile(layer, region, source -> {
+                for(int x = (region.x * 512) < begin.getX() ? cornerXOffset : 0; x < source.getWidth(); x++) {
+                    int textureX = (regionIndexX * 512) + x - cornerXOffset;
+                    if(textureX < 0 || textureX >= textureW) continue;
 
-                    for(int y = (rz * 512) < begin.getZ() ? cz : 0; y < source.getHeight(); y++) {
-                        int ty = (rz * 512) + y - cz;
-                        if(ty < 0 || ty >= h) continue;
+                    for(int y = (region.z * 512) < begin.getZ() ? cornerZOffset : 0; y < source.getHeight(); y++) {
+                        int textureY = (regionIndexZ * 512) + y - cornerZOffset;
+                        if(textureY < 0 || textureY >= textureH) continue;
 
-                        int color = Colors.layerBlend(texture.getPixelRGBA(tx, ty), source.getPixelRGBA(x, y));
-                        texture.setPixelRGBA(tx, ty, color);
+                        int color = Colors.layerBlend(texture.getPixelRGBA(textureX, textureY), source.getPixelRGBA(x, y));
+                        texture.setPixelRGBA(textureX, textureY, color);
                     }
                 }
             });
