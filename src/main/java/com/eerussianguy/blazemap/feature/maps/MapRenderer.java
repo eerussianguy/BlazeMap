@@ -201,7 +201,7 @@ public class MapRenderer implements AutoCloseable {
     }
 
     private void updateVisibleLayers() {
-        visible = mapType.getLayers().stream().filter(l -> !disabled.contains(l)).collect(Collectors.toList());
+        visible = mapType.getLayers().stream().filter(l -> !disabled.contains(l) && l.value().shouldRenderInDimension(dimension)).collect(Collectors.toList());
         updateLabels();
     }
 

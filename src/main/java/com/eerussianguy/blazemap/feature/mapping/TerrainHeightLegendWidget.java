@@ -46,7 +46,7 @@ public class TerrainHeightLegendWidget implements Widget {
         stack.translate(-28, -(height + 8), 0);
 
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        RenderHelper.fillRect(buffers, stack.last().pose(), 28, height + 8, 0xA0000000);
+        RenderHelper.fillRect(buffers, stack.last().pose(), 28, height + 8, Colors.WIDGET_BACKGROUND);
 
         stack.pushPose();
         stack.translate(16, 4, 0);

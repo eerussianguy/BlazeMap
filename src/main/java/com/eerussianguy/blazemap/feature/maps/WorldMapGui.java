@@ -1,5 +1,10 @@
 package com.eerussianguy.blazemap.feature.maps;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Widget;
@@ -21,7 +26,9 @@ import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.gui.Image;
+import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
+import com.eerussianguy.blazemap.util.RenderHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 
@@ -47,14 +54,20 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
 
     private double zoom = 1;
+    private final ResourceKey<Level> dimension;
     private final MapRenderer mapRenderer;
     private final MapConfigSynchronizer synchronizer;
+    private final List<MapType> mapTypes;
+    private final int layersBegin;
     private Widget legend;
 
     public WorldMapGui() {
         super(EMPTY);
         mapRenderer = new MapRenderer(-1, -1, Helpers.identifier("dynamic/map/worldmap"), MIN_ZOOM, MAX_ZOOM);
         synchronizer = new MapConfigSynchronizer(mapRenderer, BlazeMapConfig.CLIENT.worldMap);
+        dimension = Minecraft.getInstance().level.dimension();
+        mapTypes = BlazeMapAPI.MAPTYPES.keys().stream().map(BlazeRegistry.Key::value).filter(m -> m.shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableList());
+        layersBegin = 50 + (mapTypes.size() * 20);
     }
 
     @Override
@@ -83,20 +96,21 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         double scale = getMinecraft().getWindow().getGuiScale();
         mapRenderer.resize((int) (width * scale), (int) (height * scale));
 
-        ResourceKey<Level> dim = Minecraft.getInstance().level.dimension();
         addRenderableOnly(new Image(ICON, 5, 5, 20, 20));
         addRenderableOnly(new Image(NAME, 30, 5, 110, 20));
         int y = 20;
-        for(BlazeRegistry.Key<MapType> key : BlazeMapAPI.MAPTYPES.keys()) {
-            if(!key.value().shouldRenderInDimension(dim)) continue;
+        for(MapType mapType : mapTypes) {
+            BlazeRegistry.Key<MapType> key = mapType.getID();
             int px = 7, py = (y += 20);
             addRenderableWidget(new MapTypeButton(px, py, 16, 16, key, this));
             MapType map = key.value();
-            int layerX = px + 20;
-            for(BlazeRegistry.Key<Layer> layer : map.getLayers()) {
+            int layerY = layersBegin;
+            List<BlazeRegistry.Key<Layer>> childLayers = map.getLayers().stream().collect(Collectors.toList());
+            Collections.reverse(childLayers);
+            for(BlazeRegistry.Key<Layer> layer : childLayers) {
                 if(layer.value().isOpaque()) continue;
-                LayerButton lb = new LayerButton(layerX, py, 16, 16, layer, map, this);
-                layerX += 20;
+                LayerButton lb = new LayerButton(px, layerY, 16, 16, layer, map, this);
+                layerY += 20;
                 lb.checkVisible();
                 addRenderableWidget(lb);
             }
@@ -149,6 +163,20 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         }
 
         if(showWidgets) {
+            int maps = mapTypes.size();
+            if(maps > 0){
+                stack.pushPose();
+                stack.translate(5, 38, 0);
+                RenderHelper.fillRect(stack.last().pose(), 20, maps * 20, Colors.WIDGET_BACKGROUND);
+                stack.popPose();
+            }
+            long layers = mapRenderer.getMapType().getLayers().stream().map(k -> k.value()).filter(l -> !l.isOpaque() && l.shouldRenderInDimension(dimension)).count();
+            if(layers > 0){
+                stack.pushPose();
+                stack.translate(5, layersBegin - 2, 0);
+                RenderHelper.fillRect(stack.last().pose(), 20, layers * 20, Colors.WIDGET_BACKGROUND);
+                stack.popPose();
+            }
             stack.pushPose();
             super.render(stack, i0, i1, f0);
             stack.popPose();
