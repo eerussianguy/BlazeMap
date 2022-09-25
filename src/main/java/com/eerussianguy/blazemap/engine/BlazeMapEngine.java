@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -28,6 +29,7 @@ import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.IStorageFactory;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.util.IStorageAccess;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.MinecraftStreams;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
@@ -39,6 +41,7 @@ public class BlazeMapEngine {
     private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
     private static final Map<ResourceKey<Level>, IMarkerStorage<Waypoint>> WAYPOINTS = new HashMap<>();
+    private static final ResourceLocation WAYPOINT_STORAGE = Helpers.identifier("waypoints.bin");
 
     private static DebouncingThread debouncer;
     private static AsyncDataCruncher dataCruncher;
@@ -90,7 +93,7 @@ public class BlazeMapEngine {
         serverID = Helpers.getServerID();
         serverDir = Helpers.getClientSideStorageDir();
         serverDir.mkdirs();
-        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, serverDir);
+        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, new StorageAccess(serverDir));
         MinecraftForge.EVENT_BUS.post(serverJoined);
         waypointStorageFactory = serverJoined.getWaypointStorageFactory();
         switchToPipeline(player.level.dimension());
@@ -123,13 +126,12 @@ public class BlazeMapEngine {
         }
         activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
         activeLabels = new LabelStorage(dimension);
-        activeWaypoints = WAYPOINTS.computeIfAbsent(dimension, d -> {
-            File waypoints = new File(activePipeline.dimensionDir, "waypoints.bin");
-            return waypointStorageFactory.create(
-                () -> new MinecraftStreams.Input(new FileInputStream(waypoints)),
-                () -> new MinecraftStreams.Output(new FileOutputStream(waypoints))
-            );
-        });
+
+        IStorageAccess fileStorage = new StorageAccess(activePipeline.dimensionDir);
+        activeWaypoints = WAYPOINTS.computeIfAbsent(dimension, d -> waypointStorageFactory.create(
+            () -> fileStorage.read(WAYPOINT_STORAGE),
+            () -> fileStorage.write(WAYPOINT_STORAGE)
+        ));
 
         TILE_CHANGE_LISTENERS.clear();
         DimensionChangedEvent event = new DimensionChangedEvent(
@@ -140,7 +142,7 @@ public class BlazeMapEngine {
             activePipeline::consumeTile,
             activeLabels,
             activeWaypoints,
-            activePipeline.dimensionDir
+            fileStorage
         );
         MinecraftForge.EVENT_BUS.post(event);
     }

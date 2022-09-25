@@ -8,6 +8,7 @@ import net.minecraftforge.eventbus.api.Event;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.IStorageFactory;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.util.IStorageAccess;
 
 /**
  * Fired by the Blaze Map engine after the game connects to a new server. <br>
@@ -22,18 +23,18 @@ public class ServerJoinedEvent extends Event {
     public final String serverID;
 
     /**
-     * The directory where Blaze Map stores all the data for this server
+     * The file storage where Blaze Map stores all the data for this server
      */
-    public final File serverStorageDir;
+    public final IStorageAccess serverStorage;
 
     /**
      * The factory that creates IMarkerStorage instances to permanently store waypoints for this server
      */
     private IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
 
-    public ServerJoinedEvent(String serverID, File serverDir) {
+    public ServerJoinedEvent(String serverID, IStorageAccess storage) {
         this.serverID = serverID;
-        this.serverStorageDir = serverDir;
+        this.serverStorage = storage;
         this.waypointStorageFactory = (i, o) -> new IMarkerStorage.Dummy<>() {};
     }
 
