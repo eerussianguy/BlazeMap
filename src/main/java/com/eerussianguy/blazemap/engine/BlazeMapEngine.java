@@ -38,7 +38,6 @@ import com.eerussianguy.blazemap.util.Helpers;
 public class BlazeMapEngine {
     private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();
     private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
-    private static final Map<ResourceKey<Level>, IMarkerStorage.Layered<MapLabel>> LABELS = new HashMap<>();
     private static final Map<ResourceKey<Level>, IMarkerStorage<Waypoint>> WAYPOINTS = new HashMap<>();
 
     private static DebouncingThread debouncer;
@@ -100,7 +99,6 @@ public class BlazeMapEngine {
     @SubscribeEvent
     public static void onLeaveServer(ClientPlayerNetworkEvent.LoggedOutEvent event) {
         PIPELINES.clear();
-        LABELS.clear();
         WAYPOINTS.clear();
         if(activePipeline != null) {
             activePipeline.shutdown();
@@ -124,7 +122,7 @@ public class BlazeMapEngine {
             activePipeline.shutdown();
         }
         activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
-        activeLabels = LABELS.computeIfAbsent(dimension, LabelStorage::new);
+        activeLabels = new LabelStorage(dimension);
         activeWaypoints = WAYPOINTS.computeIfAbsent(dimension, d -> {
             File waypoints = new File(activePipeline.dimensionDir, "waypoints.bin");
             return waypointStorageFactory.create(
