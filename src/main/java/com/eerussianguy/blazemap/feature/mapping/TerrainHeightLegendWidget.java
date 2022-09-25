@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.feature.maps;
+package com.eerussianguy.blazemap.feature.mapping;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Widget;
@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 
-import com.eerussianguy.blazemap.feature.mapping.TerrainHeightLayer;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.RenderHelper;
@@ -59,7 +58,7 @@ public class TerrainHeightLegendWidget implements Widget {
         stack.translate(0, 2, 0);
         stack.scale(0.5F, 0.5F, 1);
         for(int y = max; y >= min; y -= 64) {
-            String label = y + "";
+            String label = String.valueOf(y);
             stack.pushPose();
             stack.translate(28 - font.width(label), 0, 0);
             font.drawInBatch(label, 0, 0, Colors.WHITE, false, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);

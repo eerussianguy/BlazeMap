@@ -9,7 +9,6 @@ import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
-import com.eerussianguy.blazemap.feature.maps.TerrainHeightLegendWidget;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
