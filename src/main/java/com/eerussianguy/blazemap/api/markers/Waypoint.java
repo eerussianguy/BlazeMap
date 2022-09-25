@@ -7,7 +7,7 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 
-public class Waypoint extends Marker<Waypoint>{
+public class Waypoint extends Marker<Waypoint> {
     public Waypoint(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, String name) {
         this(id, dimension, position, name, BlazeMapReferences.Icons.WAYPOINT, -1, 0);
     }

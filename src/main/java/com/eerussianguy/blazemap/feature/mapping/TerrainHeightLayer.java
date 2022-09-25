@@ -71,18 +71,19 @@ public class TerrainHeightLayer extends Layer {
     }
 
     private static final int DOWNSIZE = 4;
-    public static NativeImage getLegend(int min, int sea, int max){
+
+    public static NativeImage getLegend(int min, int sea, int max) {
         int delta = (max - min) / DOWNSIZE;
         float down = -1.0F / ((float) sea - min);
         float up = 1.0F / ((float) max - sea);
         NativeImage legend = new NativeImage(1, delta, true);
-        for(int y = 0; y < delta; y++){
+        for(int y = 0; y < delta; y++) {
             paintGradient(legend, 0, (delta - y) - 1, (y * DOWNSIZE) + min, sea, down, up);
         }
         return legend;
     }
 
-    private static void paintGradient(NativeImage tile, int x, int y, int h, int sea, float down, float up){
+    private static void paintGradient(NativeImage tile, int x, int y, int h, int sea, float down, float up) {
         int height = h - sea;
         int depth = sea - h;
         float point = h == sea ? 0 : h < sea ? down * (depth) : up * (height);

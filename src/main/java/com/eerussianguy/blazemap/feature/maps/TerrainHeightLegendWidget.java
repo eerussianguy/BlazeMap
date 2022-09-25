@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+
 import com.eerussianguy.blazemap.feature.mapping.TerrainHeightLayer;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -22,8 +23,8 @@ public class TerrainHeightLegendWidget implements Widget {
     private static int min;
     private static int max;
 
-    private static RenderType getLegend(){
-        if(type == null){
+    private static RenderType getLegend() {
+        if(type == null) {
             Minecraft mc = Minecraft.getInstance();
             ClientLevel level = mc.level;
             min = level.getMinBuildHeight();
@@ -57,7 +58,7 @@ public class TerrainHeightLegendWidget implements Widget {
         stack.pushPose();
         stack.translate(0, 2, 0);
         stack.scale(0.5F, 0.5F, 1);
-        for(int y = max; y >= min; y-= 64){
+        for(int y = max; y >= min; y -= 64) {
             String label = y + "";
             stack.pushPose();
             stack.translate(28 - font.width(label), 0, 0);

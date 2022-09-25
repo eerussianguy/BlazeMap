@@ -30,29 +30,29 @@ public class MapLabel extends Marker<MapLabel> {
         this.usesZoom = usesZoom;
     }
 
-    public final Key<Layer> getLayerID(){
+    public final Key<Layer> getLayerID() {
         return layerID;
     }
 
-    public int getWidth(){
+    public int getWidth() {
         return width;
     }
 
-    public int getHeight(){
+    public int getHeight() {
         return height;
     }
 
-    public MapLabel setSize(int width, int height){
+    public MapLabel setSize(int width, int height) {
         this.width = width;
         this.height = height;
         return this;
     }
 
-    public boolean getUsesZoom(){
+    public boolean getUsesZoom() {
         return usesZoom;
     }
 
-    public MapLabel setUsesZoom(boolean usesZoom){
+    public MapLabel setUsesZoom(boolean usesZoom) {
         this.usesZoom = usesZoom;
         return this;
     }

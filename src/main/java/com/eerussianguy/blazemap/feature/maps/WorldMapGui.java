@@ -17,8 +17,8 @@ import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
-import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.gui.Image;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -38,7 +38,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     }
 
     // TODO: remove, debug
-    public static void onDimensionChanged(DimensionChangedEvent event){
+    public static void onDimensionChanged(DimensionChangedEvent event) {
         waypointStorage = event.waypoints;
     }
 
@@ -105,7 +105,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         updateLegend();
     }
 
-    private void updateLegend(){
+    private void updateLegend() {
         legend = mapRenderer.getMapType().getLayers().iterator().next().value().getLegendWidget();
     }
 
@@ -141,7 +141,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         buffers.endBatch();
         stack.popPose();
 
-        if(legend != null){
+        if(legend != null) {
             stack.pushPose();
             stack.translate(width - 5, height - 5, 0);
             legend.render(stack, -1, -1, 0);

@@ -1,7 +1,10 @@
 package com.eerussianguy.blazemap.feature.waypoints;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -50,7 +53,7 @@ public class WaypointStore implements IMarkerStorage<Waypoint> {
     private final IOSupplier<MinecraftStreams.Output> outputSupplier;
     private final IOSupplier<MinecraftStreams.Input> inputSupplier;
 
-    public WaypointStore(IOSupplier<MinecraftStreams.Input> inputSupplier, IOSupplier<MinecraftStreams.Output> outputSupplier){
+    public WaypointStore(IOSupplier<MinecraftStreams.Input> inputSupplier, IOSupplier<MinecraftStreams.Output> outputSupplier) {
         this.outputSupplier = outputSupplier;
         this.inputSupplier = inputSupplier;
         load();
