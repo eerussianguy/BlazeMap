@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 
@@ -51,6 +52,12 @@ public class RenderHelper {
 
     public static void fillRect(MultiBufferSource buffers, Matrix4f matrix, float w, float h, int color) {
         drawQuad(buffers.getBuffer(SOLID), matrix, w, h, color);
+    }
+
+    public static void fillRect(Matrix4f matrix, float w, float h, int color) {
+        var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        drawQuad(buffers.getBuffer(SOLID), matrix, w, h, color);
+        buffers.endBatch();
     }
 
     public static void drawFrame(VertexConsumer vertices, PoseStack stack, int width, int height, int border) {

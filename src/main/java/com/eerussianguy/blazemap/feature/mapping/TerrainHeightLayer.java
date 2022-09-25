@@ -9,7 +9,6 @@ import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.util.IDataSource;
-import com.eerussianguy.blazemap.feature.maps.TerrainHeightLegendWidget;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -31,12 +30,13 @@ public class TerrainHeightLayer extends Layer {
      */
     private enum Gradient {
         WORLD_TOP(1, new Color(0xFFFFFF)),
-        CLOUDS(.75F, new Color(0xAADDFF)),
-        MOUNTAINS(.5F, new Color(0X666688)),
-        HILLS(.25F, new Color(0x00AA00)),
-        SEA_LEVEL(0, new Color(0xFFFF00)),
-        DEEPSLATE(-.5F, new Color(0xCC4400)),
-        BEDROCK(-1F, new Color(0x222222));
+        CLOUDS(.75F, new Color(0xFFFFFF)),
+        MOUNTAINS(.5F, new Color(0xAADDFF)),
+        HILLS(.25F, new Color(0X666688)),
+        SEA_LEVEL(.05F, new Color(0x00AA00)),
+        UNDERGROUND(-.05F, new Color(0xFFFF00)),
+        DEEPSLATE(-.5F, new Color(0xFF4400)),
+        BEDROCK(-1F, new Color(0x990000));
 
         public static final Gradient[] VALUES = values();
 
@@ -71,18 +71,19 @@ public class TerrainHeightLayer extends Layer {
     }
 
     private static final int DOWNSIZE = 4;
-    public static NativeImage getLegend(int min, int sea, int max){
+
+    public static NativeImage getLegend(int min, int sea, int max) {
         int delta = (max - min) / DOWNSIZE;
         float down = -1.0F / ((float) sea - min);
         float up = 1.0F / ((float) max - sea);
         NativeImage legend = new NativeImage(1, delta, true);
-        for(int y = 0; y < delta; y++){
+        for(int y = 0; y < delta; y++) {
             paintGradient(legend, 0, (delta - y) - 1, (y * DOWNSIZE) + min, sea, down, up);
         }
         return legend;
     }
 
-    private static void paintGradient(NativeImage tile, int x, int y, int h, int sea, float down, float up){
+    private static void paintGradient(NativeImage tile, int x, int y, int h, int sea, float down, float up) {
         int height = h - sea;
         int depth = sea - h;
         float point = h == sea ? 0 : h < sea ? down * (depth) : up * (height);

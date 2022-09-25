@@ -50,6 +50,8 @@ public class BlazeMapFeatures {
 
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(MapRenderer::onDimensionChange);
+        bus.addListener(MapRenderer::onMapLabelAdded);
+        bus.addListener(MapRenderer::onMapLabelRemoved);
         bus.addListener((InputEvent.KeyInputEvent evt) -> {
             if(KEY_MAPS.isDown()) {
                 if(Screen.hasShiftDown()) {
@@ -82,5 +84,7 @@ public class BlazeMapFeatures {
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(WorldMapGui::onDimensionChanged); // TODO: remove, debug
         bus.addListener(EventPriority.HIGHEST, (ServerJoinedEvent evt) -> evt.setWaypointStorageFactory(WaypointStore::new));
+        bus.addListener(MapRenderer::onWaypointAdded);
+        bus.addListener(MapRenderer::onWaypointRemoved);
     }
 }

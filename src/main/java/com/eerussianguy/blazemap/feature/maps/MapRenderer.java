@@ -21,12 +21,14 @@ import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
+import com.eerussianguy.blazemap.api.event.MapLabelEvent;
+import com.eerussianguy.blazemap.api.event.WaypointEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
-import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
 import com.eerussianguy.blazemap.util.Colors;
@@ -41,6 +43,7 @@ import com.mojang.math.Vector3f;
 
 public class MapRenderer implements AutoCloseable {
     private static final ResourceLocation PLAYER = Helpers.identifier("textures/player.png");
+    private static final List<MapRenderer> RENDERERS = new ArrayList<>(4);
     private static DimensionChangedEvent.DimensionTileStorage tileStorage;
     private static ResourceKey<Level> dimension;
     private static IMarkerStorage<Waypoint> waypointStorage;
@@ -51,6 +54,22 @@ public class MapRenderer implements AutoCloseable {
         dimension = evt.dimension;
         waypointStorage = evt.waypoints;
         labelStorage = evt.labels;
+    }
+
+    public static void onWaypointAdded(WaypointEvent.Created event) {
+        RENDERERS.forEach(r -> r.add(event.waypoint));
+    }
+
+    public static void onWaypointRemoved(WaypointEvent.Removed event) {
+        RENDERERS.forEach(r -> r.remove(event.waypoint));
+    }
+
+    public static void onMapLabelAdded(MapLabelEvent.Created event) {
+        RENDERERS.forEach(r -> r.add(event.label));
+    }
+
+    public static void onMapLabelRemoved(MapLabelEvent.Removed event) {
+        RENDERERS.forEach(r -> r.remove(event.label));
     }
 
 
@@ -92,6 +111,8 @@ public class MapRenderer implements AutoCloseable {
         if(width > 0 && height > 0) {
             this.resize(width, height);
         }
+
+        RENDERERS.add(this);
     }
 
     private void selectMapType() {
@@ -154,13 +175,33 @@ public class MapRenderer implements AutoCloseable {
         waypoints.addAll(waypointStorage.getAll().stream().filter(w -> inRange(w.getPosition())).collect(Collectors.toList()));
     }
 
-    private void updateLabels(){
+    private void add(Waypoint waypoint) {
+        if(inRange(waypoint.getPosition())) {
+            waypoints.add(waypoint);
+        }
+    }
+
+    private void remove(Waypoint waypoint) {
+        waypoints.remove(waypoint);
+    }
+
+    public void updateLabels() {
         labels.clear();
         visible.forEach(layer -> labels.addAll(labelStorage.getInLayer(layer).stream().filter(l -> inRange(l.getPosition())).collect(Collectors.toList())));
     }
 
-    private void updateVisibleLayers(){
-        visible = mapType.getLayers().stream().filter(l -> !disabled.contains(l)).collect(Collectors.toList());
+    private void add(MapLabel label) {
+        if(inRange(label.getPosition()) && visible.contains(label.getLayerID())) {
+            labels.add(label);
+        }
+    }
+
+    private void remove(MapLabel label) {
+        labels.remove(label);
+    }
+
+    private void updateVisibleLayers() {
+        visible = mapType.getLayers().stream().filter(l -> !disabled.contains(l) && l.value().shouldRenderInDimension(dimension)).collect(Collectors.toList());
         updateLabels();
     }
 
@@ -184,7 +225,7 @@ public class MapRenderer implements AutoCloseable {
         RenderHelper.drawQuad(buffers.getBuffer(renderType), matrix, width, height);
 
         stack.pushPose();
-        for(MapLabel l : labels){
+        for(MapLabel l : labels) {
             renderMarker(buffers, stack, l.getPosition(), l.getIcon(), l.getColor(), l.getWidth(), l.getHeight(), l.getRotation(), l.getUsesZoom());
         }
         for(Waypoint w : waypoints) {
@@ -200,28 +241,28 @@ public class MapRenderer implements AutoCloseable {
     private void updateTexture() {
         NativeImage texture = mapTexture.getPixels();
         if(texture == null) return;
-        int h = texture.getHeight();
-        int w = texture.getWidth();
-        texture.fillRect(0, 0, w, h, 0);
+        int textureH = texture.getHeight();
+        int textureW = texture.getWidth();
+        texture.fillRect(0, 0, textureW, textureH, 0);
 
-        int cx = (begin.getX() % 512 + 512) % 512;
-        int cz = (begin.getZ() % 512 + 512) % 512;
-        int count = offsets.length * offsets[0].length;
+        int cornerXOffset = ((begin.getX() % 512) + 512) % 512;
+        int cornerZOffset = ((begin.getZ() % 512) + 512) % 512;
+        int regionCount = offsets.length * offsets[0].length;
 
         renderTimer.begin();
-        if(count > 24) {
-            AsyncAwaiter jobs = new AsyncAwaiter(count);
-            for(int ox = 0; ox < offsets.length; ox++) {
-                for(int oz = 0; oz < offsets[ox].length; oz++) {
-                    generateMapTileAsync(texture, w, h, cx, cz, ox, oz, jobs);
+        if(regionCount > 24) {
+            AsyncAwaiter jobs = new AsyncAwaiter(regionCount);
+            for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
+                for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
+                    generateMapTileAsync(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ, jobs);
                 }
             }
             jobs.await();
         }
         else {
-            for(int ox = 0; ox < offsets.length; ox++) {
-                for(int oz = 0; oz < offsets[ox].length; oz++) {
-                    generateMapTile(texture, w, h, cx, cz, ox, oz);
+            for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
+                for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
+                    generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
                 }
             }
         }
@@ -234,27 +275,29 @@ public class MapRenderer implements AutoCloseable {
         needsUpdate = false;
     }
 
-    private void generateMapTileAsync(NativeImage texture, int w, int h, int cx, int cz, int rx, int rz, AsyncAwaiter jobs) {
+    // Run generateMapTile in an engine background thread. Useful for parallelizing massive workloads.
+    private void generateMapTileAsync(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ, AsyncAwaiter jobs) {
         BlazeMapEngine.async().runOnDataThread(() -> {
-            generateMapTile(texture, w, h, cx, cz, rx, rz);
+            generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
             jobs.done();
         });
     }
 
-    private void generateMapTile(NativeImage texture, int w, int h, int cx, int cz, int rx, int rz) {
+    private void generateMapTile(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ) {
         for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
             if(!isLayerVisible(layer)) continue;
-            tileStorage.consumeTile(layer, offsets[rx][rz], source -> {
-                for(int x = (rx * 512) < begin.getX() ? cx : 0; x < source.getWidth(); x++) {
-                    int tx = (rx * 512) + x - cx;
-                    if(tx < 0 || tx >= w) continue;
+            final RegionPos region = offsets[regionIndexX][regionIndexZ];
+            tileStorage.consumeTile(layer, region, source -> {
+                for(int x = (region.x * 512) < begin.getX() ? cornerXOffset : 0; x < source.getWidth(); x++) {
+                    int textureX = (regionIndexX * 512) + x - cornerXOffset;
+                    if(textureX < 0 || textureX >= textureW) continue;
 
-                    for(int y = (rz * 512) < begin.getZ() ? cz : 0; y < source.getHeight(); y++) {
-                        int ty = (rz * 512) + y - cz;
-                        if(ty < 0 || ty >= h) continue;
+                    for(int y = (region.z * 512) < begin.getZ() ? cornerZOffset : 0; y < source.getHeight(); y++) {
+                        int textureY = (regionIndexZ * 512) + y - cornerZOffset;
+                        if(textureY < 0 || textureY >= textureH) continue;
 
-                        int color = Colors.layerBlend(texture.getPixelRGBA(tx, ty), source.getPixelRGBA(x, y));
-                        texture.setPixelRGBA(tx, ty, color);
+                        int color = Colors.layerBlend(texture.getPixelRGBA(textureX, textureY), source.getPixelRGBA(x, y));
+                        texture.setPixelRGBA(textureX, textureY, color);
                     }
                 }
             });
@@ -367,5 +410,6 @@ public class MapRenderer implements AutoCloseable {
     @Override
     public void close() {
         mapTexture.close();
+        RENDERERS.remove(this);
     }
 }

@@ -1,12 +1,17 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.MinecraftForge;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
+import com.eerussianguy.blazemap.api.event.MapLabelEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
@@ -17,7 +22,7 @@ public class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
     private final HashSet<ResourceLocation> labelIDs = new HashSet<>();
     private final ResourceKey<Level> dimension;
 
-    public LabelStorage(ResourceKey<Level> dimension){
+    public LabelStorage(ResourceKey<Level> dimension) {
         this.dimension = dimension;
     }
 
@@ -38,14 +43,16 @@ public class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
         if(labelIDs.contains(id)) throw new IllegalStateException("Marker already exists in storage");
         inLayer(marker.getLayerID()).put(id, marker);
         labelIDs.add(id);
+        MinecraftForge.EVENT_BUS.post(new MapLabelEvent.Created(marker));
     }
 
     @Override
     public void remove(MapLabel label) {
         ResourceLocation id = label.getID();
-        if(labelIDs.contains(id)){
+        if(labelIDs.contains(id)) {
             inLayer(label.getLayerID()).remove(id);
             labelIDs.remove(id);
+            MinecraftForge.EVENT_BUS.post(new MapLabelEvent.Removed(label));
         }
     }
 
@@ -56,11 +63,12 @@ public class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
 
     @Override
     public void remove(ResourceLocation id, Key<Layer> layerID) {
-        if(labelIDs.contains(id)){
+        if(labelIDs.contains(id)) {
             HashMap<ResourceLocation, MapLabel> labels = inLayer(layerID);
             if(!labels.containsKey(id)) throw new IllegalArgumentException("Marker is not in specified layer");
-            labels.remove(id);
+            MapLabel label = labels.remove(id);
             labelIDs.remove(id);
+            MinecraftForge.EVENT_BUS.post(new MapLabelEvent.Removed(label));
         }
     }
 
@@ -69,7 +77,7 @@ public class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
         return labelIDs.contains(id);
     }
 
-    private HashMap<ResourceLocation, MapLabel> inLayer(Key<Layer> layer){
+    private HashMap<ResourceLocation, MapLabel> inLayer(Key<Layer> layer) {
         return layers.computeIfAbsent(layer, l -> new HashMap<>());
     }
 }

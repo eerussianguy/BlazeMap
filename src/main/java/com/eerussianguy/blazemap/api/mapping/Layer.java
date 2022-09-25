@@ -89,7 +89,7 @@ public abstract class Layer implements BlazeRegistry.RegistryEntry {
      * This only applies to opaque (bottom) layers, which are the first layer of the current map type,
      * however not all such layers must have one and returning null is the default action.
      */
-    public Widget getLegendWidget(){
+    public Widget getLegendWidget() {
         return null;
     }
 }

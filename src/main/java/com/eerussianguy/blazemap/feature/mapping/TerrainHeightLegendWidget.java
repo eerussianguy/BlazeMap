@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.feature.maps;
+package com.eerussianguy.blazemap.feature.mapping;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Widget;
@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
-import com.eerussianguy.blazemap.feature.mapping.TerrainHeightLayer;
+
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.RenderHelper;
@@ -22,8 +22,8 @@ public class TerrainHeightLegendWidget implements Widget {
     private static int min;
     private static int max;
 
-    private static RenderType getLegend(){
-        if(type == null){
+    private static RenderType getLegend() {
+        if(type == null) {
             Minecraft mc = Minecraft.getInstance();
             ClientLevel level = mc.level;
             min = level.getMinBuildHeight();
@@ -46,7 +46,7 @@ public class TerrainHeightLegendWidget implements Widget {
         stack.translate(-28, -(height + 8), 0);
 
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        RenderHelper.fillRect(buffers, stack.last().pose(), 28, height + 8, 0xA0000000);
+        RenderHelper.fillRect(buffers, stack.last().pose(), 28, height + 8, Colors.WIDGET_BACKGROUND);
 
         stack.pushPose();
         stack.translate(16, 4, 0);
@@ -57,8 +57,8 @@ public class TerrainHeightLegendWidget implements Widget {
         stack.pushPose();
         stack.translate(0, 2, 0);
         stack.scale(0.5F, 0.5F, 1);
-        for(int y = max; y >= min; y-= 64){
-            String label = y + "";
+        for(int y = max; y >= min; y -= 64) {
+            String label = String.valueOf(y);
             stack.pushPose();
             stack.translate(28 - font.width(label), 0, 0);
             font.drawInBatch(label, 0, 0, Colors.WHITE, false, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);
