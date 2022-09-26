@@ -26,6 +26,12 @@ public class DebouncingDomain<T> {
         }
     }
 
+    public void clear(){
+        synchronized(queue){
+            queue.clear();
+        }
+    }
+
     public long pop() {
         long curr = System.currentTimeMillis();
         Set<T> pop = new HashSet<>();

@@ -127,7 +127,8 @@ public class BlazeMapEngine {
         IStorageAccess fileStorage = new StorageAccess(activePipeline.dimensionDir);
         activeWaypoints = WAYPOINTS.computeIfAbsent(dimension, d -> waypointStorageFactory.create(
             () -> fileStorage.read(WAYPOINT_STORAGE),
-            () -> fileStorage.write(WAYPOINT_STORAGE)
+            () -> fileStorage.write(WAYPOINT_STORAGE),
+            () -> fileStorage.exists(WAYPOINT_STORAGE)
         ));
 
         TILE_CHANGE_LISTENERS.clear();

@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.api.event;
 
-import java.io.File;
 import java.util.Objects;
 
 import net.minecraftforge.eventbus.api.Event;
@@ -35,7 +34,7 @@ public class ServerJoinedEvent extends Event {
     public ServerJoinedEvent(String serverID, IStorageAccess storage) {
         this.serverID = serverID;
         this.serverStorage = storage;
-        this.waypointStorageFactory = (i, o) -> new IMarkerStorage.Dummy<>() {};
+        this.waypointStorageFactory = (i, o, e) -> new IMarkerStorage.Dummy<>() {};
     }
 
     public IStorageFactory<IMarkerStorage<Waypoint>> getWaypointStorageFactory() {
