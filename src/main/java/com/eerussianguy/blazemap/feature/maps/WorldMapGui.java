@@ -8,8 +8,10 @@ import java.util.stream.Collectors;
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Widget;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -89,6 +91,16 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     public void setMapType(MapType map) {
         synchronizer.setMapType(map);
         updateLegend();
+    }
+
+    @Override
+    public void drawTooltip(PoseStack stack, Component component, int x, int y) {
+        renderTooltip(stack, component, x, y);
+    }
+
+    @Override
+    public Iterable<? extends GuiEventListener> getChildren() {
+        return children();
     }
 
     @Override

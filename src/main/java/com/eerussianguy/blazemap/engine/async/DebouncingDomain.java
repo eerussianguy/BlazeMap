@@ -45,7 +45,12 @@ public class DebouncingDomain<T> {
             }
         }
         for(T obj : pop) {
-            callback.accept(obj);
+            try{
+                callback.accept(obj);
+            }
+            catch(Throwable t){
+                t.printStackTrace();
+            }
         }
         return this.next;
     }

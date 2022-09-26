@@ -18,7 +18,7 @@ public class MapTypeButton extends ImageButton {
     public MapTypeButton(int px, int py, int w, int h, Key<MapType> key, IMapHost host) {
         super(px, py, w, h, 0, 0, 0, key.value().getIcon(), w, h, button -> {
             host.setMapType(key.value());
-            for(GuiEventListener widget : host.children()) {
+            for(GuiEventListener widget : host.getChildren()) {
                 if(widget instanceof LayerButton lb) {
                     lb.checkVisible();
                 }
@@ -33,7 +33,7 @@ public class MapTypeButton extends ImageButton {
     public void renderToolTip(PoseStack stack, int x, int y) {
         RenderSystem.setShaderColor(1, 1, 1, 1);
         TranslatableComponent component = key.value().getName();
-        host.renderTooltip(stack, component, x, y);
+        host.drawTooltip(stack, component, x, y);
     }
 
     @Override

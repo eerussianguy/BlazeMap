@@ -1,7 +1,9 @@
 package com.eerussianguy.blazemap.feature.maps;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -48,6 +50,16 @@ public class MinimapOptionsGui extends BlazeGui implements IScreenSkipsMinimap, 
     @Override
     public void setMapType(MapType map) {
         mapRenderer.setMapType(map);
+    }
+
+    @Override
+    public void drawTooltip(PoseStack stack, Component component, int x, int y) {
+        renderTooltip(stack, component, x, y);
+    }
+
+    @Override
+    public Iterable<? extends GuiEventListener> getChildren() {
+        return children();
     }
 
     @Override
