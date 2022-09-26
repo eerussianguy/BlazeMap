@@ -19,13 +19,20 @@ public class StorageAccess implements IStorageAccess {
     }
 
     @Override
+    public boolean exists(ResourceLocation node) {
+        return getFile(node).exists();
+    }
+
+    @Override
     public MinecraftStreams.Input read(ResourceLocation node) throws IOException {
         return new MinecraftStreams.Input(new FileInputStream(getFile(node)));
     }
 
     @Override
     public MinecraftStreams.Output write(ResourceLocation node) throws IOException {
-        return new MinecraftStreams.Output(new FileOutputStream(getFile(node)));
+        File file = getFile(node);
+        file.getParentFile().mkdirs();
+        return new MinecraftStreams.Output(new FileOutputStream(file));
     }
 
     private File getFile(ResourceLocation node){
