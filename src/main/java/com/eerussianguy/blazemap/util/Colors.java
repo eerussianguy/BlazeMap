@@ -35,4 +35,9 @@ public class Colors {
     public static int abgr(Color color) {
         return 0xFF000000 | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
     }
+
+    public static int randomBrightColor() {
+        float hue = ((float) System.nanoTime() % 360) / 360F;
+        return Color.HSBtoRGB(hue, 1, 1);
+    }
 }

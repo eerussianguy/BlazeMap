@@ -13,5 +13,11 @@
   "blazemap.enabled": " §aENABLED",
   "blazemap.gui.minimap_options.title": "Minimap Options",
   "blazemap.gui.minimap_options.map_types": "Active Map",
-  "blazemap.gui.minimap_options.layers": "Active Layers"
+  "blazemap.gui.minimap_options.layers": "Optional Layers",
+  "blazemap.gui.waypoint_editor.title": "Waypoint Editor",
+  "blazemap.gui.waypoint_editor.random": "Randomize Color",
+  "blazemap.gui.waypoint_editor.save": "Save",
+  "blazemap.gui.waypoint_manager.title": "Your Waypoints",
+  "blazemap.gui.waypoint_manager.delete": "Delete",
+  "blazemap.gui.waypoint_manager.edit": "Edit"
 }

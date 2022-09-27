@@ -25,7 +25,7 @@ public class MinimapOptionsGui extends BlazeGui implements IScreenSkipsMinimap, 
         Minecraft.getInstance().setScreen(new MinimapOptionsGui());
     }
 
-    private final MapRenderer mapRenderer = new MapRenderer(MinimapRenderer.SIZE, MinimapRenderer.SIZE, Helpers.identifier("dynamic/map/minimap_preview"), MinimapRenderer.MIN_ZOOM, MinimapRenderer.MAX_ZOOM);
+    private final MapRenderer mapRenderer = new MapRenderer(MinimapRenderer.SIZE, MinimapRenderer.SIZE, Helpers.identifier("dynamic/map/minimap_preview"), MinimapRenderer.MIN_ZOOM, MinimapRenderer.MAX_ZOOM, false);
     private final MapConfigSynchronizer synchronizer = MinimapRenderer.INSTANCE.synchronizer;
 
     public MinimapOptionsGui() {

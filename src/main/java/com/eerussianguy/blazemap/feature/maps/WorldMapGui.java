@@ -1,7 +1,6 @@
 package com.eerussianguy.blazemap.feature.maps;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,11 +19,8 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
-import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.gui.Image;
@@ -40,15 +36,9 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
     public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
     private static boolean showWidgets = true;
-    private static IMarkerStorage<Waypoint> waypointStorage;
 
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());
-    }
-
-    // TODO: remove, debug
-    public static void onDimensionChanged(DimensionChangedEvent event) {
-        waypointStorage = event.waypoints;
     }
 
 
@@ -65,7 +55,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     public WorldMapGui() {
         super(EMPTY);
-        mapRenderer = new MapRenderer(-1, -1, Helpers.identifier("dynamic/map/worldmap"), MIN_ZOOM, MAX_ZOOM);
+        mapRenderer = new MapRenderer(-1, -1, Helpers.identifier("dynamic/map/worldmap"), MIN_ZOOM, MAX_ZOOM, true);
         synchronizer = new MapConfigSynchronizer(mapRenderer, BlazeMapConfig.CLIENT.worldMap);
         dimension = Minecraft.getInstance().level.dimension();
         mapTypes = BlazeMapAPI.MAPTYPES.keys().stream().map(BlazeRegistry.Key::value).filter(m -> m.shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableList());
@@ -176,14 +166,14 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
         if(showWidgets) {
             int maps = mapTypes.size();
-            if(maps > 0){
+            if(maps > 0) {
                 stack.pushPose();
                 stack.translate(5, 38, 0);
                 RenderHelper.fillRect(stack.last().pose(), 20, maps * 20, Colors.WIDGET_BACKGROUND);
                 stack.popPose();
             }
             long layers = mapRenderer.getMapType().getLayers().stream().map(k -> k.value()).filter(l -> !l.isOpaque() && l.shouldRenderInDimension(dimension)).count();
-            if(layers > 0){
+            if(layers > 0) {
                 stack.pushPose();
                 stack.translate(5, layersBegin - 2, 0);
                 RenderHelper.fillRect(stack.last().pose(), 20, layers * 20, Colors.WIDGET_BACKGROUND);
@@ -233,22 +223,6 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
             return true;
         }
         return super.keyPressed(key, x, y);
-    }
-
-    @Override // TODO: this is debug code. Remove later.
-    public boolean mouseClicked(double x, double y, int button) {
-        if(button == GLFW.GLFW_MOUSE_BUTTON_3) {
-            float scale = (float) getMinecraft().getWindow().getGuiScale();
-            waypointStorage.add(new Waypoint(
-                Helpers.identifier("waypoint-" + System.currentTimeMillis()),
-                getMinecraft().level.dimension(),
-                mapRenderer.fromBegin((int) (scale * x / zoom), 0, (int) (scale * y / zoom)),
-                "Test"
-            ).randomizeColor());
-            mapRenderer.updateWaypoints();
-            return true;
-        }
-        return super.mouseClicked(x, y, button);
     }
 
     @Override

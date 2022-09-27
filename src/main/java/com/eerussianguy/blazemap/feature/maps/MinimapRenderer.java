@@ -32,7 +32,7 @@ public class MinimapRenderer implements AutoCloseable {
     public MinimapRenderer() {
         ResourceLocation mapBackground = Helpers.identifier("textures/map.png");
         this.backgroundRenderType = RenderType.text(mapBackground);
-        this.mapRenderer = new MapRenderer(SIZE, SIZE, Helpers.identifier("dynamic/map/minimap"), MIN_ZOOM, MAX_ZOOM);
+        this.mapRenderer = new MapRenderer(SIZE, SIZE, Helpers.identifier("dynamic/map/minimap"), MIN_ZOOM, MAX_ZOOM, true);
         this.synchronizer = new MapConfigSynchronizer(mapRenderer, BlazeMapConfig.CLIENT.minimap);
     }
 

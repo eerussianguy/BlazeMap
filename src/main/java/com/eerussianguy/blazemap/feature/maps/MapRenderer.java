@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -96,8 +97,9 @@ public class MapRenderer implements AutoCloseable {
     private RegionPos[][] offsets;
     private final double minZoom, maxZoom;
     private double zoom = 1;
+    private final boolean renderNames;
 
-    public MapRenderer(int width, int height, ResourceLocation textureResource, double minZoom, double maxZoom) {
+    public MapRenderer(int width, int height, ResourceLocation textureResource, double minZoom, double maxZoom, boolean renderNames) {
         this.center = new BlockPos.MutableBlockPos();
         this.begin = new BlockPos.MutableBlockPos();
         this.end = new BlockPos.MutableBlockPos();
@@ -111,6 +113,8 @@ public class MapRenderer implements AutoCloseable {
         if(width > 0 && height > 0) {
             this.resize(width, height);
         }
+
+        this.renderNames = renderNames;
 
         RENDERERS.add(this);
     }
@@ -226,13 +230,13 @@ public class MapRenderer implements AutoCloseable {
 
         stack.pushPose();
         for(MapLabel l : labels) {
-            renderMarker(buffers, stack, l.getPosition(), l.getIcon(), l.getColor(), l.getWidth(), l.getHeight(), l.getRotation(), l.getUsesZoom());
+            renderMarker(buffers, stack, l.getPosition(), l.getIcon(), l.getColor(), l.getWidth(), l.getHeight(), l.getRotation(), l.getUsesZoom(), null);
         }
         for(Waypoint w : waypoints) {
-            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true);
+            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true, renderNames ? w.getLabel() : null);
         }
         LocalPlayer player = Helpers.getPlayer();
-        renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false);
+        renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false, null);
         stack.popPose();
 
         stack.popPose();
@@ -304,7 +308,7 @@ public class MapRenderer implements AutoCloseable {
         }
     }
 
-    private void renderMarker(MultiBufferSource buffers, PoseStack stack, BlockPos position, ResourceLocation marker, int color, double width, double height, float rotation, boolean zoom) {
+    private void renderMarker(MultiBufferSource buffers, PoseStack stack, BlockPos position, ResourceLocation marker, int color, double width, double height, float rotation, boolean zoom, String name) {
         stack.pushPose();
         stack.scale((float) this.zoom, (float) this.zoom, 1);
         int dx = position.getX() - begin.getX();
@@ -314,6 +318,14 @@ public class MapRenderer implements AutoCloseable {
             stack.scale(1F / (float) this.zoom, 1F / (float) this.zoom, 1);
         }
         stack.mulPose(Vector3f.ZP.rotationDegrees(rotation));
+        if(name != null) {
+            Minecraft mc = Minecraft.getInstance();
+            stack.pushPose();
+            stack.translate(-mc.font.width(name), (10 + (height / 2)), 0);
+            stack.scale(2, 2, 0);
+            mc.font.drawInBatch(name, 0, 0, color, true, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);
+            stack.popPose();
+        }
         stack.translate(-width / 2, -height / 2, 0);
         VertexConsumer vertices = buffers.getBuffer(RenderType.text(marker));
         RenderHelper.drawQuad(vertices, stack.last().pose(), (float) width, (float) height, color);
