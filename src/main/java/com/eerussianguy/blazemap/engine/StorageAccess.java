@@ -14,7 +14,7 @@ import com.eerussianguy.blazemap.api.util.MinecraftStreams;
 public class StorageAccess implements IStorageAccess {
     private final File dir;
 
-    public StorageAccess(File dir){
+    public StorageAccess(File dir) {
         this.dir = dir;
     }
 
@@ -35,7 +35,7 @@ public class StorageAccess implements IStorageAccess {
         return new MinecraftStreams.Output(new FileOutputStream(file));
     }
 
-    private File getFile(ResourceLocation node){
+    private File getFile(ResourceLocation node) {
         Objects.requireNonNull(node);
         File mod = new File(dir, node.getNamespace());
         mod.mkdirs();

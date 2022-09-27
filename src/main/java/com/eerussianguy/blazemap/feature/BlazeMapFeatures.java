@@ -19,6 +19,7 @@ import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointCreatorGui;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointManagerGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointStore;
 import com.mojang.blaze3d.platform.InputConstants;
 
@@ -64,7 +65,7 @@ public class BlazeMapFeatures {
             }
             if(KEY_WAYPOINTS.isDown()) {
                 if(Screen.hasShiftDown()) {
-                    // Open Waypoint Manager
+                    WaypointManagerGui.open();
                 }
                 else {
                     WaypointCreatorGui.open();
@@ -84,6 +85,7 @@ public class BlazeMapFeatures {
     public static void initWaypoints() {
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(WaypointCreatorGui::onDimensionChanged);
+        bus.addListener(WaypointManagerGui::onDimensionChanged);
         bus.addListener(EventPriority.HIGHEST, (ServerJoinedEvent evt) -> evt.setWaypointStorageFactory(WaypointStore::new));
         bus.addListener(MapRenderer::onWaypointAdded);
         bus.addListener(MapRenderer::onWaypointRemoved);

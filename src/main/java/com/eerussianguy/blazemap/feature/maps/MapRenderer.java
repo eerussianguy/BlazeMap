@@ -318,11 +318,12 @@ public class MapRenderer implements AutoCloseable {
             stack.scale(1F / (float) this.zoom, 1F / (float) this.zoom, 1);
         }
         stack.mulPose(Vector3f.ZP.rotationDegrees(rotation));
-        if(name != null){
+        if(name != null) {
+            Minecraft mc = Minecraft.getInstance();
             stack.pushPose();
-            stack.translate((4 + (width / 2)), -8, 0);
+            stack.translate(-mc.font.width(name), (10 + (height / 2)), 0);
             stack.scale(2, 2, 0);
-            Minecraft.getInstance().font.drawInBatch(name, 0, 0, color, true, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);
+            mc.font.drawInBatch(name, 0, 0, color, true, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);
             stack.popPose();
         }
         stack.translate(-width / 2, -height / 2, 0);

@@ -16,5 +16,8 @@
   "blazemap.gui.minimap_options.layers": "Optional Layers",
   "blazemap.gui.waypoint_creator.title": "New Waypoint",
   "blazemap.gui.waypoint_creator.random": "Randomize Color",
-  "blazemap.gui.waypoint_creator.save": "Save"
+  "blazemap.gui.waypoint_creator.save": "Save",
+  "blazemap.gui.waypoint_manager.title": "Your Waypoints",
+  "blazemap.gui.waypoint_manager.delete": "Delete",
+  "blazemap.gui.waypoint_manager.edit": "Edit"
 }

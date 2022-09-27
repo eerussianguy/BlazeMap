@@ -56,7 +56,7 @@ public class WaypointCreatorGui extends BlazeGui {
         iconRender = RenderType.text(icon);
     }
 
-    private void createWaypoint(){
+    private void createWaypoint() {
         waypointStorage.add(new Waypoint(
             Helpers.identifier("waypoint-" + System.currentTimeMillis()),
             getMinecraft().level.dimension(),
@@ -68,7 +68,7 @@ public class WaypointCreatorGui extends BlazeGui {
         onClose();
     }
 
-    private void randomColor(){
+    private void randomColor() {
         color = Colors.randomBrightColor();
     }
 
@@ -80,8 +80,8 @@ public class WaypointCreatorGui extends BlazeGui {
         EditBox fx = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 12, top + 40, 40, 12, this.title));
         EditBox fy = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 55, top + 40, 40, 12, this.title));
         EditBox fz = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 98, top + 40, 40, 12, this.title));
-        addRenderableWidget(new Button(left+12, top+103, 126, 20, Helpers.translate("blazemap.gui.waypoint_creator.random"), b -> randomColor()));
-        save = addRenderableWidget(new Button(left+150, top+103, 66, 20, Helpers.translate("blazemap.gui.waypoint_creator.save"), b -> createWaypoint()));
+        addRenderableWidget(new Button(left + 12, top + 103, 126, 20, Helpers.translate("blazemap.gui.waypoint_creator.random"), b -> randomColor()));
+        save = addRenderableWidget(new Button(left + 150, top + 103, 66, 20, Helpers.translate("blazemap.gui.waypoint_creator.save"), b -> createWaypoint()));
 
         fname.setValue(name);
         fx.setValue(String.valueOf(x));

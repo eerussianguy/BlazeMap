@@ -166,14 +166,14 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
         if(showWidgets) {
             int maps = mapTypes.size();
-            if(maps > 0){
+            if(maps > 0) {
                 stack.pushPose();
                 stack.translate(5, 38, 0);
                 RenderHelper.fillRect(stack.last().pose(), 20, maps * 20, Colors.WIDGET_BACKGROUND);
                 stack.popPose();
             }
             long layers = mapRenderer.getMapType().getLayers().stream().map(k -> k.value()).filter(l -> !l.isOpaque() && l.shouldRenderInDimension(dimension)).count();
-            if(layers > 0){
+            if(layers > 0) {
                 stack.pushPose();
                 stack.translate(5, layersBegin - 2, 0);
                 RenderHelper.fillRect(stack.last().pose(), 20, layers * 20, Colors.WIDGET_BACKGROUND);

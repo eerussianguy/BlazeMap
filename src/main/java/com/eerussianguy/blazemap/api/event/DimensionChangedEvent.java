@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.api.event;
 
-import java.io.File;
 import java.util.Set;
 import java.util.function.Consumer;
 
