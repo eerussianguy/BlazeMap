@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -52,10 +53,12 @@ public class WaypointStore implements IMarkerStorage<Waypoint> {
     // =================================================================================================================
     private final IOSupplier<MinecraftStreams.Output> outputSupplier;
     private final IOSupplier<MinecraftStreams.Input> inputSupplier;
+    private final Supplier<Boolean> exists;
 
-    public WaypointStore(IOSupplier<MinecraftStreams.Input> inputSupplier, IOSupplier<MinecraftStreams.Output> outputSupplier) {
+    public WaypointStore(IOSupplier<MinecraftStreams.Input> inputSupplier, IOSupplier<MinecraftStreams.Output> outputSupplier, Supplier<Boolean> exists) {
         this.outputSupplier = outputSupplier;
         this.inputSupplier = inputSupplier;
+        this.exists = exists;
         load();
     }
 
@@ -85,6 +88,7 @@ public class WaypointStore implements IMarkerStorage<Waypoint> {
     }
 
     public void load() {
+        if(!exists.get()) return;
         try(MinecraftStreams.Input input = inputSupplier.get()) {
             int count = input.readInt();
             for(int i = 0; i < count; i++) {

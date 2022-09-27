@@ -14,6 +14,7 @@ import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.util.IStorageAccess;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -69,9 +70,9 @@ public class DimensionChangedEvent extends Event {
     public final IMarkerStorage<Waypoint> waypoints;
 
     /**
-     * Directory in the client where all map data for this dimension is stored
+     * Client file storage where all map data for this dimension is stored
      */
-    public final File dimensionStorageDir;
+    public final IStorageAccess dimensionStorage;
 
     public DimensionChangedEvent(
         ResourceKey<Level> dimension,
@@ -81,7 +82,7 @@ public class DimensionChangedEvent extends Event {
         DimensionTileStorage tiles,
         IMarkerStorage.Layered<MapLabel> labels,
         IMarkerStorage<Waypoint> waypoints,
-        File dir
+        IStorageAccess storageAccess
     ) {
         this.dimension = dimension;
         this.availableMapTypes = mapTypes;
@@ -90,7 +91,7 @@ public class DimensionChangedEvent extends Event {
         this.tileStorage = tiles;
         this.labels = labels;
         this.waypoints = waypoints;
-        this.dimensionStorageDir = dir;
+        this.dimensionStorage = storageAccess;
     }
 
 

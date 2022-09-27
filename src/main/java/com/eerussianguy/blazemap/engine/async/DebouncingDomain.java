@@ -26,8 +26,23 @@ public class DebouncingDomain<T> {
         }
     }
 
-    public long pop() {
-        long curr = System.currentTimeMillis();
+    public void clear() {
+        synchronized(queue) {
+            queue.clear();
+        }
+    }
+
+    public boolean remove(T key) {
+        synchronized(queue) {
+            return queue.remove(key) != null;
+        }
+    }
+
+    public void finish() {
+        pop(Long.MAX_VALUE);
+    }
+
+    private long pop(long curr) {
         Set<T> pop = new HashSet<>();
         synchronized(queue) {
             this.next = Long.MAX_VALUE;
@@ -45,9 +60,19 @@ public class DebouncingDomain<T> {
             }
         }
         for(T obj : pop) {
-            callback.accept(obj);
+            try {
+                callback.accept(obj);
+            }
+            catch(Throwable t) {
+                t.printStackTrace();
+            }
         }
         return this.next;
+    }
+
+    public long pop() {
+        long curr = System.currentTimeMillis();
+        return pop(curr);
     }
 
     public void setThread(Thread thread) {

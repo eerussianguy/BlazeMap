@@ -38,7 +38,7 @@ public class LayerButton extends ImageButton {
     @Override
     public void renderToolTip(PoseStack stack, int x, int y) {
         RenderSystem.setShaderColor(1, 1, 1, 1);
-        host.renderTooltip(stack, key.value().getName(), x, y);
+        host.drawTooltip(stack, key.value().getName(), x, y);
     }
 
     public void checkVisible() {
