@@ -31,7 +31,6 @@ public class WaypointCreatorGui extends BlazeGui {
         Minecraft.getInstance().setScreen(new WaypointCreatorGui());
     }
 
-    private EditBox fname;
     private Button save;
     private final NumericWrapper nx, ny, nz;
 
@@ -62,7 +61,7 @@ public class WaypointCreatorGui extends BlazeGui {
             Helpers.identifier("waypoint-" + System.currentTimeMillis()),
             getMinecraft().level.dimension(),
             new BlockPos(x, y, z),
-            "Test",
+            name,
             icon,
             color
         ));
@@ -77,7 +76,7 @@ public class WaypointCreatorGui extends BlazeGui {
     protected void init() {
         super.init();
 
-        fname = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left+12, top+25, 126, 12, this.title));
+        EditBox fname = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 12, top + 25, 126, 12, this.title));
         EditBox fx = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 12, top + 40, 40, 12, this.title));
         EditBox fy = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 55, top + 40, 40, 12, this.title));
         EditBox fz = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 98, top + 40, 40, 12, this.title));
