@@ -15,6 +15,7 @@ import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.gui.BlazeGui;
 import com.eerussianguy.blazemap.gui.NumericWrapper;
+import com.eerussianguy.blazemap.gui.SelectionList;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.RenderHelper;
@@ -41,7 +42,7 @@ public class WaypointCreatorGui extends BlazeGui {
     private int color;
 
     protected WaypointCreatorGui() {
-        super(Helpers.translate("blazemap.gui.waypoint_creator.title"), 228, 135);
+        super(Helpers.translate("blazemap.gui.waypoint_creator.title"), 228, 182);
 
         nx = new NumericWrapper(() -> x, v -> x = v);
         ny = new NumericWrapper(() -> y, v -> y = v);
@@ -80,8 +81,14 @@ public class WaypointCreatorGui extends BlazeGui {
         EditBox fx = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 12, top + 40, 40, 12, this.title));
         EditBox fy = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 55, top + 40, 40, 12, this.title));
         EditBox fz = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 98, top + 40, 40, 12, this.title));
-        addRenderableWidget(new Button(left + 12, top + 103, 126, 20, Helpers.translate("blazemap.gui.waypoint_creator.random"), b -> randomColor()));
-        save = addRenderableWidget(new Button(left + 150, top + 103, 66, 20, Helpers.translate("blazemap.gui.waypoint_creator.save"), b -> createWaypoint()));
+
+        addRenderableWidget(new SelectionList<>(left + 12, top + 55, 126, 92, 18, this::renderIcon))
+            .setResponder(this::onSelect)
+            .setItems(BlazeMapReferences.Icons.ALL_WAYPOINTS)
+            .setSelected(icon);
+
+        addRenderableWidget(new Button(left + 12, top + 150, 126, 20, Helpers.translate("blazemap.gui.waypoint_creator.random"), b -> randomColor()));
+        save = addRenderableWidget(new Button(left + 150, top + 150, 66, 20, Helpers.translate("blazemap.gui.waypoint_creator.save"), b -> createWaypoint()));
 
         fname.setValue(name);
         fx.setValue(String.valueOf(x));
@@ -95,6 +102,18 @@ public class WaypointCreatorGui extends BlazeGui {
         nx.setSubject(fx);
         ny.setSubject(fy);
         nz.setSubject(fz);
+    }
+
+    private void onSelect(ResourceLocation icon){
+        if(icon == null) icon = BlazeMapReferences.Icons.WAYPOINT;
+        this.icon = icon;
+        this.iconRender = RenderType.text(icon);
+    }
+
+    private void renderIcon(PoseStack stack, ResourceLocation icon){
+        RenderHelper.drawTexturedQuad(icon, -1, stack, 2, 1, 16, 16);
+        String[] path = icon.getPath().split("/");
+        font.draw(stack, path[path.length-1].split("\\.")[0], 20, 5, -1);
     }
 
     @Override

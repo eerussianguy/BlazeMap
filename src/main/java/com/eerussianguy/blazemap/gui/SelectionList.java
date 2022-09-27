@@ -66,6 +66,14 @@ public class SelectionList<T> implements Widget, GuiEventListener, NarratableEnt
         return items.get(selected);
     }
 
+    public void setSelected(T item){
+        int previous = selected;
+        selected = items.indexOf(item);
+        if(selected != previous){
+            responder.accept(getSelected());
+        }
+    }
+
     @Override
     public void render(PoseStack stack, int mx, int my, float p) {
         stack.pushPose();

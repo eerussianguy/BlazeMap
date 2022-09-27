@@ -1,5 +1,10 @@
 package com.eerussianguy.blazemap.api;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import net.minecraft.resources.ResourceLocation;
 
 import com.eerussianguy.blazemap.api.mapping.Collector;
@@ -32,6 +37,19 @@ public class BlazeMapReferences {
     }
 
     public static class Icons {
-        public static final ResourceLocation WAYPOINT = new ResourceLocation(MODID, "textures/waypoint.png");
+        public static final List<ResourceLocation> ALL_WAYPOINTS;
+        public static final ResourceLocation WAYPOINT = new ResourceLocation(MODID, "textures/waypoints/waypoint.png");
+        public static final ResourceLocation HOUSE = new ResourceLocation(MODID, "textures/waypoints/house.png");
+        public static final ResourceLocation CAVE = new ResourceLocation(MODID, "textures/waypoints/cave.png");
+        public static final ResourceLocation INGOT = new ResourceLocation(MODID, "textures/waypoints/ingot.png");
+        public static final ResourceLocation SWORD = new ResourceLocation(MODID, "textures/waypoints/sword.png");
+        public static final ResourceLocation AXE = new ResourceLocation(MODID, "textures/waypoints/axe.png");
+        public static final ResourceLocation PICKAXE = new ResourceLocation(MODID, "textures/waypoints/pickaxe.png");
+        public static final ResourceLocation SHOVEL = new ResourceLocation(MODID, "textures/waypoints/shovel.png");
+        public static final ResourceLocation HOE = new ResourceLocation(MODID, "textures/waypoints/hoe.png");
+
+        static {
+            ALL_WAYPOINTS = List.of(WAYPOINT, HOUSE, CAVE, INGOT, SWORD, AXE, PICKAXE, SHOVEL, HOE);
+        }
     }
 }
