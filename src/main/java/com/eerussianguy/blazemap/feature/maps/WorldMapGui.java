@@ -1,7 +1,6 @@
 package com.eerussianguy.blazemap.feature.maps;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,11 +19,8 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
-import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.gui.Image;
@@ -40,15 +36,9 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
     public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
     private static boolean showWidgets = true;
-    private static IMarkerStorage<Waypoint> waypointStorage;
 
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());
-    }
-
-    // TODO: remove, debug
-    public static void onDimensionChanged(DimensionChangedEvent event) {
-        waypointStorage = event.waypoints;
     }
 
 
@@ -233,22 +223,6 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
             return true;
         }
         return super.keyPressed(key, x, y);
-    }
-
-    @Override // TODO: this is debug code. Remove later.
-    public boolean mouseClicked(double x, double y, int button) {
-        if(button == GLFW.GLFW_MOUSE_BUTTON_3) {
-            float scale = (float) getMinecraft().getWindow().getGuiScale();
-            waypointStorage.add(new Waypoint(
-                Helpers.identifier("waypoint-" + System.currentTimeMillis()),
-                getMinecraft().level.dimension(),
-                mapRenderer.fromBegin((int) (scale * x / zoom), 0, (int) (scale * y / zoom)),
-                "Test"
-            ).randomizeColor());
-            mapRenderer.updateWaypoints();
-            return true;
-        }
-        return super.mouseClicked(x, y, button);
     }
 
     @Override
