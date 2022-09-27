@@ -57,7 +57,6 @@ public class WaypointManagerGui extends BlazeGui {
 
     private void updateButtons() {
         delete.active = edit.active = selected != null;
-        edit.active = false;
     }
 
     private void onDelete(Button b) {
@@ -66,6 +65,8 @@ public class WaypointManagerGui extends BlazeGui {
     }
 
     private void onEdit(Button b) {
-
+        Waypoint waypoint = list.getSelected();
+        onClose();
+        WaypointCreatorGui.open(waypoint);
     }
 }

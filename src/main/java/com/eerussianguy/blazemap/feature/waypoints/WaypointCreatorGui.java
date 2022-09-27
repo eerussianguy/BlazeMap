@@ -29,44 +29,79 @@ public class WaypointCreatorGui extends BlazeGui {
     }
 
     public static void open() {
-        Minecraft.getInstance().setScreen(new WaypointCreatorGui());
+        open(null);
+    }
+
+    public static void open(Waypoint waypoint) {
+        Minecraft.getInstance().setScreen(new WaypointCreatorGui(waypoint));
     }
 
     private Button save;
     private final NumericWrapper nx, ny, nz;
 
+    private final Waypoint waypoint;
     private ResourceLocation icon = BlazeMapReferences.Icons.WAYPOINT;
     private RenderType iconRender;
     private String name;
     private int x, y, z;
     private int color;
 
-    protected WaypointCreatorGui() {
-        super(Helpers.translate("blazemap.gui.waypoint_creator.title"), 228, 182);
+    protected WaypointCreatorGui(Waypoint waypoint) {
+        super(Helpers.translate("blazemap.gui.waypoint_editor.title"), 228, 182);
+        this.waypoint = waypoint;
 
         nx = new NumericWrapper(() -> x, v -> x = v);
         ny = new NumericWrapper(() -> y, v -> y = v);
         nz = new NumericWrapper(() -> z, v -> z = v);
 
-        name = "New Waypoint";
-        Vec3 pos = Minecraft.getInstance().player.position();
-        x = (int) pos.x;
-        y = (int) pos.y;
-        z = (int) pos.z;
-        randomColor();
+        if(waypoint == null) {
+            name = "New Waypoint";
+            Vec3 pos = Minecraft.getInstance().player.position();
+            x = (int) pos.x;
+            y = (int) pos.y;
+            z = (int) pos.z;
+            randomColor();
+        }
+        else {
+            name = waypoint.getLabel();
+            BlockPos pos = waypoint.getPosition();
+            x = pos.getX();
+            y = pos.getY();
+            z = pos.getZ();
+            color = waypoint.getColor();
+        }
+
         iconRender = RenderType.text(icon);
     }
 
     private void createWaypoint() {
-        waypointStorage.add(new Waypoint(
-            Helpers.identifier("waypoint-" + System.currentTimeMillis()),
-            getMinecraft().level.dimension(),
-            new BlockPos(x, y, z),
-            name,
-            icon,
-            color
-        ));
+        if(waypoint == null){
+            waypointStorage.add(new Waypoint(
+                Helpers.identifier("waypoint-" + System.currentTimeMillis()),
+                getMinecraft().level.dimension(),
+                new BlockPos(x, y, z),
+                name,
+                icon,
+                color
+            ));
+        } else {
+            waypoint.setLabel(name);
+            waypoint.setPosition(new BlockPos(x, y, z));
+            waypoint.setColor(color);
+            waypoint.setIcon(icon);
+            // TODO: replace remove + add with a proper changed event
+            waypointStorage.remove(waypoint);
+            waypointStorage.add(waypoint);
+        }
         onClose();
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        if(waypoint != null){
+            WaypointManagerGui.open();
+        }
     }
 
     private void randomColor() {
@@ -87,8 +122,8 @@ public class WaypointCreatorGui extends BlazeGui {
             .setItems(BlazeMapReferences.Icons.ALL_WAYPOINTS)
             .setSelected(icon);
 
-        addRenderableWidget(new Button(left + 12, top + 150, 126, 20, Helpers.translate("blazemap.gui.waypoint_creator.random"), b -> randomColor()));
-        save = addRenderableWidget(new Button(left + 150, top + 150, 66, 20, Helpers.translate("blazemap.gui.waypoint_creator.save"), b -> createWaypoint()));
+        addRenderableWidget(new Button(left + 12, top + 150, 126, 20, Helpers.translate("blazemap.gui.waypoint_editor.random"), b -> randomColor()));
+        save = addRenderableWidget(new Button(left + 150, top + 150, 66, 20, Helpers.translate("blazemap.gui.waypoint_editor.save"), b -> createWaypoint()));
 
         fname.setValue(name);
         fx.setValue(String.valueOf(x));
@@ -104,16 +139,16 @@ public class WaypointCreatorGui extends BlazeGui {
         nz.setSubject(fz);
     }
 
-    private void onSelect(ResourceLocation icon){
+    private void onSelect(ResourceLocation icon) {
         if(icon == null) icon = BlazeMapReferences.Icons.WAYPOINT;
         this.icon = icon;
         this.iconRender = RenderType.text(icon);
     }
 
-    private void renderIcon(PoseStack stack, ResourceLocation icon){
+    private void renderIcon(PoseStack stack, ResourceLocation icon) {
         RenderHelper.drawTexturedQuad(icon, -1, stack, 2, 1, 16, 16);
         String[] path = icon.getPath().split("/");
-        font.draw(stack, path[path.length-1].split("\\.")[0], 20, 5, -1);
+        font.draw(stack, path[path.length - 1].split("\\.")[0], 20, 5, -1);
     }
 
     @Override
