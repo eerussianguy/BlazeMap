@@ -29,6 +29,7 @@ import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
@@ -51,6 +52,7 @@ public class MapRenderer implements AutoCloseable {
     private static IMarkerStorage.Layered<MapLabel> labelStorage;
 
     public static void onDimensionChange(DimensionChangedEvent evt) {
+        evt.tileNotifications.addUpdateListener(MapRenderer::onTileChanged);
         tileStorage = evt.tileStorage;
         dimension = evt.dimension;
         waypointStorage = evt.waypoints;
@@ -71,6 +73,10 @@ public class MapRenderer implements AutoCloseable {
 
     public static void onMapLabelRemoved(MapLabelEvent.Removed event) {
         RENDERERS.forEach(r -> r.remove(event.label));
+    }
+
+    private static void onTileChanged(LayerRegion tile){
+        RENDERERS.forEach(r -> r.changed(tile.layer, tile.region));
     }
 
 
@@ -202,6 +208,16 @@ public class MapRenderer implements AutoCloseable {
 
     private void remove(MapLabel label) {
         labels.remove(label);
+    }
+
+    private void changed(BlazeRegistry.Key<Layer> layer, RegionPos region){
+        if(!visible.contains(layer)) return;
+        RegionPos r0 = offsets[0][0];
+        if(r0.x > region.x || r0.z > region.z) return;
+        RegionPos[] arr = offsets[offsets.length -1];
+        RegionPos r1 = arr[arr.length -1];
+        if(r1.x < region.x || r1.z < region.z) return;
+        needsUpdate = true;
     }
 
     private void updateVisibleLayers() {
