@@ -22,10 +22,13 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
+import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.feature.ProfilingRenderer;
 import com.eerussianguy.blazemap.gui.Image;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
+import com.eerussianguy.blazemap.util.Profiler;
 import com.eerussianguy.blazemap.util.RenderHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -35,7 +38,9 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
     public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
-    private static boolean showWidgets = true;
+    private static final Profiler.TimeProfiler renderTime = new Profiler.TimeProfilerSync(10);
+    private static final Profiler.TimeProfiler uploadTime = new Profiler.TimeProfilerSync(10);
+    private static boolean showWidgets = true, renderDebug = false;
 
     public static void open() {
         Minecraft.getInstance().setScreen(new WorldMapGui());
@@ -55,7 +60,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     public WorldMapGui() {
         super(EMPTY);
-        mapRenderer = new MapRenderer(-1, -1, Helpers.identifier("dynamic/map/worldmap"), MIN_ZOOM, MAX_ZOOM, true);
+        mapRenderer = new MapRenderer(-1, -1, Helpers.identifier("dynamic/map/worldmap"), MIN_ZOOM, MAX_ZOOM, true).setProfilers(renderTime, uploadTime);
         synchronizer = new MapConfigSynchronizer(mapRenderer, BlazeMapConfig.CLIENT.worldMap);
         dimension = Minecraft.getInstance().level.dimension();
         mapTypes = BlazeMapAPI.MAPTYPES.keys().stream().map(BlazeRegistry.Key::value).filter(m -> m.shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableList());
@@ -183,6 +188,41 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
             super.render(stack, i0, i1, f0);
             stack.popPose();
         }
+
+        if(renderDebug){
+            stack.pushPose();
+            renderDebug(stack);
+            stack.popPose();
+        }
+    }
+
+    private void renderDebug(PoseStack stack){
+        stack.translate(32, 25, 0);
+        RenderHelper.fillRect(stack.last().pose(), 135, 110, 0x80000000);
+        font.draw(stack, "Debug Info", 5, 5, 0xFFFF0000);
+        stack.translate(5, 20, 0);
+        stack.scale(0.5F, 0.5F, 1);
+
+        font.draw(stack, "Atlas Time Profiling:", 0, 0, -1);
+        var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        ProfilingRenderer.drawTimeProfiler(renderTime, 12, "Render Atlas", font, stack.last().pose(), buffers);
+        ProfilingRenderer.drawTimeProfiler(uploadTime, 24, "Upload Atlas", font, stack.last().pose(), buffers);
+        buffers.endBatch();
+
+        MapRenderer.DebugInfo debug = mapRenderer.debug;
+        int y = 30;
+        font.draw(stack, String.format("Renderer Size: %d x %d", debug.rw, debug.rh), 0, y+=12, -1);
+        font.draw(stack, String.format("Renderer Zoom: %.3f", debug.zoom), 0, y+=12, -1);
+        font.draw(stack, String.format("Atlas Size: %d x %d", debug.mw, debug.mh), 0, y+=12, -1);
+        font.draw(stack, String.format("Atlas Frustrum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y+=12, -1);
+
+        font.draw(stack, String.format("Region Matrix: %d x %d", debug.ox, debug.oz), 0, y+=18, -1);
+        font.draw(stack, String.format("Active Layers: %d", debug.layers), 0, y+=12, -1);
+        font.draw(stack, String.format("Stitching: %s", debug.stitching), 0, y+=12, 0xFF0088FF);
+        font.draw(stack, String.format("Parallel Pool: %d", BlazeMapEngine.cruncher().poolSize()), 0, y+=12, 0xFFFFFF00);
+
+        font.draw(stack, String.format("Addon Labels: %d", debug.labels), 0, y+=18, -1);
+        font.draw(stack, String.format("Player Waypoints: %d", debug.waypoints), 0, y+=12, -1);
     }
 
     @Override
@@ -201,6 +241,11 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
         if(key == GLFW.GLFW_KEY_F1) {
             showWidgets = !showWidgets;
+            return true;
+        }
+
+        if(key == GLFW.GLFW_KEY_F3) {
+            renderDebug = !renderDebug;
             return true;
         }
 

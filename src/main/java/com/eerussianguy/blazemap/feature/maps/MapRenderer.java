@@ -83,6 +83,7 @@ public class MapRenderer implements AutoCloseable {
     // =================================================================================================================
 
 
+    final DebugInfo debug = new DebugInfo();
     private Profiler.TimeProfiler renderTimer = new Profiler.TimeProfiler.Dummy();
     private Profiler.TimeProfiler uploadTimer = new Profiler.TimeProfiler.Dummy();
 
@@ -138,8 +139,8 @@ public class MapRenderer implements AutoCloseable {
     }
 
     public void resize(int width, int height) {
-        this.width = width;
-        this.height = height;
+        this.width = debug.rw = width;
+        this.height = debug.rh = height;
 
         selectMapType();
         createImage();
@@ -150,8 +151,8 @@ public class MapRenderer implements AutoCloseable {
         if(mapTexture != null) {
             mapTexture.close();
         }
-        mapWidth = (int) (width / zoom);
-        mapHeight = (int) (height / zoom);
+        mapWidth = debug.mw = (int) (width / zoom);
+        mapHeight = debug.mh = (int) (height / zoom);
         mapTexture = new DynamicTexture(mapWidth, mapHeight, false);
         Minecraft.getInstance().getTextureManager().register(textureResource, mapTexture);
         renderType = RenderType.text(textureResource);
@@ -166,8 +167,8 @@ public class MapRenderer implements AutoCloseable {
         RegionPos b = new RegionPos(begin.set(center.offset(-w2, 0, -h2)));
         RegionPos e = new RegionPos(end.set(center.offset(w2, 0, h2)));
 
-        int dx = e.x - b.x + 1;
-        int dz = e.z - b.z + 1;
+        int dx = debug.ox = e.x - b.x + 1;
+        int dz = debug.oz = e.z - b.z + 1;
 
         offsets = new RegionPos[dx][dz];
         for(int x = 0; x < dx; x++) {
@@ -178,36 +179,50 @@ public class MapRenderer implements AutoCloseable {
 
         updateWaypoints();
         updateLabels();
+
+        // debug info
+        debug.bx = begin.getX();
+        debug.bz = begin.getZ();
+        debug.ex = end.getX();
+        debug.ez = end.getZ();
     }
 
     public void updateWaypoints() {
         waypoints.clear();
         waypoints.addAll(waypointStorage.getAll().stream().filter(w -> inRange(w.getPosition())).collect(Collectors.toList()));
+        debug.waypoints = waypoints.size();
     }
 
     private void add(Waypoint waypoint) {
         if(inRange(waypoint.getPosition())) {
             waypoints.add(waypoint);
+            debug.waypoints++;
         }
     }
 
     private void remove(Waypoint waypoint) {
-        waypoints.remove(waypoint);
+        if(waypoints.remove(waypoint)){
+            debug.waypoints--;
+        }
     }
 
     public void updateLabels() {
         labels.clear();
         visible.forEach(layer -> labels.addAll(labelStorage.getInLayer(layer).stream().filter(l -> inRange(l.getPosition())).collect(Collectors.toList())));
+        debug.labels = labels.size();
     }
 
     private void add(MapLabel label) {
         if(inRange(label.getPosition()) && visible.contains(label.getLayerID())) {
             labels.add(label);
+            debug.labels++;
         }
     }
 
     private void remove(MapLabel label) {
-        labels.remove(label);
+        if(labels.remove(label)){
+            debug.labels--;
+        }
     }
 
     private void changed(BlazeRegistry.Key<Layer> layer, RegionPos region){
@@ -223,6 +238,7 @@ public class MapRenderer implements AutoCloseable {
     private void updateVisibleLayers() {
         visible = mapType.getLayers().stream().filter(l -> !disabled.contains(l) && l.value().shouldRenderInDimension(dimension)).collect(Collectors.toList());
         updateLabels();
+        debug.layers = visible.size();
     }
 
     private boolean inRange(BlockPos pos) {
@@ -271,6 +287,7 @@ public class MapRenderer implements AutoCloseable {
 
         renderTimer.begin();
         if(regionCount > 24) {
+            debug.stitching = "Parallel";
             AsyncAwaiter jobs = new AsyncAwaiter(regionCount);
             for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
                 for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
@@ -280,6 +297,7 @@ public class MapRenderer implements AutoCloseable {
             jobs.await();
         }
         else {
+            debug.stitching = "Sequential";
             for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
                 for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
                     generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
@@ -387,7 +405,7 @@ public class MapRenderer implements AutoCloseable {
         double prevZoom = this.zoom;
         zoom = Helpers.clamp(minZoom, zoom, maxZoom);
         if(prevZoom == zoom) return false;
-        this.zoom = zoom;
+        this.zoom = debug.zoom = zoom;
         if(width > 0 && height > 0) {
             createImage();
         }
@@ -431,13 +449,18 @@ public class MapRenderer implements AutoCloseable {
         setCenter((int) pos.x, (int) pos.z);
     }
 
-    public BlockPos fromBegin(int x, int y, int z) {
-        return begin.offset(x, y, z);
-    }
-
     @Override
     public void close() {
         mapTexture.close();
         RENDERERS.remove(this);
+    }
+
+    static class DebugInfo {
+        int rw, rh, mw, mh;
+        int bx, bz, ex, ez;
+        double zoom;
+        int ox, oz;
+        int layers, labels, waypoints;
+        String stitching;
     }
 }
