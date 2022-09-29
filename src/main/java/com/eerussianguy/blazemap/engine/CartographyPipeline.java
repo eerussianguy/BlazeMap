@@ -182,7 +182,7 @@ public class CartographyPipeline {
             LAYER_LOAD_PROFILER.hit();
             LAYER_TIME_PROFILER.begin();
             for(Layer layer : dirtyLayers) {
-                NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, 16, 16, false);
+                NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, 16, 16, true);
                 view.setFilter(layer.getCollectors()); // the layer should only access declared collectors
 
                 // only generate updates if the renderer populates the tile

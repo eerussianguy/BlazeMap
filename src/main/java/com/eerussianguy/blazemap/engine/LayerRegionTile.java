@@ -22,7 +22,7 @@ public class LayerRegionTile {
     public LayerRegionTile(BlazeRegistry.Key<Layer> layer, RegionPos region, File worldDir) {
         File layerDir = new File(worldDir, layer.location.toString().replace(':', '+'));
         this.file = new File(layerDir, region.toString() + ".png");
-        image = new NativeImage(NativeImage.Format.RGBA, 512, 512, false);
+        image = new NativeImage(NativeImage.Format.RGBA, 512, 512, true);
     }
 
     public void tryLoad() {
