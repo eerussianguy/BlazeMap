@@ -40,4 +40,19 @@ public class Colors {
         float hue = ((float) System.nanoTime() % 360) / 360F;
         return Color.HSBtoRGB(hue, 1, 1);
     }
+
+    public static float[] decomposeRGBA(int color) {
+        float a = ((color >> 24) & 0xFF) / 255f;
+        float r = ((color >> 16) & 0xFF) / 255f;
+        float g = ((color >> 8) & 0xFF) / 255f;
+        float b = ((color) & 0xFF) / 255f;
+        return new float[] {a, r, g, b};
+    }
+
+    public static float[] decomposeRGB(int color) {
+        float r = ((color >> 16) & 0xFF) / 255f;
+        float g = ((color >> 8) & 0xFF) / 255f;
+        float b = ((color) & 0xFF) / 255f;
+        return new float[] {r, g, b};
+    }
 }

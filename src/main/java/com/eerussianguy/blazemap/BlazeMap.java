@@ -11,6 +11,7 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointRenderer;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
@@ -32,6 +33,7 @@ public class BlazeMap {
 
             EventHandler.init();
             ForgeEventHandler.init();
+            WaypointRenderer.init();
             BlazeMapConfig.init();
         }
     }
