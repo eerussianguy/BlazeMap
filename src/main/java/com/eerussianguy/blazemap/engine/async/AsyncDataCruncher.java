@@ -19,6 +19,7 @@ public final class AsyncDataCruncher {
             Thread thread = new Thread(this::loop);
             thread.setName(name + " AsyncDataCruncher #" + i);
             thread.setDaemon(true);
+            thread.setPriority(7);
             thread.start();
             threads.add(thread);
             BlazeMap.LOGGER.info("Started {}", thread.getName());
@@ -51,7 +52,7 @@ public final class AsyncDataCruncher {
     public void submit(Runnable r) {
         tasks.add(r);
         synchronized(mutex) {
-            mutex.notifyAll();
+            mutex.notify();
         }
     }
 
