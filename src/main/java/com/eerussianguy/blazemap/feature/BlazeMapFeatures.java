@@ -12,15 +12,9 @@ import net.minecraftforge.eventbus.api.IEventBus;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
-import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.feature.mapping.*;
-import com.eerussianguy.blazemap.feature.maps.MapRenderer;
-import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
-import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
-import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
-import com.eerussianguy.blazemap.feature.waypoints.WaypointCreatorGui;
-import com.eerussianguy.blazemap.feature.waypoints.WaypointManagerGui;
-import com.eerussianguy.blazemap.feature.waypoints.WaypointStore;
+import com.eerussianguy.blazemap.feature.maps.*;
+import com.eerussianguy.blazemap.feature.waypoints.*;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {
@@ -54,40 +48,43 @@ public class BlazeMapFeatures {
         bus.addListener(MapRenderer::onDimensionChange);
         bus.addListener(MapRenderer::onMapLabelAdded);
         bus.addListener(MapRenderer::onMapLabelRemoved);
-        bus.addListener((InputEvent.KeyInputEvent evt) -> {
-            if(KEY_MAPS.isDown()) {
-                if(Screen.hasShiftDown()) {
-                    MinimapOptionsGui.open();
-                }
-                else {
-                    WorldMapGui.open();
-                }
+        bus.addListener(BlazeMapFeatures::mapKeybinds);
+    }
+
+    private static void mapKeybinds(InputEvent.KeyInputEvent evt) {
+        if(KEY_MAPS.isDown()) {
+            if(Screen.hasShiftDown()) {
+                MinimapOptionsGui.open();
             }
-            if(KEY_WAYPOINTS.isDown()) {
-                if(Screen.hasShiftDown()) {
-                    WaypointManagerGui.open();
-                }
-                else {
-                    WaypointCreatorGui.open();
-                }
+            else {
+                WorldMapGui.open();
             }
-            if(KEY_ZOOM.isDown()) {
-                if(Screen.hasShiftDown()) {
-                    MinimapRenderer.INSTANCE.synchronizer.zoomOut();
-                }
-                else {
-                    MinimapRenderer.INSTANCE.synchronizer.zoomIn();
-                }
+        }
+        if(KEY_WAYPOINTS.isDown()) {
+            if(Screen.hasShiftDown()) {
+                WaypointManagerGui.open();
             }
-        });
+            else {
+                WaypointCreatorGui.open();
+            }
+        }
+        if(KEY_ZOOM.isDown()) {
+            if(Screen.hasShiftDown()) {
+                MinimapRenderer.INSTANCE.synchronizer.zoomOut();
+            }
+            else {
+                MinimapRenderer.INSTANCE.synchronizer.zoomIn();
+            }
+        }
     }
 
     public static void initWaypoints() {
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(WaypointCreatorGui::onDimensionChanged);
         bus.addListener(WaypointManagerGui::onDimensionChanged);
-        bus.addListener(EventPriority.HIGHEST, (ServerJoinedEvent evt) -> evt.setWaypointStorageFactory(WaypointStore::new));
+        bus.addListener(EventPriority.HIGHEST, WaypointStore::onServerJoined);
         bus.addListener(MapRenderer::onWaypointAdded);
         bus.addListener(MapRenderer::onWaypointRemoved);
+        WaypointRenderer.init();
     }
 }

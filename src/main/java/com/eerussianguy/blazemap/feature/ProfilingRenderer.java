@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.MinecraftForge;
 
-import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profiler;
@@ -20,6 +20,7 @@ import com.mojang.math.Matrix4f;
 
 public class ProfilingRenderer {
     public static final ProfilingRenderer INSTANCE = new ProfilingRenderer();
+    private static final String FMT = "%s : %d";
 
     ProfilingRenderer() {
         MinecraftForge.EVENT_BUS.register(this);
@@ -28,14 +29,15 @@ public class ProfilingRenderer {
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
         // ping load profilers
         Profilers.Engine.COLLECTOR_LOAD_PROFILER.ping();
+        Profilers.Engine.PROCESSOR_LOAD_PROFILER.ping();
+        Profilers.Engine.TRANSFORMER_LOAD_PROFILER.ping();
         Profilers.Engine.LAYER_LOAD_PROFILER.ping();
         Profilers.Engine.REGION_LOAD_PROFILER.ping();
-        Profilers.Engine.PROCESSOR_LOAD_PROFILER.ping();
         Profilers.Minimap.TEXTURE_LOAD_PROFILER.ping();
 
         if(Minecraft.getInstance().screen instanceof WorldMapGui) return;
 
-        Profilers.Minimap.DEBUG_TIME_PROFILER.begin();
+        Profilers.DEBUG_TIME_PROFILER.begin();
 
         // get player position
         LocalPlayer player = Helpers.getPlayer();
@@ -45,39 +47,67 @@ public class ProfilingRenderer {
         // draw profiling information
         stack.pushPose();
         stack.translate(5, 5, 0);
-        stack.scale(0.75F, 0.75F, 0);
+        float scale = (float) Minecraft.getInstance().getWindow().getGuiScale();
+        stack.scale(4F / scale, 4F / scale, 1);
         drawProfilingInfo(stack, buffers, Minecraft.getInstance().font, pos);
         stack.popPose();
 
-        Profilers.Minimap.DEBUG_TIME_PROFILER.end();
+        Profilers.DEBUG_TIME_PROFILER.end();
     }
 
     private void drawProfilingInfo(PoseStack stack, MultiBufferSource buffers, Font fontRenderer, BlockPos pos) {
         Matrix4f matrix = stack.last().pose();
 
-        float w = 250, h = 325, o = 0;
-        RenderHelper.fillRect(buffers, matrix, w, h, 0x80000000);
+        boolean isClient = BlazeMapEngine.isClientSource();
+        String side = isClient ? "Client" : "Server";
+        int c = BlazeMapEngine.numCollectors();
+        int p = BlazeMapEngine.numProcessors();
+        int t = BlazeMapEngine.numTransformers();
+        int l = BlazeMapEngine.numLayers();
+
+        float w = 250, h = 180;
+        if(c > 0) h += 50;
+        if(p > 0) h += 50;
+        if(t > 0) h += 50;
+        if(l > 0) h += 100;
+        RenderHelper.fillRect(buffers, matrix, w, h, 0xA0000000);
 
         float y = 5F;
-        fontRenderer.drawInBatch("Debug Info", 5F, y, 0xFF0000, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        fontRenderer.drawInBatch("Player Region: " + new RegionPos(pos), 5F, y += 10, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        drawTimeProfiler(Profilers.Minimap.DEBUG_TIME_PROFILER, y += 10, "Debug Info", fontRenderer, matrix, buffers);
-        drawTimeProfiler(Profilers.Minimap.DRAW_TIME_PROFILER, y += 10, "Minimap Draw", fontRenderer, matrix, buffers);
-        y = drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Texture Upload         [ last second ]", fontRenderer, matrix, buffers, "frame load");
+        fontRenderer.drawInBatch("Client Debug Info", 5F, y, 0xFF0000, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+
+        // Overlay profiling
+        fontRenderer.drawInBatch("Overlays", 5F, y += 20, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        drawTimeProfiler(Profilers.DEBUG_TIME_PROFILER, y += 15, "Debug", fontRenderer, matrix, buffers);
+        y = drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Minimap", "[ last second ]", fontRenderer, matrix, buffers, "frame load");
+
+        // Engine Miscellaneous
+        fontRenderer.drawInBatch("Engine Miscellaneous", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch("MD Source: " + side + " / " + BlazeMapEngine.getMDSource(), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch("Parallel Pool: " + BlazeMapEngine.cruncher().poolSize() + " threads", 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
 
         // Cartography Pipeline Profiling
         fontRenderer.drawInBatch("Cartography Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        y = drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, "MD Collect         [ last second ]", fontRenderer, matrix, buffers, "tick load");
-        y = drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, "Layer Render         [ last second ]", fontRenderer, matrix, buffers, "delay");
-        y = drawSubsystem(Profilers.Engine.PROCESSOR_LOAD_PROFILER, Profilers.Engine.PROCESSOR_TIME_PROFILER, y + 10, "Data Processing     [ last second ]", fontRenderer, matrix, buffers, "delay");
-        y = drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save         [ last minute ]", fontRenderer, matrix, buffers, "delay");
+        if(c > 0) {
+            y = drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, String.format(FMT, "MD Collect", c), "[ last second ]", fontRenderer, matrix, buffers, "tick load");
+        }
+        if(p > 0) {
+            y = drawSubsystem(Profilers.Engine.PROCESSOR_LOAD_PROFILER, Profilers.Engine.PROCESSOR_TIME_PROFILER, y + 10, String.format(FMT, "MD Process", p), "[ last second ]", fontRenderer, matrix, buffers, "delay");
+        }
+        if(t > 0) {
+            y = drawSubsystem(Profilers.Engine.TRANSFORMER_LOAD_PROFILER, Profilers.Engine.TRANSFORMER_TIME_PROFILER, y + 10, String.format(FMT, "MD Transform", t), "[ last second ]", fontRenderer, matrix, buffers, "delay");
+        }
+        if(l > 0) {
+            y = drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, String.format(FMT, "Layer Render", l), "[ last second ]", fontRenderer, matrix, buffers, "delay");
+            y = drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save", "[ last minute ]", fontRenderer, matrix, buffers, "delay");
+        }
     }
 
-    public static float drawSubsystem(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {
-        fontRenderer.drawInBatch(label, 5F, y += 5, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        drawTimeProfiler(time, y += 10, "    \u0394 ", fontRenderer, matrix, buffers);
-        drawLoadProfiler(load, y += 10, "    # ", fontRenderer, matrix, buffers);
-        drawSubsystemLoad(load, time, y += 10, "    \u03C1 ", fontRenderer, matrix, buffers, type);
+    public static float drawSubsystem(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, String roll, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {
+        fontRenderer.drawInBatch(label, 15F, y += 5, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch(roll, 120F, y, 0xCCCCCC, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        drawTimeProfiler(time, y += 10, "\u0394 ", fontRenderer, matrix, buffers);
+        drawLoadProfiler(load, y += 10, "# ", fontRenderer, matrix, buffers);
+        drawSubsystemLoad(load, time, y += 10, "\u03C1 ", fontRenderer, matrix, buffers, type);
         return y + 5;
     }
 
@@ -96,14 +126,18 @@ public class ProfilingRenderer {
             xt /= 1000D;
             xu = "m";
         }
-        String time = String.format("%s: %.2f%ss [ %.1f%ss - %.1f%ss ]", label, at, au, nt, nu, xt, xu);
-        fontRenderer.drawInBatch(time, 5F, y, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        String avg = String.format("%s: %.2f%ss", label, at, au);
+        String dst = String.format("[ %.1f%ss - %.1f%ss ]", nt, nu, xt, xu);
+        fontRenderer.drawInBatch(avg, 15F, y, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch(dst, 120F, y, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
     }
 
     public static void drawLoadProfiler(Profiler.LoadProfiler profiler, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers) {
         String u = profiler.unit;
-        String load = String.format("%s: %.2f\u0394/%s [ %.0f\u0394/%s - %.0f\u0394/%s ]", label, profiler.getAvg(), u, profiler.getMin(), u, profiler.getMax(), u);
-        fontRenderer.drawInBatch(load, 5F, y, 0xAAAAFF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        String avg = String.format("%s: %.2f\u0394/%s", label, profiler.getAvg(), u);
+        String dst = String.format("[ %.0f\u0394/%s - %.0f\u0394/%s ]", profiler.getMin(), u, profiler.getMax(), u);
+        fontRenderer.drawInBatch(avg, 15F, y, 0xAAAAFF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch(dst, 120F, y, 0xAAAAFF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
     }
 
     public static void drawSubsystemLoad(Profiler.LoadProfiler load, Profiler.TimeProfiler time, float y, String label, Font fontRenderer, Matrix4f matrix, MultiBufferSource buffers, String type) {
@@ -116,7 +150,9 @@ public class ProfilingRenderer {
             w /= 1000D;
             u = "m";
         }
-        String profile = String.format("%s: %.2f%ss/%s  |  %.3f%% %s", label, w, u, load.unit, p, type);
-        fontRenderer.drawInBatch(profile, 5F, y, 0xFFAAAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        String con = String.format("%s: %.2f%ss/%s", label, w, u, load.unit);
+        String pct = String.format("%.3f%% %s", p, type);
+        fontRenderer.drawInBatch(con, 15F, y, 0xFFAAAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch(pct, 120F, y, 0xFFAAAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
     }
 }

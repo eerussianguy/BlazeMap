@@ -31,10 +31,6 @@ public final class AsyncDataCruncher {
         return threads.size();
     }
 
-    public int tasks(){
-        return tasks.size();
-    }
-
     public void assertIsOnDataCruncherThread() {
         if(!threads.contains(Thread.currentThread())) {
             throw new IllegalStateException("Operation can only be performed in the AsyncDataCruncher thread");

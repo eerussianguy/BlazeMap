@@ -19,9 +19,8 @@ public class LayerRegionTile {
     private NativeImage image;
     private boolean isEmpty = true;
 
-    public LayerRegionTile(BlazeRegistry.Key<Layer> layer, RegionPos region, File worldDir) {
-        File layerDir = new File(worldDir, layer.location.toString().replace(':', '+'));
-        this.file = new File(layerDir, region.toString() + ".png");
+    public LayerRegionTile(StorageAccess.Internal storage, BlazeRegistry.Key<Layer> layer, RegionPos region) {
+        this.file = storage.getFile(layer.location, region.toString() + ".png");
         image = new NativeImage(NativeImage.Format.RGBA, 512, 512, true);
     }
 

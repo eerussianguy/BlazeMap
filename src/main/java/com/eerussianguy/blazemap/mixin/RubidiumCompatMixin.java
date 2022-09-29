@@ -15,6 +15,6 @@ public class RubidiumCompatMixin {
 
     @Inject(method = "add", at = @At("HEAD"))
     void onAdd(RenderSection render, CallbackInfo ci){
-        BlazeMapEngine.onChunkChanged(render.getChunkPos().chunk());
+        BlazeMapEngine.onChunkChanged(render.getChunkPos().chunk(), "Rubidium Chunk Hook");
     }
 }

@@ -11,6 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 
 import com.eerussianguy.blazemap.BlazeMap;
+import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
 import com.eerussianguy.blazemap.api.event.WaypointEvent;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
@@ -20,6 +21,10 @@ import com.eerussianguy.blazemap.api.util.MinecraftStreams;
 public class WaypointStore implements IMarkerStorage<Waypoint> {
     private final Map<ResourceLocation, Waypoint> store = new HashMap<>();
     private final Collection<Waypoint> view = Collections.unmodifiableCollection(store.values());
+
+    public static void onServerJoined(ServerJoinedEvent event){
+        event.setWaypointStorageFactory(WaypointStore::new);
+    }
 
     @Override
     public Collection<Waypoint> getAll() {

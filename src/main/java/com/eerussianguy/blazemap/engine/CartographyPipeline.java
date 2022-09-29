@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -23,10 +22,12 @@ import com.mojang.blaze3d.platform.NativeImage;
 import static com.eerussianguy.blazemap.util.Profilers.Engine.*;
 
 public class CartographyPipeline {
-    public final File dimensionDir;
+    private final StorageAccess.Internal storage;
+    public final StorageAccess addonStorage;
     public final ResourceKey<Level> dimension;
     public final Set<Key<MapType>> availableMapTypes;
     public final Set<Key<Layer>> availableLayers;
+    public final int numCollectors, numProcessors, numTransformers, numLayers;
     private final Collector<MasterDatum>[] collectors;
     private final Map<Key<Layer>, List<MapType>> mapTriggers = new HashMap<>();
     private final Map<Key<Collector<MasterDatum>>, List<Layer>> layerTriggers = new HashMap<>();
@@ -38,9 +39,9 @@ public class CartographyPipeline {
     private boolean active;
 
 
-    public CartographyPipeline(File serverDir, ResourceKey<Level> dimension) {
-        this.dimensionDir = new File(serverDir, dimension.location().toString().replace(':', '+'));
-        this.dimensionDir.mkdirs();
+    public CartographyPipeline(StorageAccess.Internal storage, ResourceKey<Level> dimension) {
+        this.storage = storage;
+        this.addonStorage = storage.addon();
         this.dimension = dimension;
 
         // Trim dependencies:
@@ -78,9 +79,11 @@ public class CartographyPipeline {
         }
 
         // Set up master data processors
+        int numProcessors = 0;
         for(Key<Processor> processorID : BlazeMapAPI.PROCESSORS.keys()) {
             Processor processor = processorID.value();
             if(!processor.shouldExecuteInDimension(dimension)) continue;
+            numProcessors++;
             for(Key<Collector<MasterDatum>> collectorID : processor.getCollectors()) {
                 Collector<MasterDatum> collector = collectorID.value();
                 if(collector == null)
@@ -90,12 +93,16 @@ public class CartographyPipeline {
                 collectors.put(collectorID, collector);
             }
         }
+        this.numProcessors = numProcessors;
+        this.numTransformers = 0;
 
         // Set up views (immutable sets) for the available maps and layers, fast access collector array.
         this.availableMapTypes = Collections.unmodifiableSet(maps);
         this.availableLayers = Collections.unmodifiableSet(layers);
         // noinspection unchecked
         this.collectors = collectors.values().toArray(Collector[]::new);
+        this.numCollectors = collectors.size();
+        this.numLayers = availableLayers.size();
 
         // Set up debouncing mechanisms
         AsyncChain.Root async = BlazeMapEngine.async();
@@ -226,7 +233,7 @@ public class CartographyPipeline {
             return regions
                 .computeIfAbsent(layer, $ -> new HashMap<>())
                 .computeIfAbsent(region, $ -> {
-                    LayerRegionTile layerRegionTile = new LayerRegionTile(layer, region, dimensionDir);
+                    LayerRegionTile layerRegionTile = new LayerRegionTile(storage, layer, region);
                     layerRegionTile.tryLoad();
                     return layerRegionTile;
                 });

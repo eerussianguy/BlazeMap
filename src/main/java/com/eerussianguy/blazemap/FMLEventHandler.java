@@ -8,13 +8,13 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import com.eerussianguy.blazemap.feature.Overlays;
 
 
-public class EventHandler {
+public class FMLEventHandler {
 
     public static void init() {
         final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 
-        bus.addListener(EventHandler::clientSetup);
-        bus.addListener(EventHandler::onConfigReload);
+        bus.addListener(FMLEventHandler::clientSetup);
+        bus.addListener(FMLEventHandler::onConfigReload);
     }
 
     private static void clientSetup(final FMLClientSetupEvent event) {

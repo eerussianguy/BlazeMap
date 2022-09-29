@@ -1,6 +1,5 @@
 package com.eerussianguy.blazemap.engine;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -20,9 +19,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
+import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.mapping.MasterDatum;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.IStorageFactory;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
@@ -48,14 +50,17 @@ public class BlazeMapEngine {
     private static IMarkerStorage<Waypoint> activeWaypoints;
     private static IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
     private static String serverID;
-    private static File serverDir;
-    private static boolean frozenRegistries = false;
+    private static StorageAccess.Internal storage;
+    private static boolean frozenRegistries;
+    private static boolean clientSource;
+    private static String mdSource;
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
         dataCruncher = new AsyncDataCruncher("Blaze Map");
         async = new AsyncChain.Root(dataCruncher, Helpers::runOnMainThread);
         debouncer = new DebouncingThread("Blaze Map Engine");
+        frozenRegistries = false;
     }
 
     public static AsyncChain.Root async() {
@@ -88,12 +93,13 @@ public class BlazeMapEngine {
         LocalPlayer player = event.getPlayer();
         if(player == null) return;
         serverID = Helpers.getServerID();
-        serverDir = Helpers.getClientSideStorageDir();
-        serverDir.mkdirs();
-        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, new StorageAccess(serverDir));
+        storage = new StorageAccess.Internal(Helpers.getClientSideStorageDir());
+        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, storage.addon());
         MinecraftForge.EVENT_BUS.post(serverJoined);
         waypointStorageFactory = serverJoined.getWaypointStorageFactory();
         switchToPipeline(player.level.dimension());
+        clientSource = true;
+        mdSource = "unknown";
     }
 
     @SubscribeEvent
@@ -107,7 +113,7 @@ public class BlazeMapEngine {
         activeLabels = null;
         activeWaypoints = null;
         serverID = null;
-        serverDir = null;
+        storage = null;
         waypointStorageFactory = null;
     }
 
@@ -121,10 +127,10 @@ public class BlazeMapEngine {
             if(activePipeline.dimension.equals(dimension)) return;
             activePipeline.shutdown();
         }
-        activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(serverDir, d)).activate();
+        activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(storage.internal(d.location()), d)).activate();
         activeLabels = new LabelStorage(dimension);
 
-        IStorageAccess fileStorage = new StorageAccess(activePipeline.dimensionDir);
+        IStorageAccess fileStorage = activePipeline.addonStorage;
         activeWaypoints = WAYPOINTS.computeIfAbsent(dimension, d -> waypointStorageFactory.create(
             () -> fileStorage.read(WAYPOINT_STORAGE),
             () -> fileStorage.write(WAYPOINT_STORAGE),
@@ -145,12 +151,41 @@ public class BlazeMapEngine {
         MinecraftForge.EVENT_BUS.post(event);
     }
 
-    public static void onChunkChanged(ChunkPos pos) {
-        if(activePipeline == null) {
-            BlazeMap.LOGGER.warn("Ignoring chunk update for {}", pos);
+    public static void onChunkChanged(ChunkPos pos, String source) {
+        if(activePipeline == null || !clientSource) {
+            BlazeMap.LOGGER.warn("Ignoring chunk update for {}, pipeline: {}, clientSource: {}:", pos, activePipeline, clientSource);
             return;
         }
+        mdSource = source;
         activePipeline.markChunkDirty(pos);
+    }
+
+    public static void submitChanges(ResourceKey<Level> dimension, Map<ChunkPos, Map<BlazeRegistry.Key<Collector<?>>, MasterDatum>> data) {
+
+    }
+
+    public static String getMDSource() {
+        return mdSource;
+    }
+
+    public static boolean isClientSource() {
+        return clientSource;
+    }
+
+    public static int numCollectors(){
+        return activePipeline.numCollectors;
+    }
+
+    public static int numProcessors(){
+        return activePipeline.numProcessors;
+    }
+
+    public static int numTransformers(){
+        return activePipeline.numTransformers;
+    }
+
+    public static int numLayers(){
+        return activePipeline.numLayers;
     }
 
     static void notifyLayerRegionChange(LayerRegion layerRegion) {
