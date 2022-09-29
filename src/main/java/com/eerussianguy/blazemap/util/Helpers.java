@@ -6,10 +6,12 @@ import java.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.storage.LevelResource;
 
 import com.eerussianguy.blazemap.BlazeMap;
@@ -32,6 +34,13 @@ public class Helpers {
     @Nullable
     public static LocalPlayer getPlayer() {
         return Minecraft.getInstance().player;
+    }
+
+    public static boolean isInRenderDistance(BlockPos pos) {
+        Minecraft mc = Minecraft.getInstance();
+        Entity entity = mc.cameraEntity;
+        double rd = mc.options.getEffectiveRenderDistance() * 16;
+        return entity != null && entity.blockPosition().distSqr(pos) < rd * rd;
     }
 
     public static String getServerID() {
