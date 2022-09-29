@@ -66,10 +66,10 @@ public class SelectionList<T> implements Widget, GuiEventListener, NarratableEnt
         return items.get(selected);
     }
 
-    public void setSelected(T item){
+    public void setSelected(T item) {
         int previous = selected;
         selected = items.indexOf(item);
-        if(selected != previous){
+        if(selected != previous) {
             responder.accept(getSelected());
         }
     }

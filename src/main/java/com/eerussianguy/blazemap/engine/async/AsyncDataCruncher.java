@@ -27,7 +27,7 @@ public final class AsyncDataCruncher {
         BlazeMap.LOGGER.info("Started {} {} AsyncDataCruncher Threads", cores, name);
     }
 
-    public int poolSize(){
+    public int poolSize() {
         return threads.size();
     }
 

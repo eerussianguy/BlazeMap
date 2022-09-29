@@ -45,9 +45,10 @@ public class StorageAccess implements IStorageAccess {
         private static final String OLD_PATTERN = "%s+%s";
         private static final String NEW_PATTERN = "[%s] %s";
 
-        public Internal(File dir, String child){
+        public Internal(File dir, String child) {
             this(new File(dir, child));
         }
+
         public Internal(File dir) {
             super(dir);
             dir.mkdirs();
@@ -68,15 +69,15 @@ public class StorageAccess implements IStorageAccess {
             return new File(d, file);
         }
 
-        public StorageAccess addon(){
+        public StorageAccess addon() {
             return new StorageAccess(dir);
         }
 
-        public StorageAccess addon(ResourceLocation node){
+        public StorageAccess addon(ResourceLocation node) {
             return new StorageAccess(getFile(node));
         }
 
-        public StorageAccess.Internal internal(ResourceLocation node){
+        public StorageAccess.Internal internal(ResourceLocation node) {
             return new Internal(getFile(node));
         }
     }

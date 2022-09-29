@@ -13,8 +13,14 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.feature.mapping.*;
-import com.eerussianguy.blazemap.feature.maps.*;
-import com.eerussianguy.blazemap.feature.waypoints.*;
+import com.eerussianguy.blazemap.feature.maps.MapRenderer;
+import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
+import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
+import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointCreatorGui;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointManagerGui;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointRenderer;
+import com.eerussianguy.blazemap.feature.waypoints.WaypointStore;
 import com.mojang.blaze3d.platform.InputConstants;
 
 public class BlazeMapFeatures {

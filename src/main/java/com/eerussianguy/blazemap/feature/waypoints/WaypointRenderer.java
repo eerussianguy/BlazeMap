@@ -41,19 +41,19 @@ public class WaypointRenderer {
         // Forge Doc:
         // Use this to render custom effects into the world, such as custom entity-like objects or special rendering effects. Called within a fabulous graphics target. Happens after entities render.
         // ForgeRenderTypes.TRANSLUCENT_ON_PARTICLES_TARGET
-        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+        if(event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
             Minecraft mc = Minecraft.getInstance();
             Entity entity = mc.cameraEntity;
             PoseStack stack = event.getPoseStack();
             MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
             float partialTick = event.getPartialTick();
-            if (entity != null) {
+            if(entity != null) {
                 Level level = entity.level;
                 long gameTime = level.getGameTime();
                 waypointStorage.getAll().forEach(w -> {
                     final BlockPos pos = w.getPosition();
                     final AABB fakeAABB = new AABB(pos).setMinY(level.getMinBuildHeight()).setMaxY(level.getMaxBuildHeight());
-                    if (Helpers.isInRenderDistance(pos) && event.getFrustum().isVisible(fakeAABB)) {
+                    if(Helpers.isInRenderDistance(pos) && event.getFrustum().isVisible(fakeAABB)) {
                         stack.pushPose();
                         translateFromCameraToPos(stack, pos);
 
@@ -67,7 +67,8 @@ public class WaypointRenderer {
 
                         stack.popPose();
 
-                    } else {
+                    }
+                    else {
 
                     }
                 });
@@ -106,8 +107,7 @@ public class WaypointRenderer {
         stack.popPose();
     }
 
-    private static void translateFromCameraToPos(PoseStack stack, BlockPos pos)
-    {
+    private static void translateFromCameraToPos(PoseStack stack, BlockPos pos) {
         Vec3 cam = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         stack.translate(pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z);
     }

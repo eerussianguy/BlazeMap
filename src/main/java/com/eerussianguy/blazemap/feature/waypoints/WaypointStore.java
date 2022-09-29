@@ -22,7 +22,7 @@ public class WaypointStore implements IMarkerStorage<Waypoint> {
     private final Map<ResourceLocation, Waypoint> store = new HashMap<>();
     private final Collection<Waypoint> view = Collections.unmodifiableCollection(store.values());
 
-    public static void onServerJoined(ServerJoinedEvent event){
+    public static void onServerJoined(ServerJoinedEvent event) {
         event.setWaypointStorageFactory(WaypointStore::new);
     }
 

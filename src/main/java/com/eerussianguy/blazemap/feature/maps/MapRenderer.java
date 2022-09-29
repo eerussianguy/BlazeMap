@@ -75,7 +75,7 @@ public class MapRenderer implements AutoCloseable {
         RENDERERS.forEach(r -> r.remove(event.label));
     }
 
-    private static void onTileChanged(LayerRegion tile){
+    private static void onTileChanged(LayerRegion tile) {
         RENDERERS.forEach(r -> r.changed(tile.layer, tile.region));
     }
 
@@ -201,7 +201,7 @@ public class MapRenderer implements AutoCloseable {
     }
 
     private void remove(Waypoint waypoint) {
-        if(waypoints.remove(waypoint)){
+        if(waypoints.remove(waypoint)) {
             debug.waypoints--;
         }
     }
@@ -220,17 +220,17 @@ public class MapRenderer implements AutoCloseable {
     }
 
     private void remove(MapLabel label) {
-        if(labels.remove(label)){
+        if(labels.remove(label)) {
             debug.labels--;
         }
     }
 
-    private void changed(BlazeRegistry.Key<Layer> layer, RegionPos region){
+    private void changed(BlazeRegistry.Key<Layer> layer, RegionPos region) {
         if(!visible.contains(layer)) return;
         RegionPos r0 = offsets[0][0];
         if(r0.x > region.x || r0.z > region.z) return;
-        RegionPos[] arr = offsets[offsets.length -1];
-        RegionPos r1 = arr[arr.length -1];
+        RegionPos[] arr = offsets[offsets.length - 1];
+        RegionPos r1 = arr[arr.length - 1];
         if(r1.x < region.x || r1.z < region.z) return;
         needsUpdate = true;
     }

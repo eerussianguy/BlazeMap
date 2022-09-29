@@ -189,14 +189,14 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
             stack.popPose();
         }
 
-        if(renderDebug){
+        if(renderDebug) {
             stack.pushPose();
             renderDebug(stack);
             stack.popPose();
         }
     }
 
-    private void renderDebug(PoseStack stack){
+    private void renderDebug(PoseStack stack) {
         stack.translate(32, 25, 0);
         RenderHelper.fillRect(stack.last().pose(), 135, 110, 0x80000000);
         font.draw(stack, "Debug Info", 5, 5, 0xFFFF0000);
@@ -211,18 +211,18 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
         MapRenderer.DebugInfo debug = mapRenderer.debug;
         int y = 30;
-        font.draw(stack, String.format("Renderer Size: %d x %d", debug.rw, debug.rh), 0, y+=12, -1);
-        font.draw(stack, String.format("Renderer Zoom: %.3f", debug.zoom), 0, y+=12, -1);
-        font.draw(stack, String.format("Atlas Size: %d x %d", debug.mw, debug.mh), 0, y+=12, -1);
-        font.draw(stack, String.format("Atlas Frustrum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y+=12, -1);
+        font.draw(stack, String.format("Renderer Size: %d x %d", debug.rw, debug.rh), 0, y += 12, -1);
+        font.draw(stack, String.format("Renderer Zoom: %.3f", debug.zoom), 0, y += 12, -1);
+        font.draw(stack, String.format("Atlas Size: %d x %d", debug.mw, debug.mh), 0, y += 12, -1);
+        font.draw(stack, String.format("Atlas Frustrum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y += 12, -1);
 
-        font.draw(stack, String.format("Region Matrix: %d x %d", debug.ox, debug.oz), 0, y+=18, -1);
-        font.draw(stack, String.format("Active Layers: %d", debug.layers), 0, y+=12, -1);
-        font.draw(stack, String.format("Stitching: %s", debug.stitching), 0, y+=12, 0xFF0088FF);
-        font.draw(stack, String.format("Parallel Pool: %d", BlazeMapEngine.cruncher().poolSize()), 0, y+=12, 0xFFFFFF00);
+        font.draw(stack, String.format("Region Matrix: %d x %d", debug.ox, debug.oz), 0, y += 18, -1);
+        font.draw(stack, String.format("Active Layers: %d", debug.layers), 0, y += 12, -1);
+        font.draw(stack, String.format("Stitching: %s", debug.stitching), 0, y += 12, 0xFF0088FF);
+        font.draw(stack, String.format("Parallel Pool: %d", BlazeMapEngine.cruncher().poolSize()), 0, y += 12, 0xFFFFFF00);
 
-        font.draw(stack, String.format("Addon Labels: %d", debug.labels), 0, y+=18, -1);
-        font.draw(stack, String.format("Player Waypoints: %d", debug.waypoints), 0, y+=12, -1);
+        font.draw(stack, String.format("Addon Labels: %d", debug.labels), 0, y += 18, -1);
+        font.draw(stack, String.format("Player Waypoints: %d", debug.waypoints), 0, y += 12, -1);
     }
 
     @Override

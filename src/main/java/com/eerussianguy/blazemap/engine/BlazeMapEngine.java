@@ -172,19 +172,19 @@ public class BlazeMapEngine {
         return clientSource;
     }
 
-    public static int numCollectors(){
+    public static int numCollectors() {
         return activePipeline.numCollectors;
     }
 
-    public static int numProcessors(){
+    public static int numProcessors() {
         return activePipeline.numProcessors;
     }
 
-    public static int numTransformers(){
+    public static int numTransformers() {
         return activePipeline.numTransformers;
     }
 
-    public static int numLayers(){
+    public static int numLayers() {
         return activePipeline.numLayers;
     }
 

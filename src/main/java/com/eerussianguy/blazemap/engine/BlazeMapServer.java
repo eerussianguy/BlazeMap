@@ -73,7 +73,7 @@ public class BlazeMapServer {
         addonStorage = null;
     }
 
-    public static boolean isRunning(){
+    public static boolean isRunning() {
         return isRunning;
     }
 }

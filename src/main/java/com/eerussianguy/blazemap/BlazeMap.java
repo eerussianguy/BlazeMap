@@ -11,8 +11,8 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.engine.BlazeMapEngine;
-import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.eerussianguy.blazemap.engine.BlazeMapServer;
+import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 

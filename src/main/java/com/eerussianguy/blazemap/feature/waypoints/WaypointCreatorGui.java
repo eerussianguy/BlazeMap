@@ -75,7 +75,7 @@ public class WaypointCreatorGui extends BlazeGui {
     }
 
     private void createWaypoint() {
-        if(waypoint == null){
+        if(waypoint == null) {
             waypointStorage.add(new Waypoint(
                 Helpers.identifier("waypoint-" + System.currentTimeMillis()),
                 getMinecraft().level.dimension(),
@@ -84,7 +84,8 @@ public class WaypointCreatorGui extends BlazeGui {
                 icon,
                 color
             ));
-        } else {
+        }
+        else {
             waypoint.setLabel(name);
             waypoint.setPosition(new BlockPos(x, y, z));
             waypoint.setColor(color);
@@ -99,7 +100,7 @@ public class WaypointCreatorGui extends BlazeGui {
     @Override
     public void onClose() {
         super.onClose();
-        if(waypoint != null){
+        if(waypoint != null) {
             WaypointManagerGui.open();
         }
     }
