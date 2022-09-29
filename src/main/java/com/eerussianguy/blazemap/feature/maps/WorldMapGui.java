@@ -37,7 +37,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
-    public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
+    public static final double MIN_ZOOM = 0.125, MAX_ZOOM = 8;
     private static final Profiler.TimeProfiler renderTime = new Profiler.TimeProfilerSync(10);
     private static final Profiler.TimeProfiler uploadTime = new Profiler.TimeProfilerSync(10);
     private static boolean showWidgets = true, renderDebug = false;
@@ -205,16 +205,16 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
         font.draw(stack, "Atlas Time Profiling:", 0, 0, -1);
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        ProfilingRenderer.drawTimeProfiler(renderTime, 12, "Render Atlas", font, stack.last().pose(), buffers);
-        ProfilingRenderer.drawTimeProfiler(uploadTime, 24, "Upload Atlas", font, stack.last().pose(), buffers);
+        ProfilingRenderer.drawTimeProfiler(renderTime, 12, "Render", font, stack.last().pose(), buffers);
+        ProfilingRenderer.drawTimeProfiler(uploadTime, 24, "Upload", font, stack.last().pose(), buffers);
         buffers.endBatch();
 
         MapRenderer.DebugInfo debug = mapRenderer.debug;
         int y = 30;
         font.draw(stack, String.format("Renderer Size: %d x %d", debug.rw, debug.rh), 0, y += 12, -1);
-        font.draw(stack, String.format("Renderer Zoom: %.3f", debug.zoom), 0, y += 12, -1);
+        font.draw(stack, String.format("Renderer Zoom: %sx", debug.zoom), 0, y += 12, -1);
         font.draw(stack, String.format("Atlas Size: %d x %d", debug.mw, debug.mh), 0, y += 12, -1);
-        font.draw(stack, String.format("Atlas Frustrum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y += 12, -1);
+        font.draw(stack, String.format("Atlas Frustum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y += 12, -1);
 
         font.draw(stack, String.format("Region Matrix: %d x %d", debug.ox, debug.oz), 0, y += 18, -1);
         font.draw(stack, String.format("Active Layers: %d", debug.layers), 0, y += 12, -1);
