@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.engine;
+package com.eerussianguy.blazemap.engine.client;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,22 +21,25 @@ import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.*;
-import com.eerussianguy.blazemap.api.mapping.*;
 import com.eerussianguy.blazemap.api.markers.*;
-import com.eerussianguy.blazemap.api.util.*;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
+import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
+import com.eerussianguy.blazemap.api.util.IStorageAccess;
+import com.eerussianguy.blazemap.api.util.LayerRegion;
+import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.*;
 import com.eerussianguy.blazemap.util.Helpers;
 
-public class BlazeMapEngine {
+public class BlazeMapClientEngine {
     private static final Set<Consumer<LayerRegion>> TILE_CHANGE_LISTENERS = new HashSet<>();
-    private static final Map<ResourceKey<Level>, CartographyPipeline> PIPELINES = new HashMap<>();
+    private static final Map<ResourceKey<Level>, ClientPipeline> PIPELINES = new HashMap<>();
     private static final Map<ResourceKey<Level>, IMarkerStorage<Waypoint>> WAYPOINTS = new HashMap<>();
     private static final ResourceLocation WAYPOINT_STORAGE = Helpers.identifier("waypoints.bin");
 
     private static DebouncingThread debouncer;
     private static AsyncDataCruncher dataCruncher;
     private static AsyncChain.Root async;
-    private static CartographyPipeline activePipeline;
+    private static ClientPipeline activePipeline;
     private static IMarkerStorage.Layered<MapLabel> activeLabels;
     private static IMarkerStorage<Waypoint> activeWaypoints;
     private static IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
@@ -47,7 +50,7 @@ public class BlazeMapEngine {
     private static String mdSource;
 
     public static void init() {
-        MinecraftForge.EVENT_BUS.register(BlazeMapEngine.class);
+        MinecraftForge.EVENT_BUS.register(BlazeMapClientEngine.class);
         dataCruncher = new AsyncDataCruncher("Blaze Map");
         async = new AsyncChain.Root(dataCruncher, Helpers::runOnMainThread);
         debouncer = new DebouncingThread("Blaze Map Engine");
@@ -71,13 +74,15 @@ public class BlazeMapEngine {
         if(!frozenRegistries) {
             IEventBus bus = MinecraftForge.EVENT_BUS;
             bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
+            bus.post(new BlazeRegistryEvent.TransformerRegistryEvent());
+            bus.post(new BlazeRegistryEvent.ProcessorRegistryEvent());
             bus.post(new BlazeRegistryEvent.LayerRegistryEvent());
             bus.post(new BlazeRegistryEvent.MapTypeRegistryEvent());
-            bus.post(new BlazeRegistryEvent.ProcessorRegistryEvent());
-            BlazeMapAPI.MAPTYPES.freeze();
-            BlazeMapAPI.LAYERS.freeze();
             BlazeMapAPI.COLLECTORS.freeze();
+            BlazeMapAPI.TRANSFORMERS.freeze();
             BlazeMapAPI.PROCESSORS.freeze();
+            BlazeMapAPI.LAYERS.freeze();
+            BlazeMapAPI.MAPTYPES.freeze();
             frozenRegistries = true;
         }
 
@@ -118,7 +123,7 @@ public class BlazeMapEngine {
             if(activePipeline.dimension.equals(dimension)) return;
             activePipeline.shutdown();
         }
-        activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new CartographyPipeline(storage.internal(d.location()), d)).activate();
+        activePipeline = PIPELINES.computeIfAbsent(dimension, d -> new ClientPipeline(async, debouncer, d, storage.internal(d.location()))).activate();
         activeLabels = new LabelStorage(dimension);
 
         IStorageAccess fileStorage = activePipeline.addonStorage;
@@ -148,7 +153,7 @@ public class BlazeMapEngine {
             return;
         }
         mdSource = source;
-        activePipeline.markChunkDirty(pos);
+        activePipeline.onChunkChanged(pos);
     }
 
     public static void submitChanges(ResourceKey<Level> dimension, Map<ChunkPos, Map<BlazeRegistry.Key<Collector<?>>, MasterDatum>> data) {

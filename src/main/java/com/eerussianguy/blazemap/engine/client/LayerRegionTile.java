@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.engine;
+package com.eerussianguy.blazemap.engine.client;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,19 +8,21 @@ import java.util.function.Consumer;
 import net.minecraft.world.level.ChunkPos;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.RegionPos;
+import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 import com.mojang.blaze3d.platform.NativeImage;
 
-public class LayerRegionTile {
+class LayerRegionTile {
     private final PriorityLock lock = new PriorityLock();
-    private final File file;
+    private final File file, buffer;
     private NativeImage image;
     private boolean isEmpty = true;
 
     public LayerRegionTile(StorageAccess.Internal storage, BlazeRegistry.Key<Layer> layer, RegionPos region) {
-        this.file = storage.getFile(layer.location, region.toString() + ".png");
+        this.file = storage.getFile(layer.location, region + ".png");
+        this.buffer = storage.getFile(layer.location, region + ".buffer");
         image = new NativeImage(NativeImage.Format.RGBA, 512, 512, true);
     }
 
@@ -50,7 +52,10 @@ public class LayerRegionTile {
         if(isEmpty) return;
         try {
             lock.lock();
-            image.writeToFile(file);
+            image.writeToFile(buffer);
+            if(buffer.renameTo(file)) {
+                buffer.delete();
+            }
         }
         catch(IOException e) {
             e.printStackTrace();

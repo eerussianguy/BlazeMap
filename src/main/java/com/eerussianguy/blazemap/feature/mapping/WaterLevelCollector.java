@@ -5,7 +5,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
 public class WaterLevelCollector extends Collector<WaterLevelMD> {
 

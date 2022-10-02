@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api.mapping;
+package com.eerussianguy.blazemap.api.pipeline;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
@@ -6,7 +6,8 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
-import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
+import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
 
 /**
  * Collectors collect MasterData from chunks that need updating to be processed later.
@@ -16,15 +17,17 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
  *
  * @author LordFokas
  */
-public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.RegistryEntry {
+public abstract class Collector<T extends MasterDatum> implements RegistryEntry, Producer<T> {
     protected static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
-    protected final BlazeRegistry.Key<Collector<MasterDatum>> id;
+    protected final Key<Collector<MasterDatum>> id;
+    protected final Key<DataType<T>> output;
 
-    public Collector(BlazeRegistry.Key<Collector<MasterDatum>> id) {
+    public Collector(Key<Collector<MasterDatum>> id, Key<DataType<T>> output) {
         this.id = id;
+        this.output = output;
     }
 
-    public BlazeRegistry.Key<Collector<MasterDatum>> getID() {
+    public Key<Collector<MasterDatum>> getID() {
         return id;
     }
 
@@ -38,5 +41,10 @@ public abstract class Collector<T extends MasterDatum> implements BlazeRegistry.
     protected static boolean isLeaves(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));
         return state.is(BlockTags.LEAVES) || state.isAir() || state.getMaterial().isReplaceable();
+    }
+
+    @Override
+    public Key<DataType<T>> getOutputID() {
+        return output;
     }
 }

@@ -5,7 +5,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
 public class NetherCollector extends Collector<TerrainHeightMD> {
     public NetherCollector() {

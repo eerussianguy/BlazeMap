@@ -3,7 +3,7 @@ package com.eerussianguy.blazemap.api.util;
 import java.util.Objects;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 
 public class LayerRegion {
     public final BlazeRegistry.Key<Layer> layer;

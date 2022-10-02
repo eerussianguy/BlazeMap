@@ -4,10 +4,9 @@ import java.util.List;
 
 import net.minecraft.resources.ResourceLocation;
 
-import com.eerussianguy.blazemap.api.mapping.Collector;
-import com.eerussianguy.blazemap.api.mapping.Layer;
-import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.api.mapping.MasterDatum;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 
 public class BlazeMapReferences {
     public static final String MODID = "blazemap";

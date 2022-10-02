@@ -3,8 +3,6 @@
   "package": "com.eerussianguy.blazemap.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "blazemap.refmap.json",
-  "mixins": [
-    "RenderChunkRegionMixin", "RubidiumCompatMixin"
-  ],
+  "mixins": ["ChunkHolderMixin", "RenderChunkRegionMixin", "RubidiumCompatMixin"],
   "minVersion": "0.8"
 }

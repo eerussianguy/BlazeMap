@@ -7,7 +7,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
 public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
 

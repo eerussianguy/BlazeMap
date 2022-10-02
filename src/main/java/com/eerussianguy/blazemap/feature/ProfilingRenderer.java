@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 import net.minecraftforge.common.MinecraftForge;
 
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
+import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profiler;
@@ -28,11 +28,11 @@ public class ProfilingRenderer {
 
     public void draw(PoseStack stack, MultiBufferSource buffers, ForgeIngameGui gui, int width, int height) {
         // ping load profilers
-        Profilers.Engine.COLLECTOR_LOAD_PROFILER.ping();
-        Profilers.Engine.PROCESSOR_LOAD_PROFILER.ping();
-        Profilers.Engine.TRANSFORMER_LOAD_PROFILER.ping();
-        Profilers.Engine.LAYER_LOAD_PROFILER.ping();
-        Profilers.Engine.REGION_LOAD_PROFILER.ping();
+        Profilers.Client.COLLECTOR_LOAD_PROFILER.ping();
+        Profilers.Client.PROCESSOR_LOAD_PROFILER.ping();
+        Profilers.Client.TRANSFORMER_LOAD_PROFILER.ping();
+        Profilers.Client.LAYER_LOAD_PROFILER.ping();
+        Profilers.Client.REGION_LOAD_PROFILER.ping();
         Profilers.Minimap.TEXTURE_LOAD_PROFILER.ping();
 
         if(Minecraft.getInstance().screen instanceof WorldMapGui) return;
@@ -58,12 +58,12 @@ public class ProfilingRenderer {
     private void drawProfilingInfo(PoseStack stack, MultiBufferSource buffers, Font fontRenderer, BlockPos pos) {
         Matrix4f matrix = stack.last().pose();
 
-        boolean isClient = BlazeMapEngine.isClientSource();
+        boolean isClient = BlazeMapClientEngine.isClientSource();
         String side = isClient ? "Client" : "Server";
-        int c = BlazeMapEngine.numCollectors();
-        int p = BlazeMapEngine.numProcessors();
-        int t = BlazeMapEngine.numTransformers();
-        int l = BlazeMapEngine.numLayers();
+        int c = BlazeMapClientEngine.numCollectors();
+        int p = BlazeMapClientEngine.numProcessors();
+        int t = BlazeMapClientEngine.numTransformers();
+        int l = BlazeMapClientEngine.numLayers();
 
         float w = 250, h = 180;
         if(c > 0) h += 50;
@@ -82,23 +82,23 @@ public class ProfilingRenderer {
 
         // Engine Miscellaneous
         fontRenderer.drawInBatch("Engine Miscellaneous", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        fontRenderer.drawInBatch("MD Source: " + side + " / " + BlazeMapEngine.getMDSource(), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        fontRenderer.drawInBatch("Parallel Pool: " + BlazeMapEngine.cruncher().poolSize() + " threads", 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch("MD Source: " + side + " / " + BlazeMapClientEngine.getMDSource(), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        fontRenderer.drawInBatch("Parallel Pool: " + BlazeMapClientEngine.cruncher().poolSize() + " threads", 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
 
         // Cartography Pipeline Profiling
         fontRenderer.drawInBatch("Cartography Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         if(c > 0) {
-            y = drawSubsystem(Profilers.Engine.COLLECTOR_LOAD_PROFILER, Profilers.Engine.COLLECTOR_TIME_PROFILER, y + 10, String.format(FMT, "MD Collect", c), "[ last second ]", fontRenderer, matrix, buffers, "tick load");
+            y = drawSubsystem(Profilers.Client.COLLECTOR_LOAD_PROFILER, Profilers.Client.COLLECTOR_TIME_PROFILER, y + 10, String.format(FMT, "MD Collect", c), "[ last second ]", fontRenderer, matrix, buffers, "tick load");
         }
         if(p > 0) {
-            y = drawSubsystem(Profilers.Engine.PROCESSOR_LOAD_PROFILER, Profilers.Engine.PROCESSOR_TIME_PROFILER, y + 10, String.format(FMT, "MD Process", p), "[ last second ]", fontRenderer, matrix, buffers, "delay");
+            y = drawSubsystem(Profilers.Client.PROCESSOR_LOAD_PROFILER, Profilers.Client.PROCESSOR_TIME_PROFILER, y + 10, String.format(FMT, "MD Process", p), "[ last second ]", fontRenderer, matrix, buffers, "delay");
         }
         if(t > 0) {
-            y = drawSubsystem(Profilers.Engine.TRANSFORMER_LOAD_PROFILER, Profilers.Engine.TRANSFORMER_TIME_PROFILER, y + 10, String.format(FMT, "MD Transform", t), "[ last second ]", fontRenderer, matrix, buffers, "delay");
+            y = drawSubsystem(Profilers.Client.TRANSFORMER_LOAD_PROFILER, Profilers.Client.TRANSFORMER_TIME_PROFILER, y + 10, String.format(FMT, "MD Transform", t), "[ last second ]", fontRenderer, matrix, buffers, "delay");
         }
         if(l > 0) {
-            y = drawSubsystem(Profilers.Engine.LAYER_LOAD_PROFILER, Profilers.Engine.LAYER_TIME_PROFILER, y + 10, String.format(FMT, "Layer Render", l), "[ last second ]", fontRenderer, matrix, buffers, "delay");
-            y = drawSubsystem(Profilers.Engine.REGION_LOAD_PROFILER, Profilers.Engine.REGION_TIME_PROFILER, y + 10, "Region Save", "[ last minute ]", fontRenderer, matrix, buffers, "delay");
+            y = drawSubsystem(Profilers.Client.LAYER_LOAD_PROFILER, Profilers.Client.LAYER_TIME_PROFILER, y + 10, String.format(FMT, "Layer Render", l), "[ last second ]", fontRenderer, matrix, buffers, "delay");
+            y = drawSubsystem(Profilers.Client.REGION_LOAD_PROFILER, Profilers.Client.REGION_TIME_PROFILER, y + 10, "Region Save", "[ last minute ]", fontRenderer, matrix, buffers, "delay");
         }
     }
 

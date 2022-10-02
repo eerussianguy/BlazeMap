@@ -2,7 +2,7 @@ package com.eerussianguy.blazemap.api.builtin;
 
 import net.minecraft.nbt.CompoundTag;
 
-import com.eerussianguy.blazemap.api.mapping.MasterDatum;
+import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 
 public class TerrainHeightMD implements MasterDatum {
     public final int minY, maxY, height, sea, minX, minZ;

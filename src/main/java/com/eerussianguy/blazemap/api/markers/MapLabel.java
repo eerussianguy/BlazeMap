@@ -7,7 +7,7 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 
 public class MapLabel extends Marker<MapLabel> {
     private final Key<Layer> layerID;
