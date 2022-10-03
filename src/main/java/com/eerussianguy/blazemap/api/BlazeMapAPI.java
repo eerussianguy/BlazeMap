@@ -16,11 +16,8 @@ public class BlazeMapAPI {
      * Now, the name DataType doesn't really say "(de)serializer", however most of the references to this will be in the
      * form of registry keys and not (de)serializer registration or invocation, and in the engine code it is a lot nicer
      * to have Key<DataType> to refer to kinds of MasterData than Key<MasterDataSerializer>, and there are a lot of them.
-     *
-     * Point #2 is also the reason for this registry using DataType in a raw form
      */
-    @SuppressWarnings("rawtypes")
-    public static final BlazeRegistry<DataType> MASTER_DATA = new BlazeRegistry<>();
+    public static final BlazeRegistry<DataType<MasterDatum>> MASTER_DATA = new BlazeRegistry<>();
 
     public static final BlazeRegistry<Collector<MasterDatum>> COLLECTORS = new BlazeRegistry<>();
     public static final BlazeRegistry<Transformer<MasterDatum>> TRANSFORMERS = new BlazeRegistry<>();

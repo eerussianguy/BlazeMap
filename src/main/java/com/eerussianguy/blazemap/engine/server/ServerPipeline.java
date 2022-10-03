@@ -10,7 +10,7 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.pipeline.*;
+import com.eerussianguy.blazemap.api.pipeline.DataType;
 import com.eerussianguy.blazemap.engine.MapView;
 import com.eerussianguy.blazemap.engine.Pipeline;
 import com.eerussianguy.blazemap.engine.PipelineProfiler;

@@ -16,7 +16,7 @@ public class NetherLayer extends Layer {
             BlazeMapReferences.Layers.NETHER,
             Helpers.translate("blazemap.nether_terrain"),
 
-            BlazeMapReferences.Collectors.NETHER
+            BlazeMapReferences.MasterData.NETHER
         );
     }
 
@@ -43,7 +43,7 @@ public class NetherLayer extends Layer {
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.Collectors.NETHER);
+        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.NETHER);
         float down = -1.0F / ((float) terrain.sea - terrain.minY);
         float up = 1.0F / ((float) terrain.maxY - terrain.sea);
         for(int x = 0; x < 16; x++) {

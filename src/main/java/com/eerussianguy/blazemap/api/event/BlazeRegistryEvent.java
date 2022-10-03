@@ -26,8 +26,7 @@ public abstract class BlazeRegistryEvent<T> extends Event {
         this.registry = registry;
     }
 
-    @SuppressWarnings("rawtypes")
-    public static class MasterDataRegistryEvent extends BlazeRegistryEvent<DataType> {
+    public static class MasterDataRegistryEvent extends BlazeRegistryEvent<DataType<MasterDatum>> {
         public MasterDataRegistryEvent() {
             super(BlazeMapAPI.MASTER_DATA);
         }

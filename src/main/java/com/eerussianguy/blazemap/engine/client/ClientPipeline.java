@@ -16,7 +16,10 @@ import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.*;
-import com.eerussianguy.blazemap.engine.async.*;
+import com.eerussianguy.blazemap.engine.async.AsyncChain;
+import com.eerussianguy.blazemap.engine.async.DebouncingDomain;
+import com.eerussianguy.blazemap.engine.async.DebouncingThread;
+import com.eerussianguy.blazemap.engine.async.PriorityLock;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
 
@@ -137,18 +140,17 @@ class ClientPipeline extends Pipeline {
         }
     }
 
-    // TODO: figure out why void gives generic errors but null Void is OK. Does it have to be an Object?
-    private Void sendMapUpdates(List<LayerRegion> updates) {
+    private void sendMapUpdates(List<LayerRegion> updates) {
         if(active) {
             for(LayerRegion update : updates) {
                 BlazeMapClientEngine.notifyLayerRegionChange(update);
             }
         }
-        return null;
     }
 
     public void shutdown() {
         active = false;
+        dirtyRegions.finish();
         // TODO: Release all memory dedicated to caches and such. Close resources. Flush to disk.
         regions.clear();
     }

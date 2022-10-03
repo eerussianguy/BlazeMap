@@ -1,10 +1,11 @@
 package com.eerussianguy.blazemap.api.builtin;
 
-import net.minecraft.nbt.CompoundTag;
-
+import com.eerussianguy.blazemap.api.BlazeMapReferences;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.pipeline.DataType;
 import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 
-public class WaterLevelMD implements MasterDatum {
+public class WaterLevelMD extends MasterDatum {
     public final int sea, minX, minZ;
     public final int[][] level;
 
@@ -17,12 +18,12 @@ public class WaterLevelMD implements MasterDatum {
     }
 
     @Override
-    public CompoundTag serialize() {
-        return null;
+    public BlazeRegistry.Key<DataType<MasterDatum>> getID() {
+        return BlazeMapReferences.MasterData.WATER_LEVEL;
     }
 
     @Override
-    public MasterDatum deserialize(CompoundTag nbt) {
-        return null;
+    public boolean equals(Object other) {
+        return false;
     }
 }

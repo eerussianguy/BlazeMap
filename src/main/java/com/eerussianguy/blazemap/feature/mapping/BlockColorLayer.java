@@ -18,15 +18,15 @@ public class BlockColorLayer extends Layer {
             BlazeMapReferences.Layers.BLOCK_COLOR,
             Helpers.translate("blazemap.block_color"),
 
-            BlazeMapReferences.Collectors.BLOCK_COLOR,
-            BlazeMapReferences.Collectors.WATER_LEVEL
+            BlazeMapReferences.MasterData.BLOCK_COLOR,
+            BlazeMapReferences.MasterData.WATER_LEVEL
         );
     }
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        int[][] blockColors = ((BlockColorMD) data.get(BlazeMapReferences.Collectors.BLOCK_COLOR)).colors();
-        int[][] depth = ((WaterLevelMD) data.get(BlazeMapReferences.Collectors.WATER_LEVEL)).level;
+        int[][] blockColors = ((BlockColorMD) data.get(BlazeMapReferences.MasterData.BLOCK_COLOR)).colors;
+        int[][] depth = ((WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL)).level;
 
         for(int x = 0; x < 16; x++) {
             for(int z = 0; z < 16; z++) {

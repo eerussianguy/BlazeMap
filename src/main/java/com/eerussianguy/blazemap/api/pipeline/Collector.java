@@ -17,12 +17,12 @@ import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
  *
  * @author LordFokas
  */
-public abstract class Collector<T extends MasterDatum> implements RegistryEntry, Producer<T> {
+public abstract class Collector<T extends MasterDatum> implements RegistryEntry, Producer {
     protected static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
     protected final Key<Collector<MasterDatum>> id;
-    protected final Key<DataType<T>> output;
+    protected final Key<DataType<MasterDatum>> output;
 
-    public Collector(Key<Collector<MasterDatum>> id, Key<DataType<T>> output) {
+    public Collector(Key<Collector<MasterDatum>> id, Key<DataType<MasterDatum>> output) {
         this.id = id;
         this.output = output;
     }
@@ -44,7 +44,7 @@ public abstract class Collector<T extends MasterDatum> implements RegistryEntry,
     }
 
     @Override
-    public Key<DataType<T>> getOutputID() {
+    public Key<DataType<MasterDatum>> getOutputID() {
         return output;
     }
 }

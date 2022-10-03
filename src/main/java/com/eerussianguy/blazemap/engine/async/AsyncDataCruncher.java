@@ -10,7 +10,7 @@ public final class AsyncDataCruncher {
     private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
     private volatile boolean running = true;
     private final Object mutex = new Object();
-    private final LinkedList<Thread> threads = new LinkedList();
+    private final LinkedList<Thread> threads = new LinkedList<>();
 
     public AsyncDataCruncher(String name) {
         int cores = Runtime.getRuntime().availableProcessors();

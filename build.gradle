@@ -13,7 +13,7 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
 
-version = '0.4.11-dev'
+version = '0.5.0-alpha'
 group = 'com.eerussianguy.blazemap' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "BlazeMap-${minecraft_version}"
 

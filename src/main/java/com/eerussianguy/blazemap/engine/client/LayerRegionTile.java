@@ -3,10 +3,12 @@ package com.eerussianguy.blazemap.engine.client;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
 
 import net.minecraft.world.level.ChunkPos;
 
+import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.RegionPos;
@@ -34,10 +36,8 @@ class LayerRegionTile {
                 isEmpty = false;
             }
             catch(IOException e) {
-                e.printStackTrace();
-
-                // TODO: this is temporary (aka more permanent than "forever")
-                throw new RuntimeException(e);
+                // FIXME: this needs to hook into a reporting mechanism AND possibly automated LRT regeneration
+                BlazeMap.LOGGER.error("Error loading LayerRegionTile: {}", file, e);
             }
             finally {
                 lock.unlock();
@@ -50,21 +50,30 @@ class LayerRegionTile {
 
     public void save() {
         if(isEmpty) return;
+
+        // Save image into buffer
         try {
             lock.lock();
             image.writeToFile(buffer);
-            if(buffer.renameTo(file)) {
-                buffer.delete();
-            }
         }
         catch(IOException e) {
             e.printStackTrace();
-
-            // TODO: this is temporary (aka more permanent than "forever")
-            throw new RuntimeException(e);
+            // FIXME: this needs to hook into a reporting mechanism
+            BlazeMap.LOGGER.error("Error saving LayerRegionTile buffer: {}", buffer, e);
         }
         finally {
             lock.unlock();
+        }
+
+        // Move buffer to real image path
+        try {
+            Files.move(buffer.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            buffer.delete();
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+            // FIXME: this needs to hook into a reporting mechanism
+            BlazeMap.LOGGER.error("Error moving LayerRegionTile buffer to image: {} {}", buffer, file, e);
         }
     }
 

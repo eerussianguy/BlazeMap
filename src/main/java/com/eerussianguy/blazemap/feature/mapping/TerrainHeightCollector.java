@@ -12,7 +12,10 @@ import com.eerussianguy.blazemap.api.pipeline.Collector;
 public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
 
     public TerrainHeightCollector() {
-        super(BlazeMapReferences.Collectors.TERRAIN_HEIGHT);
+        super(
+            BlazeMapReferences.Collectors.TERRAIN_HEIGHT,
+            BlazeMapReferences.MasterData.TERRAIN_HEIGHT
+        );
     }
 
     @Override
@@ -37,7 +40,7 @@ public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
             }
         }
 
-        return new TerrainHeightMD(level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
+        return new TerrainHeightMD(BlazeMapReferences.MasterData.TERRAIN_HEIGHT, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
     }
 
     protected static boolean isSkippableAfterLeaves(Level level, int x, int y, int z) {

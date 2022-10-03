@@ -20,14 +20,21 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.event.*;
-import com.eerussianguy.blazemap.api.markers.*;
+import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
+import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
+import com.eerussianguy.blazemap.api.event.ServerJoinedEvent;
+import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
+import com.eerussianguy.blazemap.api.markers.IStorageFactory;
+import com.eerussianguy.blazemap.api.markers.MapLabel;
+import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.pipeline.Collector;
 import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 import com.eerussianguy.blazemap.api.util.IStorageAccess;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.engine.StorageAccess;
-import com.eerussianguy.blazemap.engine.async.*;
+import com.eerussianguy.blazemap.engine.async.AsyncChain;
+import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
+import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 import com.eerussianguy.blazemap.util.Helpers;
 
 public class BlazeMapClientEngine {

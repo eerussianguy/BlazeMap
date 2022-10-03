@@ -1,18 +1,24 @@
 package com.eerussianguy.blazemap.api.builtin;
 
-import net.minecraft.nbt.CompoundTag;
-
+import com.eerussianguy.blazemap.api.BlazeMapReferences;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.pipeline.DataType;
 import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 
-public record BlockColorMD(int[][] colors) implements MasterDatum {
+public class BlockColorMD extends MasterDatum {
+    public final int[][] colors;
 
-    @Override
-    public CompoundTag serialize() {
-        return null;
+    public BlockColorMD(int[][] colors) {
+        this.colors = colors;
     }
 
     @Override
-    public MasterDatum deserialize(CompoundTag nbt) {
-        return null;
+    public BlazeRegistry.Key<DataType<MasterDatum>> getID() {
+        return BlazeMapReferences.MasterData.BLOCK_COLOR;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return false;
     }
 }

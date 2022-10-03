@@ -14,7 +14,10 @@ import com.eerussianguy.blazemap.api.pipeline.Collector;
 public class AerialViewCollector extends Collector<BlockColorMD> {
 
     public AerialViewCollector() {
-        super(BlazeMapReferences.Collectors.BLOCK_COLOR);
+        super(
+            BlazeMapReferences.Collectors.BLOCK_COLOR,
+            BlazeMapReferences.MasterData.BLOCK_COLOR
+        );
     }
 
     @Override

@@ -10,12 +10,18 @@ import com.mojang.blaze3d.platform.NativeImage;
 public class WaterLevelLayer extends Layer {
 
     public WaterLevelLayer() {
-        super(BlazeMapReferences.Layers.WATER_LEVEL, Helpers.translate("blazemap.water_depth"), Helpers.identifier("textures/map_icons/layer_water.png"), BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(
+            BlazeMapReferences.Layers.WATER_LEVEL,
+            Helpers.translate("blazemap.water_depth"),
+            Helpers.identifier("textures/map_icons/layer_water.png"),
+
+            BlazeMapReferences.MasterData.WATER_LEVEL
+        );
     }
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.Collectors.WATER_LEVEL);
+        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
         for(int x = 0; x < 16; x++)
             for(int z = 0; z < 16; z++) {
                 int d = water.level[x][z];

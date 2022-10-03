@@ -11,13 +11,13 @@ import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 
-public abstract class Transformer<T extends MasterDatum> implements RegistryEntry, Producer<T>, Consumer {
+public abstract class Transformer<T extends MasterDatum> implements RegistryEntry, Producer, Consumer {
     private final Key<Transformer<MasterDatum>> id;
-    private final Key<DataType<T>> output;
+    private final Key<DataType<MasterDatum>> output;
     private final Set<Key<DataType<MasterDatum>>> inputs;
 
     @SafeVarargs
-    public Transformer(Key<Transformer<MasterDatum>> id, Key<DataType<T>> output, Key<DataType<MasterDatum>>... inputs) {
+    public Transformer(Key<Transformer<MasterDatum>> id, Key<DataType<MasterDatum>> output, Key<DataType<MasterDatum>>... inputs) {
         this.id = id;
         this.output = output;
         this.inputs = Arrays.stream(inputs).collect(Collectors.toUnmodifiableSet());
@@ -29,7 +29,7 @@ public abstract class Transformer<T extends MasterDatum> implements RegistryEntr
     }
 
     @Override
-    public Key<DataType<T>> getOutputID() {
+    public Key<DataType<MasterDatum>> getOutputID() {
         return output;
     }
 

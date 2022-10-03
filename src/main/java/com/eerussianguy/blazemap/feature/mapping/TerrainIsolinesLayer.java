@@ -26,13 +26,20 @@ public class TerrainIsolinesLayer extends Layer {
     }
 
     public TerrainIsolinesLayer() {
-        super(BlazeMapReferences.Layers.TERRAIN_ISOLINES, Helpers.translate("blazemap.terrain_isolines"), Helpers.identifier("textures/map_icons/layer_terrain_isolines.png"), BlazeMapReferences.Collectors.TERRAIN_HEIGHT, BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(
+            BlazeMapReferences.Layers.TERRAIN_ISOLINES,
+            Helpers.translate("blazemap.terrain_isolines"),
+            Helpers.identifier("textures/map_icons/layer_terrain_isolines.png"),
+
+            BlazeMapReferences.MasterData.TERRAIN_HEIGHT,
+            BlazeMapReferences.MasterData.WATER_LEVEL
+        );
     }
 
     @Override
     public boolean renderTile(NativeImage tile, IDataSource data) {
-        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.Collectors.TERRAIN_HEIGHT);
-        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.Collectors.WATER_LEVEL);
+        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.TERRAIN_HEIGHT);
+        WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
         for(int x = 0; x < 16; x++)
             for(int z = 0; z < 16; z++) {
                 int p = 0, h = terrain.heightmap[x][z] - water.level[x][z];
