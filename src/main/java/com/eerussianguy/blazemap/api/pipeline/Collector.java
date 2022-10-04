@@ -17,7 +17,7 @@ import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
  *
  * @author LordFokas
  */
-public abstract class Collector<T extends MasterDatum> implements RegistryEntry, Producer {
+public abstract class Collector<T extends MasterDatum> implements RegistryEntry, PipelineComponent, Producer {
     protected static final BlockPos.MutableBlockPos POS = new BlockPos.MutableBlockPos();
     protected final Key<Collector<MasterDatum>> id;
     protected final Key<DataType<MasterDatum>> output;
@@ -33,18 +33,18 @@ public abstract class Collector<T extends MasterDatum> implements RegistryEntry,
 
     public abstract T collect(Level level, int minX, int minZ, int maxX, int maxZ);
 
+    @Override
+    public Key<DataType<MasterDatum>> getOutputID() {
+        return output;
+    }
+
     protected static boolean isWater(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));
         return state.getFluidState().is(FluidTags.WATER);
     }
 
-    protected static boolean isLeaves(Level level, int x, int y, int z) {
+    protected static boolean isLeavesOrReplaceable(Level level, int x, int y, int z) {
         BlockState state = level.getBlockState(POS.set(x, y, z));
         return state.is(BlockTags.LEAVES) || state.isAir() || state.getMaterial().isReplaceable();
-    }
-
-    @Override
-    public Key<DataType<MasterDatum>> getOutputID() {
-        return output;
     }
 }

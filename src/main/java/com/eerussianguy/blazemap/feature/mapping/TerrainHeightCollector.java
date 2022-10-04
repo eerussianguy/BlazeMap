@@ -27,7 +27,7 @@ public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
             for(int z = 0; z < 16; z++) {
                 int height = level.getHeight(Heightmap.Types.MOTION_BLOCKING, minX + x, minZ + z);
                 boolean foundLeaves = false;
-                while(isLeaves(level, minX + x, height - 1, minZ + z)) {
+                while(isLeavesOrReplaceable(level, minX + x, height - 1, minZ + z)) {
                     height--;
                     if(height <= level.getMinBuildHeight()) break;
                     foundLeaves = true;

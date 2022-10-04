@@ -4,10 +4,7 @@ import java.util.List;
 
 import net.minecraft.resources.ResourceLocation;
 
-import com.eerussianguy.blazemap.api.pipeline.Collector;
-import com.eerussianguy.blazemap.api.pipeline.DataType;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
-import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
+import com.eerussianguy.blazemap.api.pipeline.*;
 
 import static com.eerussianguy.blazemap.api.BlazeMapAPI.*;
 import static com.eerussianguy.blazemap.api.BlazeRegistry.Key;
@@ -16,6 +13,7 @@ public class BlazeMapReferences {
     public static final String MODID = "blazemap";
 
     public static class MasterData {
+        public static final Key<DataType<MasterDatum>> BLOCK_STATE = new Key<>(MASTER_DATA, MODID, "block_state");
         public static final Key<DataType<MasterDatum>> BLOCK_COLOR = new Key<>(MASTER_DATA, MODID, "block_color");
         public static final Key<DataType<MasterDatum>> NETHER = new Key<>(MASTER_DATA, MODID, "nether");
         public static final Key<DataType<MasterDatum>> TERRAIN_HEIGHT = new Key<>(MASTER_DATA, MODID, "terrain_height");
@@ -25,11 +23,14 @@ public class BlazeMapReferences {
     public static class Collectors {
         public static final Key<Collector<MasterDatum>> WATER_LEVEL = new Key<>(COLLECTORS, MODID, "water_level");
         public static final Key<Collector<MasterDatum>> TERRAIN_HEIGHT = new Key<>(COLLECTORS, MODID, "terrain_height");
+        public static final Key<Collector<MasterDatum>> BLOCK_STATE = new Key<>(COLLECTORS, MODID, "block_state");
         public static final Key<Collector<MasterDatum>> BLOCK_COLOR = new Key<>(COLLECTORS, MODID, "block_color");
         public static final Key<Collector<MasterDatum>> NETHER = new Key<>(COLLECTORS, MODID, "nether");
     }
 
-    public static class Transformers {}
+    public static class Transformers {
+        public static final Key<Transformer<MasterDatum>> BLOCK_STATE_TO_COLOR = new Key<>(TRANSFORMERS, MODID, "block_state_to_color");
+    }
 
     public static class Processors {}
 

@@ -12,7 +12,8 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
 import com.eerussianguy.blazemap.engine.server.BlazeMapServerEngine;
-import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.feature.BlazeMapFeaturesClient;
+import com.eerussianguy.blazemap.feature.BlazeMapFeaturesCommon;
 import com.eerussianguy.blazemap.network.BlazeNetwork;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
@@ -58,8 +59,12 @@ public class BlazeMap {
             BlazeMapServerEngine.initForDedicated();
         }
 
-        BlazeMapFeatures.initMapping();
-        BlazeMapFeatures.initMaps();
-        BlazeMapFeatures.initWaypoints();
+        BlazeMapFeaturesCommon.initMapping();
+
+        if(FMLEnvironment.dist == Dist.CLIENT) {
+            BlazeMapFeaturesClient.initMapping();
+            BlazeMapFeaturesClient.initMaps();
+            BlazeMapFeaturesClient.initWaypoints();
+        }
     }
 }

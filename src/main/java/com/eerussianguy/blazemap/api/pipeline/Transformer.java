@@ -4,14 +4,11 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
-
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 
-public abstract class Transformer<T extends MasterDatum> implements RegistryEntry, Producer, Consumer {
+public abstract class Transformer<T extends MasterDatum> implements RegistryEntry, PipelineComponent, Producer, Consumer {
     private final Key<Transformer<MasterDatum>> id;
     private final Key<DataType<MasterDatum>> output;
     private final Set<Key<DataType<MasterDatum>>> inputs;
@@ -35,10 +32,6 @@ public abstract class Transformer<T extends MasterDatum> implements RegistryEntr
 
     public Set<Key<DataType<MasterDatum>>> getInputIDs() {
         return inputs;
-    }
-
-    public boolean shouldExecuteInDimension(ResourceKey<Level> dimension) {
-        return true;
     }
 
     public abstract T transform(IDataSource data);

@@ -26,7 +26,7 @@ import com.eerussianguy.blazemap.api.util.RegionPos;
  *
  * @author LordFokas
  */
-public abstract class Processor implements RegistryEntry, Consumer {
+public abstract class Processor implements RegistryEntry, PipelineComponent, Consumer {
     private final Key<Processor> id;
     private final Set<Key<DataType<MasterDatum>>> inputs;
 
@@ -43,10 +43,6 @@ public abstract class Processor implements RegistryEntry, Consumer {
     @Override
     public Set<Key<DataType<MasterDatum>>> getInputIDs() {
         return inputs;
-    }
-
-    public boolean shouldExecuteInDimension(ResourceKey<Level> dimension) {
-        return true;
     }
 
     public abstract boolean execute(ResourceKey<Level> dimension, RegionPos region, ChunkPos chunk, IDataSource data);

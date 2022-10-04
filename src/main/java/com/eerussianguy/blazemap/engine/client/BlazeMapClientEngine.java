@@ -24,6 +24,7 @@ import com.eerussianguy.blazemap.api.markers.IStorageFactory;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
+import com.eerussianguy.blazemap.api.pipeline.PipelineType;
 import com.eerussianguy.blazemap.api.util.IStorageAccess;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.engine.StorageAccess;
@@ -151,7 +152,7 @@ public class BlazeMapClientEngine {
     }
 
     private static ClientPipeline getPipeline(ResourceKey<Level> dimension) {
-        return PIPELINES.computeIfAbsent(dimension, d -> new ClientPipeline(async, debouncer, d, storage.internal(d.location()))).activate();
+        return PIPELINES.computeIfAbsent(dimension, d -> new ClientPipeline(async, debouncer, d, storage.internal(d.location()), isClientSource() ? PipelineType.CLIENT_STANDALONE : PipelineType.CLIENT_AND_SERVER)).activate();
     }
 
     public static void onChunkChanged(ChunkPos pos, String source) {

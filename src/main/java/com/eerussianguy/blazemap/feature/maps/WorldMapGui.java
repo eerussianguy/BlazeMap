@@ -23,7 +23,7 @@ import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
-import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.feature.BlazeMapFeaturesClient;
 import com.eerussianguy.blazemap.feature.ProfilingRenderer;
 import com.eerussianguy.blazemap.gui.Image;
 import com.eerussianguy.blazemap.util.Colors;
@@ -234,7 +234,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     @Override
     public boolean keyPressed(int key, int x, int y) {
-        if(key == BlazeMapFeatures.KEY_MAPS.getKey().getValue()) {
+        if(key == BlazeMapFeaturesClient.KEY_MAPS.getKey().getValue()) {
             this.onClose();
             return true;
         }

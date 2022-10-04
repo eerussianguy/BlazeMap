@@ -14,6 +14,7 @@ import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.pipeline.DataType;
 import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
 import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.pipeline.PipelineType;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.*;
@@ -48,14 +49,17 @@ class ClientPipeline extends Pipeline {
     private final PriorityLock lock = new PriorityLock();
     private boolean active;
 
-    protected ClientPipeline(AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, StorageAccess.Internal storage) {
+    @SuppressWarnings("unchecked")
+    public ClientPipeline(AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, StorageAccess.Internal storage, PipelineType type) {
         super(
             async, debouncer, CLIENT_PIPELINE_PROFILER, dimension, Helpers::levelOrThrow,
-            BlazeMapAPI.MAPTYPES.keys().stream().map(k -> k.value().getLayers()).flatMap(Set::stream)
+            BlazeMapClientEngine.isClientSource()
+                ? BlazeMapAPI.MAPTYPES.keys().stream().map(k -> k.value().getLayers()).flatMap(Set::stream)
                 .map(k -> k.value().getInputIDs()).map(ids -> BlazeMapAPI.COLLECTORS.keys().stream().filter(k -> ids.contains(k.value().getOutputID()))
-                    .collect(Collectors.toUnmodifiableSet())).flatMap(Set::stream).collect(Collectors.toUnmodifiableSet()),
-            BlazeMapAPI.TRANSFORMERS.keys().stream().filter(k -> k.value().shouldExecuteInDimension(dimension)).collect(Collectors.toUnmodifiableSet()),
-            BlazeMapAPI.PROCESSORS.keys().stream().filter(k -> k.value().shouldExecuteInDimension(dimension)).collect(Collectors.toUnmodifiableSet())
+                    .collect(Collectors.toUnmodifiableSet())).flatMap(Set::stream).filter(k -> k.value().shouldExecuteIn(dimension, type)).collect(Collectors.toUnmodifiableSet())
+                : Collections.EMPTY_SET,
+            BlazeMapAPI.TRANSFORMERS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, type)).collect(Collectors.toUnmodifiableSet()),
+            BlazeMapAPI.PROCESSORS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, type)).collect(Collectors.toUnmodifiableSet())
         );
         this.storage = storage;
         this.addonStorage = storage.addon();

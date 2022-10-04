@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.pipeline.DataType;
+import com.eerussianguy.blazemap.api.pipeline.PipelineType;
 import com.eerussianguy.blazemap.engine.ChunkMDCache;
 import com.eerussianguy.blazemap.engine.MapView;
 import com.eerussianguy.blazemap.engine.Pipeline;
@@ -35,9 +36,9 @@ class ServerPipeline extends Pipeline {
     public ServerPipeline(AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, Supplier<Level> level) {
         super(
             async, debouncer, SERVER_PIPELINE_PROFILER, dimension, level,
-            BlazeMapAPI.COLLECTORS.keys().stream().collect(Collectors.toUnmodifiableSet()),
-            BlazeMapAPI.TRANSFORMERS.keys().stream().filter(k -> k.value().shouldExecuteInDimension(dimension)).collect(Collectors.toUnmodifiableSet()),
-            BlazeMapAPI.PROCESSORS.keys().stream().filter(k -> k.value().shouldExecuteInDimension(dimension)).collect(Collectors.toUnmodifiableSet())
+            BlazeMapAPI.COLLECTORS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, PipelineType.SERVER)).collect(Collectors.toUnmodifiableSet()),
+            BlazeMapAPI.TRANSFORMERS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, PipelineType.SERVER)).collect(Collectors.toUnmodifiableSet()),
+            BlazeMapAPI.PROCESSORS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, PipelineType.SERVER)).collect(Collectors.toUnmodifiableSet())
         );
     }
 
