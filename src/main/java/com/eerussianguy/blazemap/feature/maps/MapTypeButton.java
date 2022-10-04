@@ -5,7 +5,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.TranslatableComponent;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.RenderHelper;
 import com.mojang.blaze3d.systems.RenderSystem;

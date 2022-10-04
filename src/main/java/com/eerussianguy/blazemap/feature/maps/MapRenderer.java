@@ -21,18 +21,19 @@ import net.minecraft.world.phys.Vec3;
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.MapLabelEvent;
 import com.eerussianguy.blazemap.api.event.WaypointEvent;
-import com.eerussianguy.blazemap.api.mapping.Layer;
-import com.eerussianguy.blazemap.api.mapping.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
+import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profiler;
@@ -124,6 +125,7 @@ public class MapRenderer implements AutoCloseable {
         this.renderNames = renderNames;
 
         RENDERERS.add(this);
+        debug.zoom = zoom;
     }
 
     private void selectMapType() {
@@ -286,7 +288,7 @@ public class MapRenderer implements AutoCloseable {
         int regionCount = offsets.length * offsets[0].length;
 
         renderTimer.begin();
-        if(regionCount > 24) {
+        if(regionCount > 4) {
             debug.stitching = "Parallel";
             AsyncAwaiter jobs = new AsyncAwaiter(regionCount);
             for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
@@ -315,15 +317,15 @@ public class MapRenderer implements AutoCloseable {
 
     // Run generateMapTile in an engine background thread. Useful for parallelizing massive workloads.
     private void generateMapTileAsync(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ, AsyncAwaiter jobs) {
-        BlazeMapEngine.async().runOnDataThread(() -> {
+        BlazeMapClientEngine.async().runOnDataThread(() -> {
             generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
             jobs.done();
         });
     }
 
     private void generateMapTile(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ) {
-        for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
-            if(!isLayerVisible(layer)) continue;
+        for(BlazeRegistry.Key<Layer> layer : visible) {
+            if(layer.value() instanceof FakeLayer) return;
             final RegionPos region = offsets[regionIndexX][regionIndexZ];
             tileStorage.consumeTile(layer, region, source -> {
                 for(int x = (region.x * 512) < begin.getX() ? cornerXOffset : 0; x < source.getWidth(); x++) {

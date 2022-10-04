@@ -23,25 +23,20 @@ import com.eerussianguy.blazemap.feature.waypoints.WaypointRenderer;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointStore;
 import com.mojang.blaze3d.platform.InputConstants;
 
-public class BlazeMapFeatures {
+public class BlazeMapFeaturesClient {
     public static final KeyMapping KEY_MAPS = new KeyMapping("blazemap.key.maps", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, BlazeMap.MOD_NAME);
     public static final KeyMapping KEY_ZOOM = new KeyMapping("blazemap.key.zoom", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, BlazeMap.MOD_NAME);
     public static final KeyMapping KEY_WAYPOINTS = new KeyMapping("blazemap.key.waypoints", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, BlazeMap.MOD_NAME);
 
     public static void initMapping() {
-        BlazeMapAPI.COLLECTORS.register(new TerrainHeightCollector());
-        BlazeMapAPI.COLLECTORS.register(new WaterLevelCollector());
-        BlazeMapAPI.COLLECTORS.register(new AerialViewCollector());
-        BlazeMapAPI.COLLECTORS.register(new NetherCollector());
-
         BlazeMapAPI.LAYERS.register(new TerrainHeightLayer());
         BlazeMapAPI.LAYERS.register(new WaterLevelLayer());
         BlazeMapAPI.LAYERS.register(new TerrainIsolinesLayer());
-        BlazeMapAPI.LAYERS.register(new BlockColorLayer());
+//        BlazeMapAPI.LAYERS.register(new BlockColorLayer());
         BlazeMapAPI.LAYERS.register(new NetherLayer());
 
+//        BlazeMapAPI.MAPTYPES.register(new AerialViewMapType());
         BlazeMapAPI.MAPTYPES.register(new TopographyMapType());
-        BlazeMapAPI.MAPTYPES.register(new AerialViewMapType());
         BlazeMapAPI.MAPTYPES.register(new NetherMapType());
     }
 
@@ -54,7 +49,7 @@ public class BlazeMapFeatures {
         bus.addListener(MapRenderer::onDimensionChange);
         bus.addListener(MapRenderer::onMapLabelAdded);
         bus.addListener(MapRenderer::onMapLabelRemoved);
-        bus.addListener(BlazeMapFeatures::mapKeybinds);
+        bus.addListener(BlazeMapFeaturesClient::mapKeybinds);
     }
 
     private static void mapKeybinds(InputEvent.KeyInputEvent evt) {

@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api.mapping;
+package com.eerussianguy.blazemap.api.pipeline;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -10,7 +10,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
+import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 
@@ -26,39 +27,40 @@ import com.mojang.blaze3d.platform.NativeImage;
  *
  * @author LordFokas
  */
-public abstract class Layer implements BlazeRegistry.RegistryEntry {
+public abstract class Layer implements RegistryEntry, Consumer {
     protected static final int OPAQUE = 0xFF000000;
 
-    private final BlazeRegistry.Key<Layer> id;
-    private final Set<BlazeRegistry.Key<Collector<MasterDatum>>> collectors;
+    private final Key<Layer> id;
+    private final Set<Key<DataType<MasterDatum>>> inputs;
     private final TranslatableComponent name;
     private final ResourceLocation icon;
     private final boolean opaque;
 
     @SafeVarargs
-    public Layer(BlazeRegistry.Key<Layer> id, TranslatableComponent name, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+    public Layer(Key<Layer> id, TranslatableComponent name, Key<DataType<MasterDatum>>... inputs) {
         this.id = id;
         this.name = name;
         this.icon = null;
-        this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
+        this.inputs = Arrays.stream(inputs).collect(Collectors.toUnmodifiableSet());
         this.opaque = true;
     }
 
     @SafeVarargs
-    public Layer(BlazeRegistry.Key<Layer> id, TranslatableComponent name, ResourceLocation icon, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+    public Layer(Key<Layer> id, TranslatableComponent name, ResourceLocation icon, Key<DataType<MasterDatum>>... inputs) {
         this.id = id;
         this.name = name;
         this.icon = icon;
-        this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
+        this.inputs = Arrays.stream(inputs).collect(Collectors.toUnmodifiableSet());
         this.opaque = false;
     }
 
-    public BlazeRegistry.Key<Layer> getID() {
+    public Key<Layer> getID() {
         return id;
     }
 
-    public Set<BlazeRegistry.Key<Collector<MasterDatum>>> getCollectors() {
-        return collectors;
+    @Override
+    public Set<Key<DataType<MasterDatum>>> getInputIDs() {
+        return inputs;
     }
 
     public boolean shouldRenderInDimension(ResourceKey<Level> dimension) {

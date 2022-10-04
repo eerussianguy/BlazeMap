@@ -3,8 +3,8 @@ package com.eerussianguy.blazemap.feature.maps;
 import net.minecraft.client.gui.components.ImageButton;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.mapping.Layer;
-import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.MapType;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.RenderHelper;
 import com.mojang.blaze3d.systems.RenderSystem;

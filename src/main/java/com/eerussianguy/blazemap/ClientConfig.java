@@ -8,8 +8,8 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.mapping.Layer;
-import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.MapType;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapSize;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;

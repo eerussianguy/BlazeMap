@@ -34,7 +34,7 @@ public class Overlays {
         stack.pushPose();
         stack.scale(0.5f, 0.5f, 1f);
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        ProfilingRenderer.INSTANCE.draw(stack, buffers, gui, width * 2, height * 2);
+        ProfilingRenderer.INSTANCE.draw(stack, buffers);
         buffers.endBatch();
         stack.popPose();
     }

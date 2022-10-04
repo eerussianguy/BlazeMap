@@ -9,12 +9,15 @@ import net.minecraft.world.level.material.MaterialColor;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.BlockColorMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
-public class AerialViewCollector extends Collector<BlockColorMD> {
+public class BlockColorCollector extends Collector<BlockColorMD> {
 
-    public AerialViewCollector() {
-        super(BlazeMapReferences.Collectors.BLOCK_COLOR);
+    public BlockColorCollector() {
+        super(
+            BlazeMapReferences.Collectors.BLOCK_COLOR,
+            BlazeMapReferences.MasterData.BLOCK_COLOR
+        );
     }
 
     @Override

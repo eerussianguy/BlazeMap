@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api.mapping;
+package com.eerussianguy.blazemap.api;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 
 /**
  * Each available map in Blaze Map is defined by MapType.

@@ -5,12 +5,15 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
 public class WaterLevelCollector extends Collector<WaterLevelMD> {
 
     public WaterLevelCollector() {
-        super(BlazeMapReferences.Collectors.WATER_LEVEL);
+        super(
+            BlazeMapReferences.Collectors.WATER_LEVEL,
+            BlazeMapReferences.MasterData.WATER_LEVEL
+        );
     }
 
 
@@ -30,6 +33,6 @@ public class WaterLevelCollector extends Collector<WaterLevelMD> {
             }
         }
 
-        return new WaterLevelMD(level.getSeaLevel(), minX, minZ, water);
+        return new WaterLevelMD(level.getSeaLevel(), water);
     }
 }

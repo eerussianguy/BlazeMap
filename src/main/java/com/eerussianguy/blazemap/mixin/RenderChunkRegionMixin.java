@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
+import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,7 +21,7 @@ public class RenderChunkRegionMixin {
         for(RenderChunk[] rcs : renderChunks) {
             for(RenderChunk rc : rcs) {
                 ChunkPos pos = rc.wrapped.getPos();
-                BlazeMapEngine.onChunkChanged(pos, "Vanilla Chunk Hook");
+                BlazeMapClientEngine.onChunkChanged(pos, "Vanilla Chunk Hook");
             }
         }
     }

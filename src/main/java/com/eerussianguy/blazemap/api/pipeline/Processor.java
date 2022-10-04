@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api.mapping;
+package com.eerussianguy.blazemap.api.pipeline;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -8,7 +8,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
-import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
+import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 
@@ -25,27 +26,24 @@ import com.eerussianguy.blazemap.api.util.RegionPos;
  *
  * @author LordFokas
  */
-public abstract class Processor implements BlazeRegistry.RegistryEntry {
-    private final BlazeRegistry.Key<Processor> id;
-    private final Set<BlazeRegistry.Key<Collector<MasterDatum>>> collectors;
+public abstract class Processor implements RegistryEntry, PipelineComponent, Consumer {
+    private final Key<Processor> id;
+    private final Set<Key<DataType<MasterDatum>>> inputs;
 
     @SafeVarargs
-    public Processor(BlazeRegistry.Key<Processor> id, BlazeRegistry.Key<Collector<MasterDatum>>... collectors) {
+    public Processor(Key<Processor> id, Key<DataType<MasterDatum>>... inputs) {
         this.id = id;
-        this.collectors = Arrays.stream(collectors).collect(Collectors.toUnmodifiableSet());
+        this.inputs = Arrays.stream(inputs).collect(Collectors.toUnmodifiableSet());
     }
 
-    public BlazeRegistry.Key<Processor> getID() {
+    public Key<Processor> getID() {
         return id;
     }
 
-    public Set<BlazeRegistry.Key<Collector<MasterDatum>>> getCollectors() {
-        return collectors;
+    @Override
+    public Set<Key<DataType<MasterDatum>>> getInputIDs() {
+        return inputs;
     }
 
-    public boolean shouldExecuteInDimension(ResourceKey<Level> dimension) {
-        return true;
-    }
-
-    public abstract boolean execute(ResourceKey<Level> dimension, RegionPos regions, ChunkPos chunk, IDataSource data);
+    public abstract boolean execute(ResourceKey<Level> dimension, RegionPos region, ChunkPos chunk, IDataSource data);
 }

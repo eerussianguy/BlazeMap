@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.engine;
+package com.eerussianguy.blazemap.engine.client;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -12,11 +12,11 @@ import net.minecraftforge.common.MinecraftForge;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.event.MapLabelEvent;
-import com.eerussianguy.blazemap.api.mapping.Layer;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
+import com.eerussianguy.blazemap.api.pipeline.Layer;
 
-public class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
+class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
     private final HashMap<Key<Layer>, HashMap<ResourceLocation, MapLabel>> layers = new HashMap<>();
     private final HashMap<Key<Layer>, Collection<MapLabel>> views = new HashMap<>();
     private final HashSet<ResourceLocation> labelIDs = new HashSet<>();

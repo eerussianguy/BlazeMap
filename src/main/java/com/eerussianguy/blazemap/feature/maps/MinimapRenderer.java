@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.ForgeIngameGui;
 
 import com.eerussianguy.blazemap.BlazeMapConfig;
-import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.Profilers;

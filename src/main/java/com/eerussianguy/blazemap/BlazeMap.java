@@ -10,9 +10,11 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
-import com.eerussianguy.blazemap.engine.BlazeMapServer;
-import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
+import com.eerussianguy.blazemap.engine.server.BlazeMapServerEngine;
+import com.eerussianguy.blazemap.feature.BlazeMapFeaturesClient;
+import com.eerussianguy.blazemap.feature.BlazeMapFeaturesCommon;
+import com.eerussianguy.blazemap.network.BlazeNetwork;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
@@ -45,19 +47,24 @@ public class BlazeMap {
     }
 
     public void setup(FMLCommonSetupEvent event) {
-        BlazeMapEngine.init();
+        BlazeNetwork.init();
+        BlazeMapClientEngine.init();
 
-        // BlazeMapServer is the server side of the Engine.
-        // It has dependencies on the Engine, so needs to init after.
+        // Server engine must always start after the client engine due to
+        // a dependency used to conserve resources in the integrated server
         if(FMLEnvironment.dist == Dist.CLIENT) {
-            BlazeMapServer.initForIntegrated();
+            BlazeMapServerEngine.initForIntegrated();
         }
         else {
-            BlazeMapServer.initForDedicated();
+            BlazeMapServerEngine.initForDedicated();
         }
 
-        BlazeMapFeatures.initMapping();
-        BlazeMapFeatures.initMaps();
-        BlazeMapFeatures.initWaypoints();
+        BlazeMapFeaturesCommon.initMapping();
+
+        if(FMLEnvironment.dist == Dist.CLIENT) {
+            BlazeMapFeaturesClient.initMapping();
+            BlazeMapFeaturesClient.initMaps();
+            BlazeMapFeaturesClient.initWaypoints();
+        }
     }
 }
