@@ -21,7 +21,7 @@ import static com.eerussianguy.blazemap.engine.UnsafeGenerics.*;
 // parameterizations every single line, it would be unreadable and hard to maintain.
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class Pipeline {
-    protected static final ThreadLocal<MapView> MAP_VIEWS = ThreadLocal.withInitial(MapView::new);
+    protected final ThreadLocal<MapView> MAP_VIEWS = ThreadLocal.withInitial(MapView::new);
 
     private final PipelineProfiler profiler;
     protected final AsyncChain.Root async;
@@ -45,7 +45,7 @@ public abstract class Pipeline {
         Set<Key<Processor>> availableProcessors
     ) {
         this.async = async;
-        this.dirtyChunks = new DebouncingDomain<>(this::begin, 500, 5000);
+        this.dirtyChunks = new DebouncingDomain<>(debouncer, this::begin, 500, 5000);
         this.profiler = profiler;
 
         this.dimension = dimension;
@@ -55,7 +55,6 @@ public abstract class Pipeline {
         this.availableTransformers = stripTransformers(availableTransformers);
         this.availableProcessors = availableProcessors;
 
-        debouncer.add(dirtyChunks);
         collectors = availableCollectors.stream().map(Key::value).toArray(Collector[]::new);
         transformers = this.availableTransformers.stream().map(Key::value).toList();
         processors = this.availableProcessors.stream().map(Key::value).toList();
@@ -65,10 +64,15 @@ public abstract class Pipeline {
         numProcessors = processors.size();
     }
 
+    public int getDirtyChunks() {
+        return dirtyChunks.size();
+    }
+
 
     // =================================================================================================================
     // Pipeline IO
     public void onChunkChanged(ChunkPos pos) {
+        if(!level.get().getChunkSource().hasChunk(pos.x, pos.z)) return;
         dirtyChunks.push(pos);
     }
 
@@ -76,7 +80,7 @@ public abstract class Pipeline {
         async.runOnDataThread(() -> processMasterData(pos, data));
     }
 
-    protected abstract void onPipelineOutput(ChunkPos pos, Set<Key<DataType>> diff, MapView view);
+    protected abstract void onPipelineOutput(ChunkPos pos, Set<Key<DataType>> diff, MapView view, ChunkMDCache cache);
 
 
     // =================================================================================================================
@@ -105,7 +109,7 @@ public abstract class Pipeline {
         // Cache MD
         cache.persist(); // TODO: double check that persistence is done
 
-        this.onPipelineOutput(pos, diff, view);
+        this.onPipelineOutput(pos, diff, view, cache);
         this.runProcessors(pos, diff, view);
         return null;
     }

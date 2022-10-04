@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
+import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.feature.mapping.*;
 import com.eerussianguy.blazemap.feature.maps.MapRenderer;
 import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
@@ -29,9 +30,14 @@ public class BlazeMapFeatures {
     public static final KeyMapping KEY_WAYPOINTS = new KeyMapping("blazemap.key.waypoints", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, BlazeMap.MOD_NAME);
 
     public static void initMapping() {
+        BlazeMapAPI.MASTER_DATA.register(new TerrainHeightSerializer(BlazeMapReferences.MasterData.TERRAIN_HEIGHT));
+        BlazeMapAPI.MASTER_DATA.register(new WaterLevelSerializer());
+        BlazeMapAPI.MASTER_DATA.register(new BlockColorSerializer());
+        BlazeMapAPI.MASTER_DATA.register(new TerrainHeightSerializer(BlazeMapReferences.MasterData.NETHER));
+
         BlazeMapAPI.COLLECTORS.register(new TerrainHeightCollector());
         BlazeMapAPI.COLLECTORS.register(new WaterLevelCollector());
-        BlazeMapAPI.COLLECTORS.register(new AerialViewCollector());
+        BlazeMapAPI.COLLECTORS.register(new BlockColorCollector());
         BlazeMapAPI.COLLECTORS.register(new NetherCollector());
 
         BlazeMapAPI.LAYERS.register(new TerrainHeightLayer());
@@ -40,8 +46,8 @@ public class BlazeMapFeatures {
         BlazeMapAPI.LAYERS.register(new BlockColorLayer());
         BlazeMapAPI.LAYERS.register(new NetherLayer());
 
-        BlazeMapAPI.MAPTYPES.register(new TopographyMapType());
         BlazeMapAPI.MAPTYPES.register(new AerialViewMapType());
+        BlazeMapAPI.MAPTYPES.register(new TopographyMapType());
         BlazeMapAPI.MAPTYPES.register(new NetherMapType());
     }
 

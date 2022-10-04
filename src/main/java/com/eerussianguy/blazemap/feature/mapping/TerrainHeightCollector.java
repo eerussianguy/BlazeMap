@@ -40,7 +40,7 @@ public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
             }
         }
 
-        return new TerrainHeightMD(BlazeMapReferences.MasterData.TERRAIN_HEIGHT, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
+        return new TerrainHeightMD(BlazeMapReferences.MasterData.TERRAIN_HEIGHT, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), heightmap);
     }
 
     protected static boolean isSkippableAfterLeaves(Level level, int x, int y, int z) {

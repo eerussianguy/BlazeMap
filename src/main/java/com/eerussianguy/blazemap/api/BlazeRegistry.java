@@ -22,6 +22,7 @@ public class BlazeRegistry<T> {
 
     @SuppressWarnings("unchecked")
     public T get(Key<T> key) {
+        if(key.registry != this) throw new IllegalArgumentException("Key does not belong to the same registry!");
         return (T) objects.get(key);
     }
 
@@ -29,6 +30,7 @@ public class BlazeRegistry<T> {
     public void register(RegistryEntry object) {
         if(frozen) throw new IllegalStateException("Registry is frozen!");
         Key<T> key = (Key<T>) object.getID();
+        if(key.registry != this) throw new IllegalArgumentException("Key does not belong to the same registry!");
         if(objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is already set!");
         objects.put(key, object);
         orderedKeys.add(key);
@@ -38,12 +40,16 @@ public class BlazeRegistry<T> {
     public void replace(RegistryEntry object) {
         if(frozen) throw new IllegalStateException("Registry is frozen!");
         Key<T> key = (Key<T>) object.getID();
+        if(key.registry != this) throw new IllegalArgumentException("Key does not belong to the same registry!");
         if(!objects.containsKey(key)) throw new IllegalArgumentException("Key " + key.toString() + " is not set!");
         objects.put(key, object);
     }
 
     public Key<T> findOrCreate(String path) {
-        ResourceLocation location = new ResourceLocation(path);
+        return findOrCreate(new ResourceLocation(path));
+    }
+
+    public Key<T> findOrCreate(ResourceLocation location) {
         for(Key<T> key : orderedKeys) {
             if(key.location.equals(location)) return key;
         }

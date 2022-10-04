@@ -1,6 +1,7 @@
 package com.eerussianguy.blazemap.engine;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
@@ -30,5 +31,9 @@ public class ChunkMDCache {
     public void persist() {
         if(!dirty) return;
         // TODO: implement persistence
+    }
+
+    public List<MasterDatum> data() {
+        return cache.values().stream().toList();
     }
 }

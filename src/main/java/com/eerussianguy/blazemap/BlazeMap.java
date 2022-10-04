@@ -11,7 +11,9 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
+import com.eerussianguy.blazemap.engine.server.BlazeMapServerEngine;
 import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.network.BlazeNetwork;
 import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
@@ -44,16 +46,17 @@ public class BlazeMap {
     }
 
     public void setup(FMLCommonSetupEvent event) {
+        BlazeNetwork.init();
         BlazeMapClientEngine.init();
 
-        // BlazeMapServer is the server side of the Engine.
-        // It has dependencies on the Engine, so needs to init after.
-        /*if(FMLEnvironment.dist == Dist.CLIENT) {
+        // Server engine must always start after the client engine due to
+        // a dependency used to conserve resources in the integrated server
+        if(FMLEnvironment.dist == Dist.CLIENT) {
             BlazeMapServerEngine.initForIntegrated();
         }
         else {
             BlazeMapServerEngine.initForDedicated();
-        }*/
+        }
 
         BlazeMapFeatures.initMapping();
         BlazeMapFeatures.initMaps();

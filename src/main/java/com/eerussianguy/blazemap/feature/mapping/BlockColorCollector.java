@@ -11,9 +11,9 @@ import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.BlockColorMD;
 import com.eerussianguy.blazemap.api.pipeline.Collector;
 
-public class AerialViewCollector extends Collector<BlockColorMD> {
+public class BlockColorCollector extends Collector<BlockColorMD> {
 
-    public AerialViewCollector() {
+    public BlockColorCollector() {
         super(
             BlazeMapReferences.Collectors.BLOCK_COLOR,
             BlazeMapReferences.MasterData.BLOCK_COLOR

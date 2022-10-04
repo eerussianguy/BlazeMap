@@ -33,6 +33,6 @@ public class WaterLevelCollector extends Collector<WaterLevelMD> {
             }
         }
 
-        return new WaterLevelMD(level.getSeaLevel(), minX, minZ, water);
+        return new WaterLevelMD(level.getSeaLevel(), water);
     }
 }

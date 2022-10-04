@@ -16,14 +16,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
-import com.eerussianguy.blazemap.engine.PipelineProfiler;
+import com.eerussianguy.blazemap.engine.Pipeline;
 import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
 import com.eerussianguy.blazemap.engine.async.DebouncingThread;
 import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
-
-import static com.eerussianguy.blazemap.util.Profilers.Server.*;
 
 public class BlazeMapServerEngine {
     private static final Map<ResourceKey<Level>, ServerPipeline> PIPELINES = new HashMap<>();
@@ -33,8 +31,7 @@ public class BlazeMapServerEngine {
     private static boolean frozenRegistries;
     private static boolean isRunning;
     private static StorageAccess.Internal storage;
-    private static StorageAccess addonStorage;
-    private static PipelineProfiler profiler;
+    private static int numCollectors = 0, numProcessors = 0, numTransformers = 0;
 
     // Initialize in a client side context.
     // Some resources are shared with the client, there's no need to be greedy.
@@ -58,14 +55,6 @@ public class BlazeMapServerEngine {
     // Common context initialization routine.
     private static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapServerEngine.class);
-        profiler = new PipelineProfiler(
-            COLLECTOR_TIME_PROFILER,
-            COLLECTOR_LOAD_PROFILER,
-            TRANSFORMER_TIME_PROFILER,
-            TRANSFORMER_LOAD_PROFILER,
-            PROCESSOR_TIME_PROFILER,
-            PROCESSOR_LOAD_PROFILER
-        );
     }
 
     private static void submit(Runnable task) {
@@ -89,7 +78,6 @@ public class BlazeMapServerEngine {
         isRunning = true;
         server = event.getServer();
         storage = new StorageAccess.Internal(server.getWorldPath(LevelResource.ROOT).toFile(), "blazemap-server");
-        addonStorage = storage.addon();
     }
 
     @SubscribeEvent
@@ -97,7 +85,6 @@ public class BlazeMapServerEngine {
         isRunning = false;
         server = null;
         storage = null;
-        addonStorage = null;
         PIPELINES.clear();
     }
 
@@ -107,7 +94,13 @@ public class BlazeMapServerEngine {
     }
 
     private static ServerPipeline getPipeline(ResourceKey<Level> dimension) {
-        return PIPELINES.computeIfAbsent(dimension, d -> new ServerPipeline(async, debouncer, profiler, d, () -> server.getLevel(d)));
+        return PIPELINES.computeIfAbsent(dimension, d -> {
+            ServerPipeline pipeline = new ServerPipeline(async, debouncer, d, () -> server.getLevel(d));
+            numCollectors = Math.max(numCollectors, pipeline.numCollectors);
+            numTransformers = Math.max(numTransformers, pipeline.numTransformers);
+            numProcessors = Math.max(numProcessors, pipeline.numProcessors);
+            return pipeline;
+        });
     }
 
     public static boolean isRunning() {
@@ -116,5 +109,40 @@ public class BlazeMapServerEngine {
 
     public static DebouncingThread debouncer() {
         return debouncer;
+    }
+
+
+    // =================================================================================================================
+    // Debug Info Access
+    public static String getMDSource() {
+        return "Vanilla Chunk Hook";
+    }
+
+    public static int numPipelines() {
+        return PIPELINES.size();
+    }
+
+    public static int avgTPS() {
+        return (int) Math.min(20, 1000F / server.getAverageTickTime());
+    }
+
+    public static int numCollectors() {
+        return numCollectors;
+    }
+
+    public static int numProcessors() {
+        return numProcessors;
+    }
+
+    public static int numTransformers() {
+        return numTransformers;
+    }
+
+    public static int dirtyChunks() {
+        int dirty = 0;
+        for(Pipeline pipeline : PIPELINES.values()) {
+            dirty += pipeline.getDirtyChunks();
+        }
+        return dirty;
     }
 }

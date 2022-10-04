@@ -12,6 +12,7 @@ import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.pipeline.DataType;
+import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
 import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
@@ -26,7 +27,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import static com.eerussianguy.blazemap.util.Profilers.Client.*;
 
 class ClientPipeline extends Pipeline {
-    private static final PipelineProfiler PIPELINE_PROFILER = new PipelineProfiler(
+    private static final PipelineProfiler CLIENT_PIPELINE_PROFILER = new PipelineProfiler(
         COLLECTOR_TIME_PROFILER,
         COLLECTOR_LOAD_PROFILER,
         TRANSFORMER_TIME_PROFILER,
@@ -35,6 +36,7 @@ class ClientPipeline extends Pipeline {
         PROCESSOR_LOAD_PROFILER
     );
 
+
     private final StorageAccess.Internal storage;
     public final StorageAccess addonStorage;
     public final Set<Key<MapType>> availableMapTypes;
@@ -42,15 +44,13 @@ class ClientPipeline extends Pipeline {
     private final Layer[] layers;
     public final int numLayers;
     private final Map<Key<Layer>, Map<RegionPos, LayerRegionTile>> regions = new HashMap<>();
-    private final DebouncingDomain<LayerRegionTile> dirtyRegions;
+    private final DebouncingDomain<LayerRegionTile> dirtyTiles;
     private final PriorityLock lock = new PriorityLock();
     private boolean active;
 
-    protected ClientPipeline(
-        AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, StorageAccess.Internal storage
-    ) {
+    protected ClientPipeline(AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, StorageAccess.Internal storage) {
         super(
-            async, debouncer, PIPELINE_PROFILER, dimension, Helpers::levelOrThrow,
+            async, debouncer, CLIENT_PIPELINE_PROFILER, dimension, Helpers::levelOrThrow,
             BlazeMapAPI.MAPTYPES.keys().stream().map(k -> k.value().getLayers()).flatMap(Set::stream)
                 .map(k -> k.value().getInputIDs()).map(ids -> BlazeMapAPI.COLLECTORS.keys().stream().filter(k -> ids.contains(k.value().getOutputID()))
                     .collect(Collectors.toUnmodifiableSet())).flatMap(Set::stream).collect(Collectors.toUnmodifiableSet()),
@@ -60,20 +60,19 @@ class ClientPipeline extends Pipeline {
         this.storage = storage;
         this.addonStorage = storage.addon();
 
-        // Set up views (immutable sets) for the available maps and layers, fast access collector array.
+        // Set up views (immutable sets) for the available maps and layers.
         this.availableMapTypes = BlazeMapAPI.MAPTYPES.keys().stream().filter(m -> m.value().shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableSet());
         this.availableLayers = availableMapTypes.stream().map(k -> k.value().getLayers()).flatMap(Set::stream).filter(l -> l.value().shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableSet());
-        this.layers = availableLayers.stream().map(Key::value).toArray(Layer[]::new);
+        this.layers = availableLayers.stream().map(Key::value).filter(l -> !(l instanceof FakeLayer)).toArray(Layer[]::new);
         this.numLayers = layers.length;
 
         // Set up debouncing mechanisms
-        this.dirtyRegions = new DebouncingDomain<>(region -> async.runOnDataThread(() -> {
-            REGION_LOAD_PROFILER.hit();
-            REGION_TIME_PROFILER.begin();
+        this.dirtyTiles = new DebouncingDomain<>(debouncer, region -> async.runOnDataThread(() -> {
+            TILE_LOAD_PROFILER.hit();
+            TILE_TIME_PROFILER.begin();
             region.save();
-            REGION_TIME_PROFILER.end();
+            TILE_TIME_PROFILER.end();
         }), 1000, 30000);
-        debouncer.add(dirtyRegions);
     }
 
     // Redraw tiles based on MD changes
@@ -85,7 +84,7 @@ class ClientPipeline extends Pipeline {
     // -  - add LayerRegion to the list of updated images to send a notification for
     @Override
     @SuppressWarnings("rawtypes")
-    protected void onPipelineOutput(ChunkPos chunkPos, Set<Key<DataType>> diff, MapView view) {
+    protected void onPipelineOutput(ChunkPos chunkPos, Set<Key<DataType>> diff, MapView view, ChunkMDCache cache) {
         try {
             RegionPos regionPos = new RegionPos(chunkPos);
             List<LayerRegion> updates = new LinkedList<>();
@@ -93,6 +92,7 @@ class ClientPipeline extends Pipeline {
             LAYER_TIME_PROFILER.begin();
 
             for(Layer layer : layers) {
+                if(Collections.disjoint(layer.getInputIDs(), diff)) continue;
                 NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, 16, 16, true);
                 view.setFilter(UnsafeGenerics.stripKeys(layer.getInputIDs())); // the layer should only access declared collectors
 
@@ -106,7 +106,7 @@ class ClientPipeline extends Pipeline {
                     layerRegionTile.updateTile(layerChunkTile, chunkPos);
 
                     // asynchronously save this region later
-                    dirtyRegions.push(layerRegionTile);
+                    dirtyTiles.push(layerRegionTile);
 
                     // updates for the listeners
                     updates.add(new LayerRegion(layerID, regionPos));
@@ -148,9 +148,14 @@ class ClientPipeline extends Pipeline {
         }
     }
 
+    public int getDirtyTiles() {
+        return dirtyTiles.size();
+    }
+
     public void shutdown() {
         active = false;
-        dirtyRegions.finish();
+        dirtyChunks.clear();
+        dirtyTiles.finish();
         // TODO: Release all memory dedicated to caches and such. Close resources. Flush to disk.
         regions.clear();
     }

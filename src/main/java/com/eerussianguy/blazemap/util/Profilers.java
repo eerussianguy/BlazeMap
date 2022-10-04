@@ -21,8 +21,8 @@ public class Profilers {
         public static final Profiler.LoadProfiler TRANSFORMER_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
         public static final Profiler.TimeProfilerAsync LAYER_TIME_PROFILER = new Profiler.TimeProfilerAsync(20);
         public static final Profiler.LoadProfiler LAYER_LOAD_PROFILER = new Profiler.LoadProfiler(20, 50);
-        public static final Profiler.TimeProfilerAsync REGION_TIME_PROFILER = new Profiler.TimeProfilerAsync(60);
-        public static final Profiler.LoadProfiler REGION_LOAD_PROFILER = new Profiler.LoadProfiler(60, 1000);
+        public static final Profiler.TimeProfilerAsync TILE_TIME_PROFILER = new Profiler.TimeProfilerAsync(60);
+        public static final Profiler.LoadProfiler TILE_LOAD_PROFILER = new Profiler.LoadProfiler(60, 1000);
     }
 
     public static class Minimap {

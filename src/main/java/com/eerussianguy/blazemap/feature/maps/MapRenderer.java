@@ -28,6 +28,7 @@ import com.eerussianguy.blazemap.api.event.WaypointEvent;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
 import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
@@ -323,8 +324,8 @@ public class MapRenderer implements AutoCloseable {
     }
 
     private void generateMapTile(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ) {
-        for(BlazeRegistry.Key<Layer> layer : mapType.getLayers()) {
-            if(!isLayerVisible(layer)) continue;
+        for(BlazeRegistry.Key<Layer> layer : visible) {
+            if(layer.value() instanceof FakeLayer) return;
             final RegionPos region = offsets[regionIndexX][regionIndexZ];
             tileStorage.consumeTile(layer, region, source -> {
                 for(int x = (region.x * 512) < begin.getX() ? cornerXOffset : 0; x < source.getWidth(); x++) {

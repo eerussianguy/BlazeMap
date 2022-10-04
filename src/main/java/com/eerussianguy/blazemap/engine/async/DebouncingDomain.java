@@ -11,10 +11,11 @@ public class DebouncingDomain<T> {
     private Thread thread;
     private long next = Long.MAX_VALUE;
 
-    public DebouncingDomain(Consumer<T> callback, int step, int max) {
+    public DebouncingDomain(DebouncingThread debouncer, Consumer<T> callback, int step, int max) {
         this.callback = callback;
         this.step = step;
         this.max = max;
+        debouncer.add(this);
     }
 
     public void push(T object) {
@@ -75,8 +76,12 @@ public class DebouncingDomain<T> {
         return pop(curr);
     }
 
-    public void setThread(Thread thread) {
+    void setThread(Thread thread) {
         this.thread = thread;
+    }
+
+    public int size() {
+        return queue.size();
     }
 
     private static class Delay {
@@ -93,7 +98,8 @@ public class DebouncingDomain<T> {
 
         Delay touch() {
             long curr = System.currentTimeMillis();
-            next = Math.min(curr + step, max);
+            long rand = System.nanoTime() % step;
+            next = Math.min(curr + step + rand, max);
             return this;
         }
     }

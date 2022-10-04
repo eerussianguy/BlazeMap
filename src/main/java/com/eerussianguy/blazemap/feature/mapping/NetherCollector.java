@@ -36,7 +36,7 @@ public class NetherCollector extends Collector<TerrainHeightMD> {
             }
         }
 
-        return new TerrainHeightMD(BlazeMapReferences.MasterData.NETHER, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
+        return new TerrainHeightMD(BlazeMapReferences.MasterData.NETHER, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), heightmap);
     }
 
     private boolean isNotAir(Level level, int x, int y, int z) {
