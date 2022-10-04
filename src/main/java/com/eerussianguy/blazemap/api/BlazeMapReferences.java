@@ -4,6 +4,7 @@ import java.util.List;
 
 import net.minecraft.resources.ResourceLocation;
 
+import com.eerussianguy.blazemap.api.markers.ObjectRenderer;
 import com.eerussianguy.blazemap.api.pipeline.*;
 
 import static com.eerussianguy.blazemap.api.BlazeMapAPI.*;
@@ -46,6 +47,10 @@ public class BlazeMapReferences {
         public static final Key<MapType> AERIAL_VIEW = new Key<>(MAPTYPES, MODID, "aerial_view");
         public static final Key<MapType> TOPOGRAPHY = new Key<>(MAPTYPES, MODID, "topography");
         public static final Key<MapType> NETHER = new Key<>(MAPTYPES, MODID, "nether");
+    }
+
+    public static class ObjectRenderers {
+        public static final Key<ObjectRenderer<?>> DEFAULT = new Key<>(OBJECT_RENDERERS, MODID, "default");
     }
 
     public static class Icons {

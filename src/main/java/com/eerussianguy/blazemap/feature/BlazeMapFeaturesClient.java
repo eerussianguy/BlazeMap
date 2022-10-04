@@ -13,10 +13,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.feature.mapping.*;
-import com.eerussianguy.blazemap.feature.maps.MapRenderer;
-import com.eerussianguy.blazemap.feature.maps.MinimapOptionsGui;
-import com.eerussianguy.blazemap.feature.maps.MinimapRenderer;
-import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
+import com.eerussianguy.blazemap.feature.maps.*;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointCreatorGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointManagerGui;
 import com.eerussianguy.blazemap.feature.waypoints.WaypointRenderer;
@@ -44,6 +41,8 @@ public class BlazeMapFeaturesClient {
         ClientRegistry.registerKeyBinding(KEY_MAPS);
         ClientRegistry.registerKeyBinding(KEY_ZOOM);
         ClientRegistry.registerKeyBinding(KEY_WAYPOINTS);
+
+        BlazeMapAPI.OBJECT_RENDERERS.register(new DefaultObjectRenderer());
 
         IEventBus bus = MinecraftForge.EVENT_BUS;
         bus.addListener(MapRenderer::onDimensionChange);

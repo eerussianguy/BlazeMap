@@ -25,9 +25,7 @@ import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.MapLabelEvent;
 import com.eerussianguy.blazemap.api.event.WaypointEvent;
-import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
-import com.eerussianguy.blazemap.api.markers.MapLabel;
-import com.eerussianguy.blazemap.api.markers.Waypoint;
+import com.eerussianguy.blazemap.api.markers.*;
 import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
 import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
@@ -264,7 +262,7 @@ public class MapRenderer implements AutoCloseable {
 
         stack.pushPose();
         for(MapLabel l : labels) {
-            renderMarker(buffers, stack, l.getPosition(), l.getIcon(), l.getColor(), l.getWidth(), l.getHeight(), l.getRotation(), l.getUsesZoom(), null);
+            renderObject(buffers, stack, l);
         }
         for(Waypoint w : waypoints) {
             renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true, renderNames ? w.getLabel() : null);
@@ -365,6 +363,19 @@ public class MapRenderer implements AutoCloseable {
         stack.translate(-width / 2, -height / 2, 0);
         VertexConsumer vertices = buffers.getBuffer(RenderType.text(marker));
         RenderHelper.drawQuad(vertices, stack.last().pose(), (float) width, (float) height, color);
+        stack.popPose();
+    }
+
+    private void renderObject(MultiBufferSource buffers, PoseStack stack, MapLabel label) {
+        stack.pushPose();
+        stack.scale((float) this.zoom, (float) this.zoom, 1);
+        BlockPos position = label.getPosition();
+        int dx = position.getX() - begin.getX();
+        int dy = position.getZ() - begin.getZ();
+        stack.translate(dx, dy, 0);
+
+        ((ObjectRenderer<MapLabel>) label.getRenderer().value()).render(label, stack, buffers, this.zoom);
+
         stack.popPose();
     }
 

@@ -11,6 +11,8 @@ import com.eerussianguy.blazemap.api.pipeline.Layer;
 
 public class MapLabel extends Marker<MapLabel> {
     private final Key<Layer> layerID;
+
+    private Key<ObjectRenderer<?>> renderer = BlazeMapReferences.ObjectRenderers.DEFAULT;
     private int width, height;
     private boolean usesZoom;
 
@@ -32,6 +34,15 @@ public class MapLabel extends Marker<MapLabel> {
 
     public final Key<Layer> getLayerID() {
         return layerID;
+    }
+
+    public Key<ObjectRenderer<?>> getRenderer() {
+        return renderer;
+    }
+
+    public MapLabel setRenderer(Key<ObjectRenderer<?>> renderer) {
+        this.renderer = renderer;
+        return this;
     }
 
     public int getWidth() {
