@@ -265,7 +265,7 @@ public class MapRenderer implements AutoCloseable {
             renderObject(buffers, stack, l);
         }
         for(Waypoint w : waypoints) {
-            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true, renderNames ? w.getLabel() : null);
+            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true, renderNames ? w.getName() : null);
         }
         LocalPlayer player = Helpers.getPlayer();
         renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false, null);

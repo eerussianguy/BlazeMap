@@ -41,8 +41,9 @@ public class BlazeMap {
         else {
             // These are forbidden in the dedicated server.
             // The others are frozen by BlazeMapServer when the time comes.
-            BlazeMapAPI.MAPTYPES.freeze();
             BlazeMapAPI.LAYERS.freeze();
+            BlazeMapAPI.MAPTYPES.freeze();
+            BlazeMapAPI.OBJECT_RENDERERS.freeze();
         }
     }
 

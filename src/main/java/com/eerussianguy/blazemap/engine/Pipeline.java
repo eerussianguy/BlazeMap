@@ -139,7 +139,10 @@ public abstract class Pipeline {
 
             List<MasterDatum> data = new ArrayList<>(32);
             for(Collector collector : collectors) {
-                data.add(collector.collect(level, x0, z0, x1, z1));
+                MasterDatum md = collector.collect(level, x0, z0, x1, z1);
+                if(md != null){
+                    data.add(md);
+                }
             }
             return data;
         }

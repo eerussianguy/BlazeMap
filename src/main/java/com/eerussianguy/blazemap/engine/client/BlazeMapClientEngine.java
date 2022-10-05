@@ -27,6 +27,7 @@ import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 import com.eerussianguy.blazemap.api.pipeline.PipelineType;
 import com.eerussianguy.blazemap.api.util.IStorageAccess;
 import com.eerussianguy.blazemap.api.util.LayerRegion;
+import com.eerussianguy.blazemap.engine.RegistryController;
 import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
@@ -49,16 +50,14 @@ public class BlazeMapClientEngine {
     private static IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
     private static String serverID;
     private static StorageAccess.Internal storage;
-    private static boolean frozenRegistries;
     private static boolean clientSource;
     private static String mdSource;
 
     public static void init() {
         MinecraftForge.EVENT_BUS.register(BlazeMapClientEngine.class);
-        dataCruncher = new AsyncDataCruncher("Blaze Map");
+        dataCruncher = new AsyncDataCruncher("Blaze Map (Client)");
         async = new AsyncChain.Root(dataCruncher, Helpers::runOnMainThread);
-        debouncer = new DebouncingThread("Blaze Map Engine");
-        frozenRegistries = false;
+        debouncer = new DebouncingThread("Blaze Map (Client)");
     }
 
     public static AsyncChain.Root async() {
@@ -75,21 +74,7 @@ public class BlazeMapClientEngine {
 
     @SubscribeEvent
     public static void onJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
-        if(!frozenRegistries) {
-            IEventBus bus = MinecraftForge.EVENT_BUS;
-            bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
-            bus.post(new BlazeRegistryEvent.TransformerRegistryEvent());
-            bus.post(new BlazeRegistryEvent.ProcessorRegistryEvent());
-            bus.post(new BlazeRegistryEvent.LayerRegistryEvent());
-            bus.post(new BlazeRegistryEvent.MapTypeRegistryEvent());
-            BlazeMapAPI.COLLECTORS.freeze();
-            BlazeMapAPI.TRANSFORMERS.freeze();
-            BlazeMapAPI.PROCESSORS.freeze();
-            BlazeMapAPI.LAYERS.freeze();
-            BlazeMapAPI.MAPTYPES.freeze();
-            frozenRegistries = true;
-        }
-
+        RegistryController.ensureRegistriesReady();
         LocalPlayer player = event.getPlayer();
         if(player == null) return;
         serverID = Helpers.getServerID();

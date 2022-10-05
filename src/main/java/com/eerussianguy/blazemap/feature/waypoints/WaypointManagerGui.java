@@ -47,7 +47,7 @@ public class WaypointManagerGui extends BlazeGui {
 
     private void renderWaypoint(PoseStack stack, Waypoint waypoint) {
         RenderHelper.drawTexturedQuad(waypoint.getIcon(), waypoint.getColor(), stack, 2, 2, 16, 16);
-        font.draw(stack, waypoint.getLabel(), 20, 6, waypoint.getColor());
+        font.draw(stack, waypoint.getName(), 20, 6, waypoint.getColor());
     }
 
     private void onSelected(Waypoint waypoint) {

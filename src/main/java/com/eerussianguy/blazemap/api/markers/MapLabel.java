@@ -16,16 +16,16 @@ public class MapLabel extends Marker<MapLabel> {
     private int width, height;
     private boolean usesZoom;
 
-    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, String name) {
-        this(id, dimension, position, layerID, name, BlazeMapReferences.Icons.WAYPOINT, 32, 32, -1, 0, true);
+    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID) {
+        this(id, dimension, position, layerID, BlazeMapReferences.Icons.WAYPOINT, 32, 32, -1, 0, true);
     }
 
-    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, String name, ResourceLocation icon, int width, int height) {
-        this(id, dimension, position, layerID, name, icon, width, height, -1, 0, true);
+    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, ResourceLocation icon, int width, int height) {
+        this(id, dimension, position, layerID, icon, width, height, -1, 0, true);
     }
 
-    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, String name, ResourceLocation icon, int width, int height, int color, float rotation, boolean usesZoom) {
-        super(id, dimension, position, name, icon, color, rotation);
+    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, ResourceLocation icon, int width, int height, int color, float rotation, boolean usesZoom) {
+        super(id, dimension, position, icon, color, rotation);
         this.layerID = layerID;
         this.width = width;
         this.height = height;

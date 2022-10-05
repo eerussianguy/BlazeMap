@@ -37,8 +37,9 @@ public class StorageAccess implements IStorageAccess {
     protected File getFile(ResourceLocation node) {
         Objects.requireNonNull(node);
         File mod = new File(dir, node.getNamespace());
-        mod.mkdirs();
-        return new File(mod, node.getPath());
+        File file = new File(mod, node.getPath());
+        file.getParentFile().mkdirs();
+        return file;
     }
 
     public static class Internal extends StorageAccess {

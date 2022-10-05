@@ -5,6 +5,7 @@ import net.minecraftforge.eventbus.api.Event;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.MapType;
+import com.eerussianguy.blazemap.api.markers.ObjectRenderer;
 import com.eerussianguy.blazemap.api.pipeline.*;
 
 /**
@@ -59,6 +60,12 @@ public abstract class BlazeRegistryEvent<T> extends Event {
     public static class MapTypeRegistryEvent extends BlazeRegistryEvent<MapType> {
         public MapTypeRegistryEvent() {
             super(BlazeMapAPI.MAPTYPES);
+        }
+    }
+
+    public static class ObjectRendererRegistryEvent extends BlazeRegistryEvent<ObjectRenderer<?>> {
+        public ObjectRendererRegistryEvent() {
+            super(BlazeMapAPI.OBJECT_RENDERERS);
         }
     }
 }

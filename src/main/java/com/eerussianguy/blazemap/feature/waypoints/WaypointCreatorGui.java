@@ -63,7 +63,7 @@ public class WaypointCreatorGui extends BlazeGui {
             randomColor();
         }
         else {
-            name = waypoint.getLabel();
+            name = waypoint.getName();
             BlockPos pos = waypoint.getPosition();
             x = pos.getX();
             y = pos.getY();
@@ -86,7 +86,7 @@ public class WaypointCreatorGui extends BlazeGui {
             ));
         }
         else {
-            waypoint.setLabel(name);
+            waypoint.setName(name);
             waypoint.setPosition(new BlockPos(x, y, z));
             waypoint.setColor(color);
             waypoint.setIcon(icon);

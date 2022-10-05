@@ -11,20 +11,18 @@ public abstract class Marker<T extends Marker<T>> {
     private final ResourceLocation id;
     private final ResourceKey<Level> dimension;
     private final BlockPos.MutableBlockPos position;
-    private String label;
     private ResourceLocation icon;
     private int color;
     private float rotation;
 
-    protected Marker(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, String label, ResourceLocation icon) {
-        this(id, dimension, position, label, icon, -1, 0);
+    protected Marker(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, ResourceLocation icon) {
+        this(id, dimension, position, icon, -1, 0);
     }
 
-    protected Marker(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, String label, ResourceLocation icon, int color, float rotation) {
+    protected Marker(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, ResourceLocation icon, int color, float rotation) {
         this.id = id;
         this.dimension = dimension;
         this.position = new BlockPos.MutableBlockPos().set(position);
-        this.label = label;
         this.icon = icon;
         this.color = color;
         this.rotation = rotation;
@@ -42,10 +40,6 @@ public abstract class Marker<T extends Marker<T>> {
         return position;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
     public ResourceLocation getIcon() {
         return icon;
     }
@@ -61,12 +55,6 @@ public abstract class Marker<T extends Marker<T>> {
     @SuppressWarnings("unchecked")
     public T setPosition(BlockPos position) {
         this.position.set(position);
-        return (T) this;
-    }
-
-    @SuppressWarnings("unchecked")
-    public T setLabel(String label) {
-        this.label = label;
         return (T) this;
     }
 

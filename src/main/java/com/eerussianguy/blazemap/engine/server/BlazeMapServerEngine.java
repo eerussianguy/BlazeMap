@@ -11,12 +11,11 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
-import com.eerussianguy.blazemap.api.event.BlazeRegistryEvent;
 import com.eerussianguy.blazemap.engine.Pipeline;
+import com.eerussianguy.blazemap.engine.RegistryController;
 import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
 import com.eerussianguy.blazemap.engine.async.AsyncDataCruncher;
@@ -28,7 +27,6 @@ public class BlazeMapServerEngine {
     private static DebouncingThread debouncer;
     private static AsyncChain.Root async;
     private static MinecraftServer server;
-    private static boolean frozenRegistries;
     private static boolean isRunning;
     private static StorageAccess.Internal storage;
     private static int numCollectors = 0, numProcessors = 0, numTransformers = 0;
@@ -39,7 +37,6 @@ public class BlazeMapServerEngine {
         async = new AsyncChain.Root(BlazeMapClientEngine.cruncher(), BlazeMapServerEngine::submit);
         debouncer = BlazeMapClientEngine.debouncer();
         init();
-        frozenRegistries = true;
     }
 
     // Initialize in a dedicated server context.
@@ -49,7 +46,6 @@ public class BlazeMapServerEngine {
         async = new AsyncChain.Root(dataCruncher, BlazeMapServerEngine::submit);
         debouncer = new DebouncingThread("Blaze Map (Server)");
         init();
-        frozenRegistries = false;
     }
 
     // Common context initialization routine.
@@ -64,17 +60,7 @@ public class BlazeMapServerEngine {
 
     @SubscribeEvent
     public static void onServerStart(ServerStartingEvent event) {
-        if(!frozenRegistries) {
-            IEventBus bus = MinecraftForge.EVENT_BUS;
-            bus.post(new BlazeRegistryEvent.CollectorRegistryEvent());
-            bus.post(new BlazeRegistryEvent.TransformerRegistryEvent());
-            bus.post(new BlazeRegistryEvent.ProcessorRegistryEvent());
-            BlazeMapAPI.COLLECTORS.freeze();
-            BlazeMapAPI.TRANSFORMERS.freeze();
-            BlazeMapAPI.PROCESSORS.freeze();
-            frozenRegistries = true;
-        }
-
+        RegistryController.ensureRegistriesReady();
         isRunning = true;
         server = event.getServer();
         storage = new StorageAccess.Internal(server.getWorldPath(LevelResource.ROOT).toFile(), "blazemap-server");
@@ -95,6 +81,7 @@ public class BlazeMapServerEngine {
 
     private static ServerPipeline getPipeline(ResourceKey<Level> dimension) {
         return PIPELINES.computeIfAbsent(dimension, d -> {
+            BlazeMapAPI.COLLECTORS.keys();
             ServerPipeline pipeline = new ServerPipeline(async, debouncer, d, () -> server.getLevel(d));
             numCollectors = Math.max(numCollectors, pipeline.numCollectors);
             numTransformers = Math.max(numTransformers, pipeline.numTransformers);
@@ -109,6 +96,14 @@ public class BlazeMapServerEngine {
 
     public static DebouncingThread debouncer() {
         return debouncer;
+    }
+
+    public static AsyncChain.Root async() {
+        return async;
+    }
+
+    public static AsyncDataCruncher cruncher() {
+        return cruncher();
     }
 
 
