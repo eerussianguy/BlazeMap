@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import net.minecraft.client.Minecraft;
@@ -91,6 +95,11 @@ public class MapRenderer implements AutoCloseable {
     private final HashMap<BlazeRegistry.Key<MapType>, List<BlazeRegistry.Key<Layer>>> disabledLayers = new HashMap<>();
     private final List<Waypoint> waypoints = new ArrayList<>(16);
     private final List<MapLabel> labels = new ArrayList<>(16);
+    private final List<MapLabel> labels_on = new ArrayList<>(16);
+    private final List<MapLabel> labels_off = new ArrayList<>(16);
+    private boolean hasActiveSearch = false;
+    private Predicate<String> matcher;
+    private Consumer<Boolean> searchHost;
 
     private final ResourceLocation textureResource;
     private DynamicTexture mapTexture;
@@ -210,18 +219,25 @@ public class MapRenderer implements AutoCloseable {
         labels.clear();
         visible.forEach(layer -> labels.addAll(labelStorage.getInLayer(layer).stream().filter(l -> inRange(l.getPosition())).collect(Collectors.toList())));
         debug.labels = labels.size();
+        labels.forEach(this::matchLabel);
+        pingSearchHost();
     }
 
     private void add(MapLabel label) {
         if(inRange(label.getPosition()) && visible.contains(label.getLayerID())) {
             labels.add(label);
             debug.labels++;
+            matchLabel(label);
+            pingSearchHost();
         }
     }
 
     private void remove(MapLabel label) {
         if(labels.remove(label)) {
             debug.labels--;
+            labels_off.remove(label);
+            labels_on.remove(label);
+            pingSearchHost();
         }
     }
 
@@ -261,11 +277,23 @@ public class MapRenderer implements AutoCloseable {
         RenderHelper.drawQuad(buffers.getBuffer(renderType), matrix, width, height);
 
         stack.pushPose();
-        for(MapLabel l : labels) {
-            renderObject(buffers, stack, l);
+        if(hasActiveSearch) {
+            for(MapLabel l : labels_off) {
+                renderObject(buffers, stack, l, SearchTargeting.MISS);
+            }
+        }
+        else {
+            for(MapLabel l : labels) {
+                renderObject(buffers, stack, l, SearchTargeting.NONE);
+            }
         }
         for(Waypoint w : waypoints) {
             renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true, renderNames ? w.getName() : null);
+        }
+        if(hasActiveSearch) {
+            for(MapLabel l : labels_on) {
+                renderObject(buffers, stack, l, SearchTargeting.HIT);
+            }
         }
         LocalPlayer player = Helpers.getPlayer();
         renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false, null);
@@ -366,7 +394,7 @@ public class MapRenderer implements AutoCloseable {
         stack.popPose();
     }
 
-    private void renderObject(MultiBufferSource buffers, PoseStack stack, MapLabel label) {
+    private void renderObject(MultiBufferSource buffers, PoseStack stack, MapLabel label, SearchTargeting search) {
         stack.pushPose();
         stack.scale((float) this.zoom, (float) this.zoom, 1);
         BlockPos position = label.getPosition();
@@ -374,7 +402,7 @@ public class MapRenderer implements AutoCloseable {
         int dy = position.getZ() - begin.getZ();
         stack.translate(dx, dy, 0);
 
-        ((ObjectRenderer<MapLabel>) label.getRenderer().value()).render(label, stack, buffers, this.zoom);
+        ((ObjectRenderer<MapLabel>) label.getRenderer().value()).render(label, stack, buffers, this.zoom, search);
 
         stack.popPose();
     }
@@ -383,11 +411,60 @@ public class MapRenderer implements AutoCloseable {
     // =================================================================================================================
 
 
+    public void setSearch(String search) {
+        labels_off.clear();
+        labels_on.clear();
+        if(search == null || search.equals("")) {
+            hasActiveSearch = false;
+            matcher = null;
+            return;
+        }
+        try {
+            Pattern pattern = Pattern.compile(search);
+            matcher = pattern.asPredicate();
+        }
+        catch(PatternSyntaxException pse) {
+            matcher = (s) -> s.contains(search);
+        }
+        hasActiveSearch = true;
+        labels.forEach(this::matchLabel);
+    }
+
+    private void matchLabel(MapLabel label) {
+        if(!hasActiveSearch) return;
+        for(String tag : label.getTags()) {
+            if(matcher.test(tag)) {
+                labels_on.add(label);
+                return;
+            }
+        }
+        labels_off.add(label);
+    }
+
+    public void setSearchHost(Consumer<Boolean> searchHost){
+        this.searchHost = searchHost;
+    }
+
+    public void pingSearchHost(){
+        if(searchHost == null) return;
+        searchHost.accept(labels.size() > 0);
+    }
+
+
+    // =================================================================================================================
+
+
     public boolean setMapType(MapType mapType) {
         if(this.mapType == mapType || dimension == null) return false;
-        if(!mapType.shouldRenderInDimension(dimension)) return false;
-        this.mapType = mapType;
-        this.disabled = disabledLayers.computeIfAbsent(mapType.getID(), $ -> new LinkedList<>());
+        if(mapType == null) {
+            selectMapType();
+            if(this.mapType == mapType) return false;
+        }
+        else {
+            if(!mapType.shouldRenderInDimension(dimension)) return false;
+            this.mapType = mapType;
+        }
+        this.disabled = disabledLayers.computeIfAbsent(this.mapType.getID(), $ -> new LinkedList<>());
         updateVisibleLayers();
         this.needsUpdate = true;
         return true;

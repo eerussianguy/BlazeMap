@@ -16,7 +16,10 @@ import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
 import com.mojang.blaze3d.platform.NativeImage;
 
-class LayerRegionTile {
+public class LayerRegionTile {
+    private static final Object MUTEX = new Object();
+    private static int instances = 0, loaded = 0;
+
     private final PriorityLock lock = new PriorityLock();
     private final File file, buffer;
     private NativeImage image;
@@ -46,6 +49,7 @@ class LayerRegionTile {
         else {
             file.getParentFile().mkdirs();
         }
+        onCreate();
     }
 
     public void save() {
@@ -103,6 +107,32 @@ class LayerRegionTile {
         }
         finally {
             lock.unlock();
+        }
+    }
+
+    private void onCreate() {
+        synchronized(MUTEX) {
+            instances++;
+            if(!isEmpty) loaded++;
+        }
+    }
+
+    private void onDestroy() {
+        synchronized(MUTEX) {
+            instances--;
+            if(!isEmpty) loaded--;
+        }
+    }
+
+    public static int getInstances() {
+        synchronized(MUTEX) {
+            return instances;
+        }
+    }
+
+    public static int getLoaded() {
+        synchronized(MUTEX) {
+            return loaded;
         }
     }
 }

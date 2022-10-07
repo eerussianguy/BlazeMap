@@ -1,5 +1,8 @@
 package com.eerussianguy.blazemap.api.markers;
 
+import java.util.Collections;
+import java.util.Set;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -11,29 +14,35 @@ import com.eerussianguy.blazemap.api.pipeline.Layer;
 
 public class MapLabel extends Marker<MapLabel> {
     private final Key<Layer> layerID;
+    private final Set<String> tags;
 
     private Key<ObjectRenderer<?>> renderer = BlazeMapReferences.ObjectRenderers.DEFAULT;
     private int width, height;
     private boolean usesZoom;
 
     public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID) {
-        this(id, dimension, position, layerID, BlazeMapReferences.Icons.WAYPOINT, 32, 32, -1, 0, true);
+        this(id, dimension, position, layerID, BlazeMapReferences.Icons.WAYPOINT, 32, 32, -1, 0, true, Collections.EMPTY_SET);
     }
 
     public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, ResourceLocation icon, int width, int height) {
-        this(id, dimension, position, layerID, icon, width, height, -1, 0, true);
+        this(id, dimension, position, layerID, icon, width, height, -1, 0, true, Collections.EMPTY_SET);
     }
 
-    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, ResourceLocation icon, int width, int height, int color, float rotation, boolean usesZoom) {
+    public MapLabel(ResourceLocation id, ResourceKey<Level> dimension, BlockPos position, Key<Layer> layerID, ResourceLocation icon, int width, int height, int color, float rotation, boolean usesZoom, Set<String> tags) {
         super(id, dimension, position, icon, color, rotation);
         this.layerID = layerID;
         this.width = width;
         this.height = height;
         this.usesZoom = usesZoom;
+        this.tags = tags;
     }
 
     public final Key<Layer> getLayerID() {
         return layerID;
+    }
+
+    public final Set<String> getTags(){
+        return tags;
     }
 
     public Key<ObjectRenderer<?>> getRenderer() {

@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -57,6 +58,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private final List<MapType> mapTypes;
     private final int layersBegin;
     private Widget legend;
+    private EditBox search;
 
     public WorldMapGui() {
         super(EMPTY);
@@ -65,6 +67,12 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         dimension = Minecraft.getInstance().level.dimension();
         mapTypes = BlazeMapAPI.MAPTYPES.keys().stream().map(BlazeRegistry.Key::value).filter(m -> m.shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableList());
         layersBegin = 50 + (mapTypes.size() * 20);
+
+        mapRenderer.setSearchHost(active -> {
+            if(search != null) {
+                search.visible = active;
+            }
+        });
     }
 
     @Override
@@ -85,6 +93,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     @Override
     public void setMapType(MapType map) {
         synchronizer.setMapType(map);
+        search.setValue("");
         updateLegend();
     }
 
@@ -122,6 +131,10 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
                 addRenderableWidget(lb);
             }
         }
+
+        search = addRenderableWidget(new EditBox(getMinecraft().font, (width - 120) / 2, height - 15, 120, 12, EMPTY));
+        search.setResponder(mapRenderer::setSearch);
+        mapRenderer.pingSearchHost();
 
         updateLegend();
     }
@@ -249,23 +262,25 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
             return true;
         }
 
-        int dx = 0;
-        int dz = 0;
-        if(key == GLFW.GLFW_KEY_W) {
-            dz -= 16;
-        }
-        if(key == GLFW.GLFW_KEY_S) {
-            dz += 16;
-        }
-        if(key == GLFW.GLFW_KEY_D) {
-            dx += 16;
-        }
-        if(key == GLFW.GLFW_KEY_A) {
-            dx -= 16;
-        }
-        if(dx != 0 || dz != 0) {
-            mapRenderer.moveCenter(dx, dz);
-            return true;
+        if(!search.isFocused()) {
+            int dx = 0;
+            int dz = 0;
+            if(key == GLFW.GLFW_KEY_W) {
+                dz -= 16;
+            }
+            if(key == GLFW.GLFW_KEY_S) {
+                dz += 16;
+            }
+            if(key == GLFW.GLFW_KEY_D) {
+                dx += 16;
+            }
+            if(key == GLFW.GLFW_KEY_A) {
+                dx -= 16;
+            }
+            if(dx != 0 || dz != 0) {
+                mapRenderer.moveCenter(dx, dz);
+                return true;
+            }
         }
         return super.keyPressed(key, x, y);
     }

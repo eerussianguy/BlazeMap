@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 
 import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
+import com.eerussianguy.blazemap.engine.client.LayerRegionTile;
 import com.eerussianguy.blazemap.engine.server.BlazeMapServerEngine;
 import com.eerussianguy.blazemap.feature.maps.WorldMapGui;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -62,7 +63,7 @@ public class ProfilingRenderer {
         int t = BlazeMapClientEngine.numTransformers();
         int l = BlazeMapClientEngine.numLayers();
 
-        float w = 250, h = 185;
+        float w = 250, h = 195;
         if(c > 0) h += 60;
         if(p > 0) h += 50;
         if(t > 0) h += 50;
@@ -79,13 +80,15 @@ public class ProfilingRenderer {
         fontRenderer.drawInBatch("Overlays", 5F, y += 20, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         drawTimeProfiler(Profilers.DEBUG_TIME_PROFILER, y += 15, "Debug", fontRenderer, matrix, buffers);
 
-        // FIXME: put the load profiler to use and adjust load rate according to current FPS
+        // TODO: put the load profiler to use and adjust load rate according to current FPS
         y = drawSubsystem(Profilers.Minimap.TEXTURE_LOAD_PROFILER, Profilers.Minimap.TEXTURE_TIME_PROFILER, y + 10, "Minimap", "[ last second ]", fontRenderer, matrix, buffers, "frame load");
 
         // Engine Miscellaneous
         fontRenderer.drawInBatch("Client Engine", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         fontRenderer.drawInBatch("MD Source: " + side + " / " + BlazeMapClientEngine.getMDSource(), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         fontRenderer.drawInBatch("Parallel Pool: " + BlazeMapClientEngine.cruncher().poolSize() + " threads", 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        int size = LayerRegionTile.getLoaded(), tiles = LayerRegionTile.getInstances();
+        fontRenderer.drawInBatch(String.format("Layer Region Tiles: %d (%d MB)", tiles, size), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
 
         // Cartography Pipeline Profiling
         fontRenderer.drawInBatch("Client Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);

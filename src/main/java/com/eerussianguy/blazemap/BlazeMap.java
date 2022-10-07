@@ -29,18 +29,16 @@ public class BlazeMap {
 
     public BlazeMap() {
         ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> "Nothing", (remote, isServer) -> true));
+        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(this::setup);
 
         if(FMLEnvironment.dist == Dist.CLIENT) {
-            final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-            bus.addListener(this::setup);
-
             FMLEventHandler.init();
-            ForgeEventHandler.init();
             BlazeMapConfig.init();
         }
         else {
             // These are forbidden in the dedicated server.
-            // The others are frozen by BlazeMapServer when the time comes.
+            // The others are frozen by the RegistryController when the time comes.
             BlazeMapAPI.LAYERS.freeze();
             BlazeMapAPI.MAPTYPES.freeze();
             BlazeMapAPI.OBJECT_RENDERERS.freeze();
@@ -49,11 +47,11 @@ public class BlazeMap {
 
     public void setup(FMLCommonSetupEvent event) {
         BlazeNetwork.init();
-        BlazeMapClientEngine.init();
 
-        // Server engine must always start after the client engine due to
-        // a dependency used to conserve resources in the integrated server
         if(FMLEnvironment.dist == Dist.CLIENT) {
+            // Server engine must always start after the client engine due to
+            // a dependency used to conserve resources in the integrated server
+            BlazeMapClientEngine.init();
             BlazeMapServerEngine.initForIntegrated();
         }
         else {
@@ -66,6 +64,7 @@ public class BlazeMap {
             BlazeMapFeaturesClient.initMapping();
             BlazeMapFeaturesClient.initMaps();
             BlazeMapFeaturesClient.initWaypoints();
+            BlazeMapCommands.init();
         }
     }
 }
