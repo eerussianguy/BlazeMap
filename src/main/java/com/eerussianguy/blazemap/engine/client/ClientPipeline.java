@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -16,10 +15,7 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.maps.FakeLayer;
-import com.eerussianguy.blazemap.api.maps.Layer;
-import com.eerussianguy.blazemap.api.maps.LayerRegion;
-import com.eerussianguy.blazemap.api.maps.MapType;
+import com.eerussianguy.blazemap.api.maps.*;
 import com.eerussianguy.blazemap.api.pipeline.DataType;
 import com.eerussianguy.blazemap.api.pipeline.PipelineType;
 import com.eerussianguy.blazemap.api.util.RegionPos;
@@ -50,7 +46,7 @@ class ClientPipeline extends Pipeline {
     public final Set<Key<Layer>> availableLayers;
     private final Layer[] layers;
     public final int numLayers;
-    private final Map<Key<Layer>, LoadingCache<RegionPos, LayerRegionTile>> tiles = new HashMap<>();
+    private final Map<TileResolution, Map<Key<Layer>, LoadingCache<RegionPos, LayerRegionTile>>> tiles = new EnumMap<>(TileResolution.class);
     private final DebouncingDomain<LayerRegionTile> dirtyTiles;
     private final PriorityLock lock = new PriorityLock();
     private boolean active;
@@ -82,7 +78,7 @@ class ClientPipeline extends Pipeline {
             TILE_TIME_PROFILER.begin();
             region.save();
             TILE_TIME_PROFILER.end();
-        }), 1000, 30000);
+        }), 2500, 30000);
     }
 
     // Redraw tiles based on MD changes
@@ -97,31 +93,34 @@ class ClientPipeline extends Pipeline {
     protected void onPipelineOutput(ChunkPos chunkPos, Set<Key<DataType>> diff, MapView view, ChunkMDCache cache) {
         try {
             RegionPos regionPos = new RegionPos(chunkPos);
-            List<LayerRegion> updates = new LinkedList<>();
+            Set<LayerRegion> updates = new HashSet<>();
             LAYER_LOAD_PROFILER.hit();
             LAYER_TIME_PROFILER.begin();
 
             for(Layer layer : layers) {
                 if(Collections.disjoint(layer.getInputIDs(), diff)) continue;
-                NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, 16, 16, true);
-                view.setFilter(UnsafeGenerics.stripKeys(layer.getInputIDs())); // the layer should only access declared collectors
+                Key<Layer> layerID = layer.getID();
 
-                // only generate updates if the renderer populates the tile
-                // this is determined by the return value of renderTile being true
-                if(layer.renderTile(layerChunkTile, view)) {
-                    Key<Layer> layerID = layer.getID();
+                for(TileResolution resolution : TileResolution.values()) {
+                    NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, resolution.chunkWidth, resolution.chunkWidth, true);
+                    view.setFilter(UnsafeGenerics.stripKeys(layer.getInputIDs())); // the layer should only access declared collectors
 
-                    // update this chunk of the region
-                    LayerRegionTile layerRegionTile = getLayerRegionTile(layerID, regionPos, false);
-                    layerRegionTile.updateTile(layerChunkTile, chunkPos);
+                    // only generate updates if the renderer populates the tile
+                    // this is determined by the return value of renderTile being true
+                    if(layer.renderTile(layerChunkTile, resolution, view, chunkPos.x % resolution.pixelWidth, chunkPos.z % resolution.pixelWidth)) {
 
-                    // asynchronously save this region later
-                    if(layerRegionTile.isDirty()) {
-                        dirtyTiles.push(layerRegionTile);
+                        // update this chunk of the region
+                        LayerRegionTile layerRegionTile = getLayerRegionTile(layerID, regionPos, resolution, false);
+                        layerRegionTile.updateTile(layerChunkTile, chunkPos);
+
+                        // asynchronously save this region later
+                        if(layerRegionTile.isDirty()) {
+                            dirtyTiles.push(layerRegionTile);
+                        }
+
+                        // updates for the listeners
+                        updates.add(new LayerRegion(layerID, regionPos));
                     }
-
-                    // updates for the listeners
-                    updates.add(new LayerRegion(layerID, regionPos));
                 }
             }
 
@@ -132,22 +131,22 @@ class ClientPipeline extends Pipeline {
         finally {
             LAYER_TIME_PROFILER.end();
         }
-
     }
 
-    private LayerRegionTile getLayerRegionTile(Key<Layer> layer, RegionPos region, boolean priority) {
+    private LayerRegionTile getLayerRegionTile(Key<Layer> layer, RegionPos region, TileResolution resolution, boolean priority) {
         try {
             if(priority) lock.lockPriority();
             else lock.lock();
             return tiles
+                .computeIfAbsent(resolution, $ -> new HashMap<>())
                 .computeIfAbsent(layer, $ -> CacheBuilder.newBuilder()
                     .maximumSize(1000)
-                    .expireAfterAccess(15, TimeUnit.SECONDS)
+                    .expireAfterAccess(resolution.cacheTime, TimeUnit.SECONDS)
                     .removalListener(lrt -> ((LayerRegionTile) lrt.getValue()).destroy())
                     .build(new CacheLoader<>() {
                         @Override
                         public LayerRegionTile load(RegionPos pos) {
-                            LayerRegionTile layerRegionTile = new LayerRegionTile(storage, layer, pos);
+                            LayerRegionTile layerRegionTile = new LayerRegionTile(storage, layer, pos, resolution);
                             layerRegionTile.tryLoad();
                             return layerRegionTile;
                         }
@@ -163,7 +162,7 @@ class ClientPipeline extends Pipeline {
         }
     }
 
-    private void sendMapUpdates(List<LayerRegion> updates) {
+    private void sendMapUpdates(Set<LayerRegion> updates) {
         if(active) {
             for(LayerRegion update : updates) {
                 BlazeMapClientEngine.notifyLayerRegionChange(update);
@@ -179,7 +178,7 @@ class ClientPipeline extends Pipeline {
         active = false;
         dirtyChunks.clear();
         dirtyTiles.finish();
-        tiles.values().forEach(Cache::invalidateAll);
+        tiles.values().forEach(r -> r.forEach((lr, c) -> c.invalidateAll()));
         tiles.clear();
     }
 
@@ -188,9 +187,9 @@ class ClientPipeline extends Pipeline {
         return this;
     }
 
-    public void consumeTile(Key<Layer> layer, RegionPos region, Consumer<NativeImage> consumer) {
+    public void consumeTile(Key<Layer> layer, RegionPos region, TileResolution resolution, Consumer<NativeImage> consumer) {
         if(!availableLayers.contains(layer))
             throw new IllegalArgumentException("Layer " + layer + " not available for dimension " + dimension);
-        getLayerRegionTile(layer, region, true).consume(consumer);
+        getLayerRegionTile(layer, region, resolution, true).consume(consumer);
     }
 }

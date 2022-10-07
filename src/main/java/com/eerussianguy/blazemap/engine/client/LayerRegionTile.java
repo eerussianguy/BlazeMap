@@ -24,14 +24,16 @@ public class LayerRegionTile {
     private final PriorityLock lock = new PriorityLock();
     private final File file, buffer;
     private NativeImage image;
-    private final TileResolution resolution = TileResolution.FULL;
+    private final TileResolution resolution;
     private boolean isEmpty = true;
     private boolean isDirty = false;
+    private boolean destroyed = false;
 
-    public LayerRegionTile(StorageAccess.Internal storage, BlazeRegistry.Key<Layer> layer, RegionPos region) {
-        this.file = storage.getFile(layer.location, region + ".png");
-        this.buffer = storage.getFile(layer.location, region + ".buffer");
-        image = new NativeImage(NativeImage.Format.RGBA, 512, 512, true);
+    public LayerRegionTile(StorageAccess.Internal storage, BlazeRegistry.Key<Layer> layer, RegionPos region, TileResolution resolution) {
+        this.file = storage.getMipmap(layer.location, region + ".png", resolution);
+        this.buffer = storage.getMipmap(layer.location, region + ".buffer", resolution);
+        this.resolution = resolution;
+        image = new NativeImage(NativeImage.Format.RGBA, resolution.regionWidth, resolution.regionWidth, true);
     }
 
     public void tryLoad() {
@@ -86,13 +88,13 @@ public class LayerRegionTile {
     }
 
     public void updateTile(NativeImage tile, ChunkPos chunk) {
-        int xOffset = chunk.getRegionLocalX() << 4;
-        int zOffset = chunk.getRegionLocalZ() << 4;
+        int xOffset = (chunk.getRegionLocalX() << 4) / resolution.pixelWidth;
+        int zOffset = (chunk.getRegionLocalZ() << 4) / resolution.pixelWidth;
 
         try {
             lock.lock();
-            for(int x = 0; x < 16; x++) {
-                for(int z = 0; z < 16; z++) {
+            for(int x = 0; x < resolution.chunkWidth; x++) {
+                for(int z = 0; z < resolution.chunkWidth; z++) {
                     int old = image.getPixelRGBA(xOffset + x, zOffset + z);
                     int pixel = tile.getPixelRGBA(x, z);
                     if(pixel != old) {
@@ -126,19 +128,28 @@ public class LayerRegionTile {
     private void onCreate() {
         synchronized(MUTEX) {
             instances++;
-            if(!isEmpty) loaded += resolution.regionSizeKb;
+            if(!isEmpty) {
+                loaded += resolution.regionSizeKb;
+            }
         }
     }
 
     public void destroy() {
+        if(destroyed) return;
         save();
         onDestroy();
+        image = null;
+        isDirty = false;
+        isEmpty = true;
+        destroyed = true;
     }
 
     private void onDestroy() {
         synchronized(MUTEX) {
             instances--;
-            if(!isEmpty) loaded -= resolution.regionSizeKb;
+            if(!isEmpty) {
+                loaded -= resolution.regionSizeKb;
+            }
         }
     }
 

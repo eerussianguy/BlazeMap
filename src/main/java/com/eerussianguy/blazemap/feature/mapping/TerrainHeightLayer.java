@@ -8,6 +8,8 @@ import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.TileResolution;
+import com.eerussianguy.blazemap.api.util.ArrayAggregator;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -51,17 +53,18 @@ public class TerrainHeightLayer extends Layer {
     }
 
     @Override
-    public boolean renderTile(NativeImage tile, IDataSource data) {
+    public boolean renderTile(NativeImage tile, TileResolution resolution, IDataSource data, int xGridOffset, int zGridOffset) {
         TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.TERRAIN_HEIGHT);
         WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
         float down = -1.0F / ((float) terrain.sea - terrain.minY);
         float up = 1.0F / ((float) terrain.maxY - terrain.sea);
-        for(int x = 0; x < 16; x++) {
-            for(int z = 0; z < 16; z++) {
-                int h = terrain.heightmap[x][z] - water.level[x][z];
-                paintGradient(tile, x, z, h, terrain.sea, down, up);
-            }
-        }
+
+        foreachPixel(resolution, (x, z) -> {
+            int h = ArrayAggregator.avg(relevantData(resolution, x, z, terrain.heightmap));
+            int d = ArrayAggregator.avg(relevantData(resolution, x, z, water.level));
+            paintGradient(tile, x, z, h - d, terrain.sea, down, up);
+        });
+
         return true;
     }
 

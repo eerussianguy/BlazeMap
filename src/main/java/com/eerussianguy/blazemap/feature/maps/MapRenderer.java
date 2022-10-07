@@ -28,10 +28,7 @@ import com.eerussianguy.blazemap.api.BlazeRegistry;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.MapLabelEvent;
 import com.eerussianguy.blazemap.api.event.WaypointEvent;
-import com.eerussianguy.blazemap.api.maps.FakeLayer;
-import com.eerussianguy.blazemap.api.maps.Layer;
-import com.eerussianguy.blazemap.api.maps.LayerRegion;
-import com.eerussianguy.blazemap.api.maps.MapType;
+import com.eerussianguy.blazemap.api.maps.*;
 import com.eerussianguy.blazemap.api.markers.*;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
@@ -49,7 +46,7 @@ import com.mojang.math.Vector3f;
 public class MapRenderer implements AutoCloseable {
     private static final ResourceLocation PLAYER = Helpers.identifier("textures/player.png");
     private static final List<MapRenderer> RENDERERS = new ArrayList<>(4);
-    private static DimensionChangedEvent.DimensionTileStorage tileStorage;
+    private static DimensionTileStorage tileStorage;
     private static ResourceKey<Level> dimension;
     private static IMarkerStorage<Waypoint> waypointStorage;
     private static IMarkerStorage.Layered<MapLabel> labelStorage;
@@ -353,7 +350,7 @@ public class MapRenderer implements AutoCloseable {
         for(BlazeRegistry.Key<Layer> layer : visible) {
             if(layer.value() instanceof FakeLayer) return;
             final RegionPos region = offsets[regionIndexX][regionIndexZ];
-            tileStorage.consumeTile(layer, region, source -> {
+            tileStorage.consumeTile(layer, region, TileResolution.FULL, source -> {
                 for(int x = (region.x * 512) < begin.getX() ? cornerXOffset : 0; x < source.getWidth(); x++) {
                     int textureX = (regionIndexX * 512) + x - cornerXOffset;
                     if(textureX < 0 || textureX >= textureW) continue;

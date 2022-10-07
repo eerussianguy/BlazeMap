@@ -8,10 +8,10 @@ package com.eerussianguy.blazemap.api.maps;
  * render time.
  */
 public enum TileResolution {
-    FULL(1),    // zoom 1,     chunk 16, region 512, size   1 MB
-    HALF(2),    // zoom 0.5,   chunk  8, region 256, size 256 KB
-    QUARTER(4), // zoom 0.25,  chunk  4, region 128, size  64 KB
-    EIGHTH(8);  // zoom 0.125, chunk  2, region  64, size  16 KB
+    FULL(1),    // zoom 1,     chunk 16, region 512, size   1 MB, time 4:00
+    HALF(2),    // zoom 0.5,   chunk  8, region 256, size 256 KB, time 2:00
+    QUARTER(4), // zoom 0.25,  chunk  4, region 128, size  64 KB, time 1:00
+    EIGHTH(8);  // zoom 0.125, chunk  2, region  64, size  16 KB, time 0:30
 
     /**
      * The map zoom value associated with this resolution.
@@ -41,12 +41,19 @@ public enum TileResolution {
      */
     public final int regionSizeKb;
 
+    /**
+     * Amount of time tiles of this resolution stay in cache.
+     * Bigger tiles are cached for longer because they are more expensive to load and there are fewer of them.
+     */
+    public final int cacheTime;
+
     TileResolution(int factor) {
         this.zoom = 1.0 / factor;
         this.pixelWidth = factor;
         this.chunkWidth = 16 / factor;
         this.regionWidth = chunkWidth * 32;
         this.regionSizeKb = regionWidth * regionWidth / 256;
+        this.cacheTime = 240 / factor;
     }
 
     public static TileResolution byZoom(double zoom) {

@@ -74,7 +74,7 @@ public abstract class Layer implements RegistryEntry, Consumer {
         return opaque;
     }
 
-    public abstract boolean renderTile(NativeImage tile, IDataSource data);
+    public abstract boolean renderTile(NativeImage tile, TileResolution resolution, IDataSource data, int xGridOffset, int zGridOffset);
 
     public TranslatableComponent getName() {
         return name;
@@ -96,5 +96,68 @@ public abstract class Layer implements RegistryEntry, Consumer {
      */
     public Widget getLegendWidget() {
         return null;
+    }
+
+
+    // =================================================================================================================
+    // Common helper functions for easier layer rendering
+
+    protected static void foreachPixel(TileResolution resolution, PixelConsumer consumer) {
+        for(int x = 0; x < resolution.chunkWidth; x++) {
+            for(int z = 0; z < resolution.chunkWidth; z++) {
+                consumer.accept(x, z);
+            }
+        }
+    }
+
+    @FunctionalInterface
+    protected interface PixelConsumer {
+        void accept(int x, int y);
+    }
+
+    protected static int[] relevantData(TileResolution resolution, int x, int z, int[][] data) {
+        int[] objects = new int[resolution.pixelWidth * resolution.pixelWidth];
+        x *= resolution.pixelWidth;
+        z *= resolution.pixelWidth;
+        int idx = 0;
+
+        for(int dx = 0; dx < resolution.pixelWidth; dx++) {
+            for(int dz = 0; dz < resolution.pixelWidth; dz++) {
+                objects[idx++] = data[dx + x][dz + z];
+            }
+        }
+
+        return objects;
+    }
+
+    protected static float[] relevantData(TileResolution resolution, int x, int z, float[][] data) {
+        float[] objects = new float[resolution.pixelWidth * resolution.pixelWidth];
+        x *= resolution.pixelWidth;
+        z *= resolution.pixelWidth;
+        int idx = 0;
+
+        for(int dx = 0; dx < resolution.pixelWidth; dx++) {
+            for(int dz = 0; dz < resolution.pixelWidth; dz++) {
+                objects[idx++] = data[dx + x][dz + z];
+            }
+        }
+
+        return objects;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <T> T[] relevantData(TileResolution resolution, int x, int z, T[][] data) {
+        Object[] objects = new Object[resolution.pixelWidth * resolution.pixelWidth];
+        x *= resolution.pixelWidth;
+        z *= resolution.pixelWidth;
+        int idx = 0;
+
+        for(int dx = 0; dx < resolution.pixelWidth; dx++) {
+            for(int dz = 0; dz < resolution.pixelWidth; dz++) {
+                objects[idx++] = data[dx + x][dz + z];
+            }
+        }
+
+        return (T[]) objects;
     }
 }

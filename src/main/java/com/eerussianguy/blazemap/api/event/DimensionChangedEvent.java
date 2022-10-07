@@ -1,22 +1,20 @@
 package com.eerussianguy.blazemap.api.event;
 
 import java.util.Set;
-import java.util.function.Consumer;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.eventbus.api.Event;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.maps.DimensionTileNotifications;
+import com.eerussianguy.blazemap.api.maps.DimensionTileStorage;
 import com.eerussianguy.blazemap.api.maps.Layer;
-import com.eerussianguy.blazemap.api.maps.LayerRegion;
 import com.eerussianguy.blazemap.api.maps.MapType;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
 import com.eerussianguy.blazemap.api.markers.Waypoint;
 import com.eerussianguy.blazemap.api.util.IStorageAccess;
-import com.eerussianguy.blazemap.api.util.RegionPos;
-import com.mojang.blaze3d.platform.NativeImage;
 
 /**
  * Fired after the client enters a new dimension. <br>
@@ -91,37 +89,5 @@ public class DimensionChangedEvent extends Event {
         this.labels = labels;
         this.waypoints = waypoints;
         this.dimensionStorage = storageAccess;
-    }
-
-
-    @FunctionalInterface
-    public interface DimensionTileStorage {
-        /**
-         * Gives access to a Region's section of a specific map layer. <br>
-         * It is a 512x512 32-bit ARGB image where each pixel represents 1 block in-world.
-         * <br>
-         * <br>
-         * <b>  WARNING!  </b><br>
-         * <br>
-         * In order to ensure thread safety please do all NativeImage related processing inside the Consumer code. <br>
-         * <b>DO NOT</b> attempt to save a reference to the image to handle it later.<br>
-         * <br>
-         * You have been warned.<br>
-         * <br>
-         *
-         * @throws IllegalArgumentException if the layer is not in the availableLayers Set.
-         * @author LordFokas
-         */
-        void consumeTile(BlazeRegistry.Key<Layer> layer, RegionPos region, Consumer<NativeImage> consumer);
-    }
-
-    @FunctionalInterface
-    public interface DimensionTileNotifications {
-        /**
-         * Add a listener to be notified when a Region's section of a specific map layer changes.
-         *
-         * @author LordFokas
-         */
-        void addUpdateListener(Consumer<LayerRegion> listener);
     }
 }

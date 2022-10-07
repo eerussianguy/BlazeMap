@@ -27,7 +27,7 @@ public class FakeLayer extends Layer {
     }
 
     @Override // can't render
-    public final boolean renderTile(NativeImage tile, IDataSource data) {
+    public boolean renderTile(NativeImage tile, TileResolution resolution, IDataSource data, int xGridOffset, int zGridOffset) {
         throw new UnsupportedOperationException("FakeLayers do not render: " + getID());
     }
 

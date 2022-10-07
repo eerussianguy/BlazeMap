@@ -4,6 +4,8 @@ import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
 import com.eerussianguy.blazemap.api.builtin.WaterLevelMD;
 import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.TileResolution;
+import com.eerussianguy.blazemap.api.util.ArrayAggregator;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -12,9 +14,10 @@ public class TerrainIsolinesLayer extends Layer {
     private static final int FULL = 0x5F444444;
     private static final int HALF = 0x3F444444;
 
-    private static int height(TerrainHeightMD terrain, WaterLevelMD water, int x, int z, int def) {
-        if(x < 0 || z < 0 || x > 15 || z > 15) return def;
-        return terrain.heightmap[x][z] - water.level[x][z];
+    // FIXME: use a double pass to save resources on relevant data aggregation
+    private static int height(TerrainHeightMD terrain, WaterLevelMD water, TileResolution resolution, int x, int z, int def) {
+        if(x < 0 || z < 0 || x >= resolution.chunkWidth || z >= resolution.chunkWidth) return def;
+        return ArrayAggregator.avg(relevantData(resolution, x, z, terrain.heightmap)) - ArrayAggregator.avg(relevantData(resolution, x, z, water.level));
     }
 
     private static int delta(int h, int n, int p) {
@@ -37,18 +40,23 @@ public class TerrainIsolinesLayer extends Layer {
     }
 
     @Override
-    public boolean renderTile(NativeImage tile, IDataSource data) {
+    public boolean renderTile(NativeImage tile, TileResolution resolution, IDataSource data, int xGridOffset, int zGridOffset) {
         TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.TERRAIN_HEIGHT);
         WaterLevelMD water = (WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL);
-        for(int x = 0; x < 16; x++)
-            for(int z = 0; z < 16; z++) {
-                int p = 0, h = terrain.heightmap[x][z] - water.level[x][z];
-                p = delta(h, height(terrain, water, x + 1, z, h), p);
-                p = delta(h, height(terrain, water, x - 1, z, h), p);
-                p = delta(h, height(terrain, water, x, z + 1, h), p);
-                p = delta(h, height(terrain, water, x, z - 1, h), p);
-                tile.setPixelRGBA(x, z, p);
-            }
+
+        foreachPixel(resolution, (x, z) -> {
+            int p = 0;
+            int h = ArrayAggregator.avg(relevantData(resolution, x, z, terrain.heightmap));
+            int d = ArrayAggregator.avg(relevantData(resolution, x, z, water.level));
+            h -= d;
+
+            p = delta(h, height(terrain, water, resolution, x + 1, z, h), p);
+            p = delta(h, height(terrain, water, resolution, x - 1, z, h), p);
+            p = delta(h, height(terrain, water, resolution, x, z + 1, h), p);
+            p = delta(h, height(terrain, water, resolution, x, z - 1, h), p);
+            tile.setPixelRGBA(x, z, p);
+        });
+
         return true;
     }
 }

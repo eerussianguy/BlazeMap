@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import net.minecraft.resources.ResourceLocation;
 
+import com.eerussianguy.blazemap.api.maps.TileResolution;
 import com.eerussianguy.blazemap.api.util.IStorageAccess;
 import com.eerussianguy.blazemap.api.util.MinecraftStreams;
 
@@ -45,6 +46,7 @@ public class StorageAccess implements IStorageAccess {
     public static class Internal extends StorageAccess {
         private static final String OLD_PATTERN = "%s+%s";
         private static final String NEW_PATTERN = "[%s] %s";
+        private static final String NEW_PATTERN_MIP = "[%s] %s [%d]";
 
         public Internal(File dir, String child) {
             this(new File(dir, child));
@@ -58,14 +60,21 @@ public class StorageAccess implements IStorageAccess {
         @Override
         public File getFile(ResourceLocation node) {
             Objects.requireNonNull(node);
-            File file = new File(dir, String.format(OLD_PATTERN, node.getNamespace(), node.getPath()));
+            File file = new File(dir, String.format(NEW_PATTERN, node.getNamespace(), node.getPath()));
             file.getParentFile().mkdirs();
             return file;
         }
 
         public File getFile(ResourceLocation node, String file) {
             Objects.requireNonNull(node);
-            File d = new File(dir, String.format(OLD_PATTERN, node.getNamespace(), node.getPath()));
+            File d = new File(dir, String.format(NEW_PATTERN, node.getNamespace(), node.getPath()));
+            d.mkdirs();
+            return new File(d, file);
+        }
+
+        public File getMipmap(ResourceLocation node, String file, TileResolution resolution) {
+            Objects.requireNonNull(node);
+            File d = new File(dir, String.format(NEW_PATTERN_MIP, node.getNamespace(), node.getPath(), resolution.pixelWidth));
             d.mkdirs();
             return new File(d, file);
         }
