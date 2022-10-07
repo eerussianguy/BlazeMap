@@ -109,6 +109,7 @@ public class MapRenderer implements AutoCloseable {
     private RegionPos[][] offsets;
     private final double minZoom, maxZoom;
     private double zoom = 1;
+    private TileResolution resolution;
     private final boolean renderNames;
 
     public MapRenderer(int width, int height, ResourceLocation textureResource, double minZoom, double maxZoom, boolean renderNames) {
@@ -118,6 +119,7 @@ public class MapRenderer implements AutoCloseable {
         this.textureResource = textureResource;
         this.minZoom = minZoom;
         this.maxZoom = maxZoom;
+        resolution = TileResolution.FULL;
 
         selectMapType();
         centerOnPlayer();
@@ -157,12 +159,17 @@ public class MapRenderer implements AutoCloseable {
         if(mapTexture != null) {
             mapTexture.close();
         }
-        mapWidth = debug.mw = (int) (width / zoom);
-        mapHeight = debug.mh = (int) (height / zoom);
+        double factor = zoom < 1 ? 1 : zoom;
+        resolution = (zoom < 1) ? TileResolution.byZoom(zoom) : TileResolution.FULL;
+        mapWidth = (int) (width / factor);
+        mapHeight = (int) (height / factor);
         mapTexture = new DynamicTexture(mapWidth, mapHeight, false);
         Minecraft.getInstance().getTextureManager().register(textureResource, mapTexture);
         renderType = RenderType.text(textureResource);
         needsUpdate = true;
+
+        debug.mw = mapWidth * resolution.pixelWidth;
+        debug.mh = mapHeight * resolution.pixelWidth;
     }
 
     private void makeOffsets() {
@@ -316,7 +323,7 @@ public class MapRenderer implements AutoCloseable {
             AsyncAwaiter jobs = new AsyncAwaiter(regionCount);
             for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
                 for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
-                    generateMapTileAsync(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ, jobs);
+                    generateMapTileAsync(texture, resolution, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ, jobs);
                 }
             }
             jobs.await();
@@ -325,7 +332,7 @@ public class MapRenderer implements AutoCloseable {
             debug.stitching = "Sequential";
             for(int regionIndexX = 0; regionIndexX < offsets.length; regionIndexX++) {
                 for(int regionIndexZ = 0; regionIndexZ < offsets[regionIndexX].length; regionIndexZ++) {
-                    generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
+                    generateMapTile(texture, resolution, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
                 }
             }
         }
@@ -339,24 +346,26 @@ public class MapRenderer implements AutoCloseable {
     }
 
     // Run generateMapTile in an engine background thread. Useful for parallelizing massive workloads.
-    private void generateMapTileAsync(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ, AsyncAwaiter jobs) {
+    private void generateMapTileAsync(NativeImage texture, TileResolution resolution, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ, AsyncAwaiter jobs) {
         BlazeMapClientEngine.async().runOnDataThread(() -> {
-            generateMapTile(texture, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
+            generateMapTile(texture, resolution, textureW, textureH, cornerXOffset, cornerZOffset, regionIndexX, regionIndexZ);
             jobs.done();
         });
     }
 
-    private void generateMapTile(NativeImage texture, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ) {
+    private void generateMapTile(NativeImage texture, TileResolution resolution, int textureW, int textureH, int cornerXOffset, int cornerZOffset, int regionIndexX, int regionIndexZ) {
         for(BlazeRegistry.Key<Layer> layer : visible) {
             if(layer.value() instanceof FakeLayer) return;
             final RegionPos region = offsets[regionIndexX][regionIndexZ];
-            tileStorage.consumeTile(layer, region, TileResolution.FULL, source -> {
-                for(int x = (region.x * 512) < begin.getX() ? cornerXOffset : 0; x < source.getWidth(); x++) {
-                    int textureX = (regionIndexX * 512) + x - cornerXOffset;
+            tileStorage.consumeTile(layer, region, resolution, source -> {
+                int cxo = cornerXOffset / resolution.pixelWidth;
+                int czo = cornerZOffset / resolution.pixelWidth;
+                for(int x = (region.x * 512) < begin.getX() ? cxo : 0; x < source.getWidth(); x++) {
+                    int textureX = (regionIndexX * resolution.regionWidth) + x - cxo;
                     if(textureX < 0 || textureX >= textureW) continue;
 
-                    for(int y = (region.z * 512) < begin.getZ() ? cornerZOffset : 0; y < source.getHeight(); y++) {
-                        int textureY = (regionIndexZ * 512) + y - cornerZOffset;
+                    for(int y = (region.z * 512) < begin.getZ() ? czo : 0; y < source.getHeight(); y++) {
+                        int textureY = (regionIndexZ * resolution.regionWidth) + y - czo;
                         if(textureY < 0 || textureY >= textureH) continue;
 
                         int color = Colors.layerBlend(texture.getPixelRGBA(textureX, textureY), source.getPixelRGBA(x, y));
