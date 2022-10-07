@@ -12,9 +12,9 @@ import net.minecraftforge.common.MinecraftForge;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.event.MapLabelEvent;
+import com.eerussianguy.blazemap.api.maps.Layer;
 import com.eerussianguy.blazemap.api.markers.IMarkerStorage;
 import com.eerussianguy.blazemap.api.markers.MapLabel;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
 
 class LabelStorage implements IMarkerStorage.Layered<MapLabel> {
     private final HashMap<Key<Layer>, HashMap<ResourceLocation, MapLabel>> layers = new HashMap<>();

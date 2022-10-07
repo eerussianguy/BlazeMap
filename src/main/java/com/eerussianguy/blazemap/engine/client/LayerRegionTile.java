@@ -10,7 +10,8 @@ import net.minecraft.world.level.ChunkPos;
 
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.TileResolution;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.StorageAccess;
 import com.eerussianguy.blazemap.engine.async.PriorityLock;
@@ -23,7 +24,9 @@ public class LayerRegionTile {
     private final PriorityLock lock = new PriorityLock();
     private final File file, buffer;
     private NativeImage image;
+    private final TileResolution resolution = TileResolution.FULL;
     private boolean isEmpty = true;
+    private boolean isDirty = false;
 
     public LayerRegionTile(StorageAccess.Internal storage, BlazeRegistry.Key<Layer> layer, RegionPos region) {
         this.file = storage.getFile(layer.location, region + ".png");
@@ -53,12 +56,13 @@ public class LayerRegionTile {
     }
 
     public void save() {
-        if(isEmpty) return;
+        if(isEmpty || !isDirty) return;
 
         // Save image into buffer
         try {
             lock.lock();
             image.writeToFile(buffer);
+            isDirty = false;
         }
         catch(IOException e) {
             e.printStackTrace();
@@ -89,7 +93,12 @@ public class LayerRegionTile {
             lock.lock();
             for(int x = 0; x < 16; x++) {
                 for(int z = 0; z < 16; z++) {
-                    image.setPixelRGBA(xOffset + x, zOffset + z, tile.getPixelRGBA(x, z));
+                    int old = image.getPixelRGBA(xOffset + x, zOffset + z);
+                    int pixel = tile.getPixelRGBA(x, z);
+                    if(pixel != old) {
+                        image.setPixelRGBA(xOffset + x, zOffset + z, pixel);
+                        isDirty = true;
+                    }
                 }
             }
             isEmpty = false;
@@ -97,6 +106,10 @@ public class LayerRegionTile {
         finally {
             lock.unlock();
         }
+    }
+
+    public boolean isDirty() {
+        return isDirty;
     }
 
     public void consume(Consumer<NativeImage> consumer) {
@@ -113,14 +126,19 @@ public class LayerRegionTile {
     private void onCreate() {
         synchronized(MUTEX) {
             instances++;
-            if(!isEmpty) loaded++;
+            if(!isEmpty) loaded += resolution.regionSizeKb;
         }
+    }
+
+    public void destroy() {
+        save();
+        onDestroy();
     }
 
     private void onDestroy() {
         synchronized(MUTEX) {
             instances--;
-            if(!isEmpty) loaded--;
+            if(!isEmpty) loaded -= resolution.regionSizeKb;
         }
     }
 
@@ -130,7 +148,7 @@ public class LayerRegionTile {
         }
     }
 
-    public static int getLoaded() {
+    public static int getLoadedKb() {
         synchronized(MUTEX) {
             return loaded;
         }

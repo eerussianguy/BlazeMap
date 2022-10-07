@@ -1,21 +1,27 @@
 package com.eerussianguy.blazemap.engine.client;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.MapType;
+import com.eerussianguy.blazemap.api.maps.FakeLayer;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.LayerRegion;
+import com.eerussianguy.blazemap.api.maps.MapType;
 import com.eerussianguy.blazemap.api.pipeline.DataType;
-import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
 import com.eerussianguy.blazemap.api.pipeline.PipelineType;
-import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.*;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
@@ -44,7 +50,7 @@ class ClientPipeline extends Pipeline {
     public final Set<Key<Layer>> availableLayers;
     private final Layer[] layers;
     public final int numLayers;
-    private final Map<Key<Layer>, Map<RegionPos, LayerRegionTile>> regions = new HashMap<>();
+    private final Map<Key<Layer>, LoadingCache<RegionPos, LayerRegionTile>> tiles = new HashMap<>();
     private final DebouncingDomain<LayerRegionTile> dirtyTiles;
     private final PriorityLock lock = new PriorityLock();
     private boolean active;
@@ -110,7 +116,9 @@ class ClientPipeline extends Pipeline {
                     layerRegionTile.updateTile(layerChunkTile, chunkPos);
 
                     // asynchronously save this region later
-                    dirtyTiles.push(layerRegionTile);
+                    if(layerRegionTile.isDirty()) {
+                        dirtyTiles.push(layerRegionTile);
+                    }
 
                     // updates for the listeners
                     updates.add(new LayerRegion(layerID, regionPos));
@@ -131,13 +139,24 @@ class ClientPipeline extends Pipeline {
         try {
             if(priority) lock.lockPriority();
             else lock.lock();
-            return regions
-                .computeIfAbsent(layer, $ -> new HashMap<>())
-                .computeIfAbsent(region, $ -> {
-                    LayerRegionTile layerRegionTile = new LayerRegionTile(storage, layer, region);
-                    layerRegionTile.tryLoad();
-                    return layerRegionTile;
-                });
+            return tiles
+                .computeIfAbsent(layer, $ -> CacheBuilder.newBuilder()
+                    .maximumSize(1000)
+                    .expireAfterAccess(15, TimeUnit.SECONDS)
+                    .removalListener(lrt -> ((LayerRegionTile) lrt.getValue()).destroy())
+                    .build(new CacheLoader<>() {
+                        @Override
+                        public LayerRegionTile load(RegionPos pos) {
+                            LayerRegionTile layerRegionTile = new LayerRegionTile(storage, layer, pos);
+                            layerRegionTile.tryLoad();
+                            return layerRegionTile;
+                        }
+                    })
+                ).get(region);
+        }
+        catch(ExecutionException e) {
+            // Should never happen as the loader code does not throw exceptions.
+            throw new RuntimeException(e);
         }
         finally {
             lock.unlock();
@@ -160,8 +179,8 @@ class ClientPipeline extends Pipeline {
         active = false;
         dirtyChunks.clear();
         dirtyTiles.finish();
-        // TODO: Release all memory dedicated to caches and such. Close resources. Flush to disk.
-        regions.clear();
+        tiles.values().forEach(Cache::invalidateAll);
+        tiles.clear();
     }
 
     public ClientPipeline activate() {

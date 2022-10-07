@@ -25,14 +25,14 @@ import net.minecraft.world.phys.Vec3;
 import com.eerussianguy.blazemap.BlazeMap;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.MapType;
 import com.eerussianguy.blazemap.api.event.DimensionChangedEvent;
 import com.eerussianguy.blazemap.api.event.MapLabelEvent;
 import com.eerussianguy.blazemap.api.event.WaypointEvent;
+import com.eerussianguy.blazemap.api.maps.FakeLayer;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.LayerRegion;
+import com.eerussianguy.blazemap.api.maps.MapType;
 import com.eerussianguy.blazemap.api.markers.*;
-import com.eerussianguy.blazemap.api.pipeline.FakeLayer;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
-import com.eerussianguy.blazemap.api.util.LayerRegion;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.async.AsyncAwaiter;
 import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
@@ -441,11 +441,11 @@ public class MapRenderer implements AutoCloseable {
         labels_off.add(label);
     }
 
-    public void setSearchHost(Consumer<Boolean> searchHost){
+    public void setSearchHost(Consumer<Boolean> searchHost) {
         this.searchHost = searchHost;
     }
 
-    public void pingSearchHost(){
+    public void pingSearchHost() {
         if(searchHost == null) return;
         searchHost.accept(labels.size() > 0);
     }

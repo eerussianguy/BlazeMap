@@ -10,7 +10,7 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.maps.Layer;
 
 public class MapLabel extends Marker<MapLabel> {
     private final Key<Layer> layerID;
@@ -41,7 +41,7 @@ public class MapLabel extends Marker<MapLabel> {
         return layerID;
     }
 
-    public final Set<String> getTags(){
+    public final Set<String> getTags() {
         return tags;
     }
 

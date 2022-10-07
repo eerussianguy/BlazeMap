@@ -10,9 +10,9 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.MapType;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
-import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
+import com.eerussianguy.blazemap.api.maps.IScreenSkipsMinimap;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.MapType;
 import com.eerussianguy.blazemap.gui.BlazeGui;
 import com.eerussianguy.blazemap.util.Helpers;
 import com.mojang.blaze3d.vertex.PoseStack;

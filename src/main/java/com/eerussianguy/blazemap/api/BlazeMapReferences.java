@@ -4,8 +4,13 @@ import java.util.List;
 
 import net.minecraft.resources.ResourceLocation;
 
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.MapType;
 import com.eerussianguy.blazemap.api.markers.ObjectRenderer;
-import com.eerussianguy.blazemap.api.pipeline.*;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
+import com.eerussianguy.blazemap.api.pipeline.DataType;
+import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
+import com.eerussianguy.blazemap.api.pipeline.Transformer;
 
 import static com.eerussianguy.blazemap.api.BlazeMapAPI.*;
 import static com.eerussianguy.blazemap.api.BlazeRegistry.Key;

@@ -22,11 +22,11 @@ public enum SearchTargeting {
     /**
      * Helper function to override the render color in fuction of search status
      */
-    public int color(int color){
+    public int color(int color) {
         return this == MISS ? 0x80808080 : color;
     }
 
-    public int color(){
+    public int color() {
         return color(-1);
     }
 }

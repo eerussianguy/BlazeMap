@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api.pipeline;
+package com.eerussianguy.blazemap.api.maps;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -12,6 +12,9 @@ import net.minecraft.world.level.Level;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.BlazeRegistry.RegistryEntry;
+import com.eerussianguy.blazemap.api.pipeline.Consumer;
+import com.eerussianguy.blazemap.api.pipeline.DataType;
+import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.mojang.blaze3d.platform.NativeImage;
 

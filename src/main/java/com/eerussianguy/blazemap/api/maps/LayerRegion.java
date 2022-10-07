@@ -1,9 +1,9 @@
-package com.eerussianguy.blazemap.api.util;
+package com.eerussianguy.blazemap.api.maps;
 
 import java.util.Objects;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.util.RegionPos;
 
 public class LayerRegion {
     public final BlazeRegistry.Key<Layer> layer;

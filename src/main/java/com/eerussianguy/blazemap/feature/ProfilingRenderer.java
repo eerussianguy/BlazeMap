@@ -87,8 +87,14 @@ public class ProfilingRenderer {
         fontRenderer.drawInBatch("Client Engine", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         fontRenderer.drawInBatch("MD Source: " + side + " / " + BlazeMapClientEngine.getMDSource(), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
         fontRenderer.drawInBatch("Parallel Pool: " + BlazeMapClientEngine.cruncher().poolSize() + " threads", 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
-        int size = LayerRegionTile.getLoaded(), tiles = LayerRegionTile.getInstances();
-        fontRenderer.drawInBatch(String.format("Layer Region Tiles: %d (%d MB)", tiles, size), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
+        double size = ((double) LayerRegionTile.getLoadedKb()) / 1024;
+        int tiles = LayerRegionTile.getInstances();
+        String scale = "M";
+        if(size >= 1024) {
+            size /= 1024;
+            scale = "G";
+        }
+        fontRenderer.drawInBatch(String.format("Layer Region Tiles: %d   [ %.2f %sB ]", tiles, size, scale), 15F, y += 10, 0xFFFFAA, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);
 
         // Cartography Pipeline Profiling
         fontRenderer.drawInBatch("Client Pipeline", 5F, y += 30, 0x0088FF, false, matrix, buffers, false, 0, LightTexture.FULL_BRIGHT);

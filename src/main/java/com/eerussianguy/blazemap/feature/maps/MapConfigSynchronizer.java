@@ -2,8 +2,8 @@ package com.eerussianguy.blazemap.feature.maps;
 
 import com.eerussianguy.blazemap.ClientConfig.MapConfig;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.MapType;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.MapType;
 
 public class MapConfigSynchronizer {
     private final MapConfig config;

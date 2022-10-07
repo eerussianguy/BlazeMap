@@ -1,4 +1,4 @@
-package com.eerussianguy.blazemap.api.pipeline;
+package com.eerussianguy.blazemap.api.maps;
 
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.network.chat.TranslatableComponent;

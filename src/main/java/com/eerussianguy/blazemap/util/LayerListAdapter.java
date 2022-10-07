@@ -7,7 +7,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
-import com.eerussianguy.blazemap.api.pipeline.Layer;
+import com.eerussianguy.blazemap.api.maps.Layer;
 
 public class LayerListAdapter implements IConfigAdapter<List<Key<Layer>>> {
     private final ForgeConfigSpec.ConfigValue<List<? extends String>> target;
