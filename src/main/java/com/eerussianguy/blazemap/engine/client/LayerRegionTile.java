@@ -135,22 +135,20 @@ public class LayerRegionTile {
     }
 
     public void destroy() {
+        lock.lockPriority();
         if(destroyed) return;
         save();
-        onDestroy();
-        image = null;
-        isDirty = false;
-        isEmpty = true;
-        destroyed = true;
-    }
-
-    private void onDestroy() {
         synchronized(MUTEX) {
             instances--;
             if(!isEmpty) {
                 loaded -= resolution.regionSizeKb;
             }
         }
+        image = null;
+        isDirty = false;
+        isEmpty = true;
+        destroyed = true;
+        lock.unlock();
     }
 
     public static int getInstances() {

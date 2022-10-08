@@ -292,7 +292,7 @@ public class MapRenderer implements AutoCloseable {
             }
         }
         for(Waypoint w : waypoints) {
-            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), true, renderNames ? w.getName() : null);
+            renderMarker(buffers, stack, w.getPosition(), w.getIcon(), w.getColor(), 32, 32, w.getRotation(), false, renderNames ? w.getName() : null);
         }
         if(hasActiveSearch) {
             for(MapLabel l : labels_on) {
