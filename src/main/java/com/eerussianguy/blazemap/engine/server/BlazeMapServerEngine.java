@@ -82,7 +82,7 @@ public class BlazeMapServerEngine {
     private static ServerPipeline getPipeline(ResourceKey<Level> dimension) {
         return PIPELINES.computeIfAbsent(dimension, d -> {
             BlazeMapAPI.COLLECTORS.keys();
-            ServerPipeline pipeline = new ServerPipeline(async, debouncer, d, () -> server.getLevel(d));
+            ServerPipeline pipeline = new ServerPipeline(async, debouncer, d, () -> server.getLevel(d), storage.internal(d.location()));
             numCollectors = Math.max(numCollectors, pipeline.numCollectors);
             numTransformers = Math.max(numTransformers, pipeline.numTransformers);
             numProcessors = Math.max(numProcessors, pipeline.numProcessors);
@@ -110,7 +110,7 @@ public class BlazeMapServerEngine {
     // =================================================================================================================
     // Debug Info Access
     public static String getMDSource() {
-        return "Vanilla Chunk Hook";
+        return "Default";
     }
 
     public static int numPipelines() {

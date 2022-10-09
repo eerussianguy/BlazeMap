@@ -47,7 +47,7 @@ public class BlazeMapClientEngine {
     private static IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
     private static String serverID;
     private static StorageAccess.Internal storage;
-    private static boolean clientSource;
+    private static boolean isServerSource;
     private static String mdSource;
 
     public static void init() {
@@ -76,11 +76,11 @@ public class BlazeMapClientEngine {
         if(player == null) return;
         serverID = Helpers.getServerID();
         storage = new StorageAccess.Internal(Helpers.getClientSideStorageDir());
-        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, storage.addon());
+        isServerSource = BlazeNetwork.ENGINE.isRemotePresent(event.getConnection());
+        ServerJoinedEvent serverJoined = new ServerJoinedEvent(serverID, storage.addon(), isServerSource);
         MinecraftForge.EVENT_BUS.post(serverJoined);
         waypointStorageFactory = serverJoined.getWaypointStorageFactory();
         switchToPipeline(player.level.dimension());
-        clientSource = BlazeNetwork.ENGINE.isRemotePresent(event.getConnection());
         mdSource = "unknown";
     }
 
@@ -138,17 +138,18 @@ public class BlazeMapClientEngine {
     }
 
     public static void onChunkChanged(ChunkPos pos, String source) {
-        if(!clientSource) return;
+        if(isServerSource) return;
         if(activePipeline == null) {
-            BlazeMap.LOGGER.warn("Ignoring chunk update for {}, pipeline: {}, clientSource: {}, brand: {}", pos, activePipeline.getClass().getSimpleName() + "@" + activePipeline.hashCode(), clientSource, source);
+            BlazeMap.LOGGER.warn("Ignoring chunk update for {}, pipeline: {}, isServerSource: {}, brand: {}", pos, activePipeline.getClass().getSimpleName() + "@" + activePipeline.hashCode(), isServerSource, source);
             return;
         }
         mdSource = source;
         activePipeline.onChunkChanged(pos);
     }
 
-    public static void submitChanges(ResourceKey<Level> dimension, ChunkPos pos, List<MasterDatum> data) {
-        clientSource = false;
+    public static void submitChanges(ResourceKey<Level> dimension, ChunkPos pos, List<MasterDatum> data, String source) {
+        isServerSource = true;
+        mdSource = source;
         getPipeline(dimension).insertMasterData(pos, data);
     }
 
@@ -166,7 +167,7 @@ public class BlazeMapClientEngine {
     }
 
     public static boolean isClientSource() {
-        return clientSource;
+        return !isServerSource;
     }
 
     public static int numCollectors() {

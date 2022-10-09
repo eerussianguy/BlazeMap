@@ -19,6 +19,13 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.AbstractGolem;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.WaterAnimal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -281,6 +288,10 @@ public class MapRenderer implements AutoCloseable {
         RenderHelper.drawQuad(buffers.getBuffer(renderType), matrix, width, height);
 
         stack.pushPose();
+        renderEntities(stack, buffers);
+        stack.popPose();
+
+        stack.pushPose();
         if(hasActiveSearch) {
             for(MapLabel l : labels_off) {
                 renderObject(buffers, stack, l, SearchTargeting.MISS);
@@ -300,10 +311,49 @@ public class MapRenderer implements AutoCloseable {
             }
         }
         LocalPlayer player = Helpers.getPlayer();
-        renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 48, 48, player.getRotationVector().y, false, null);
+        renderMarker(buffers, stack, player.blockPosition(), PLAYER, Colors.NO_TINT, 32, 32, player.getRotationVector().y, false, null);
         stack.popPose();
 
         stack.popPose();
+    }
+
+    private void renderEntities(PoseStack stack, MultiBufferSource buffers) {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        mc.level.entitiesForRendering().forEach(entity -> {
+            if(!(entity instanceof LivingEntity)) return;
+            BlockPos pos = entity.blockPosition();
+            if(inRange(pos)) {
+                int color;
+                boolean isPlayer = false;
+                if(entity instanceof Player) {
+                    if(entity == player) return;
+                    color = 0xFF88FF66;
+                    isPlayer = true;
+                }
+                else if(entity instanceof AbstractVillager || entity instanceof AbstractGolem) {
+                    color = 0xFFFFFF3F;
+                }
+                else if(entity instanceof Animal) {
+                    color = 0xFFA0A0A0;
+                }
+                else if(entity instanceof WaterAnimal) {
+                    color = 0xFF4488FF;
+                }
+                else if(entity instanceof Monster) {
+                    color = 0xFFFF2222;
+                }
+                else {
+                    return;
+                }
+
+                if(!isPlayer && Math.abs(player.position().y - entity.position().y) > 10) {
+                    return;
+                }
+
+                renderMarker(buffers, stack, pos, PLAYER, color, 32, 32, entity.getRotationVector().y, false, isPlayer ? entity.getName().getString() : null);
+            }
+        });
     }
 
     private void updateTexture() {
@@ -357,9 +407,9 @@ public class MapRenderer implements AutoCloseable {
         for(BlazeRegistry.Key<Layer> layer : visible) {
             if(layer.value() instanceof FakeLayer) return;
             final RegionPos region = offsets[regionIndexX][regionIndexZ];
+            final int cxo = cornerXOffset / resolution.pixelWidth;
+            final int czo = cornerZOffset / resolution.pixelWidth;
             tileStorage.consumeTile(layer, region, resolution, source -> {
-                int cxo = cornerXOffset / resolution.pixelWidth;
-                int czo = cornerZOffset / resolution.pixelWidth;
                 for(int x = (region.x * 512) < begin.getX() ? cxo : 0; x < source.getWidth(); x++) {
                     int textureX = (regionIndexX * resolution.regionWidth) + x - cxo;
                     if(textureX < 0 || textureX >= textureW) continue;
@@ -385,15 +435,16 @@ public class MapRenderer implements AutoCloseable {
         if(!zoom) {
             stack.scale(1F / (float) this.zoom, 1F / (float) this.zoom, 1);
         }
-        stack.mulPose(Vector3f.ZP.rotationDegrees(rotation));
         if(name != null) {
+            float scale = 2;
             Minecraft mc = Minecraft.getInstance();
             stack.pushPose();
-            stack.translate(-mc.font.width(name), (10 + (height / 2)), 0);
-            stack.scale(2, 2, 0);
+            stack.translate(-mc.font.width(name), (10 + (height / scale)), 0);
+            stack.scale(scale, scale, 0);
             mc.font.drawInBatch(name, 0, 0, color, true, stack.last().pose(), buffers, false, 0, LightTexture.FULL_BRIGHT);
             stack.popPose();
         }
+        stack.mulPose(Vector3f.ZP.rotationDegrees(rotation));
         stack.translate(-width / 2, -height / 2, 0);
         VertexConsumer vertices = buffers.getBuffer(RenderType.text(marker));
         RenderHelper.drawQuad(vertices, stack.last().pose(), (float) width, (float) height, color);

@@ -77,7 +77,7 @@ public class WaypointCreatorGui extends BlazeGui {
 
         float[] hsb = new float[3];
         int r = (color >> 16) & 0xFF;
-        int g = (color >>  8) & 0xFF;
+        int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
         Color.RGBtoHSB(r, g, b, hsb);
         this.hue360 = hsb[0] * 360;
@@ -175,7 +175,7 @@ public class WaypointCreatorGui extends BlazeGui {
         nz.setSubject(fz);
     }
 
-    private void updateColor(){
+    private void updateColor() {
         color = Color.HSBtoRGB(hue360 / 360, s, b);
     }
 

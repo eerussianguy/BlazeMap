@@ -18,6 +18,10 @@ public class UnsafeGenerics {
         return (Set<Key<DataType>>) (Object) keys;
     }
 
+    public static Set<Key<DataType<MasterDatum>>> mdKeys(Set<Key<DataType>> keys) {
+        return (Set<Key<DataType<MasterDatum>>>) (Object) keys;
+    }
+
     static Set<Key<Collector>> stripCollectors(Set<Key<Collector<MasterDatum>>> list) {
         return (Set<Key<Collector>>) (Object) list;
     }

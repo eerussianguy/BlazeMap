@@ -69,7 +69,7 @@ public class SaturationBrightnessSelector implements Widget, GuiEventListener, N
     public boolean mouseClicked(double mx, double my, int b) {
         mx -= x;
         my -= y;
-        if(mx <= 1 || mx >= w - 1 || my <= 1 || my >= h-1) return false;
+        if(mx <= 1 || mx >= w - 1 || my <= 1 || my >= h - 1) return false;
         int rw = w - 2;
         int rh = h - 2;
         mx--;
