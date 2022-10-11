@@ -1,5 +1,6 @@
 package com.eerussianguy.blazemap.api.maps;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -102,6 +103,10 @@ public abstract class Layer implements RegistryEntry, Consumer {
     // =================================================================================================================
     // Common helper functions for easier layer rendering
 
+    /**
+     * Allows to run code once for each pixel of the chunk tile.
+     * Automatically accounts for the fact chunk tile sizes vary with resolution.
+     */
     protected static void foreachPixel(TileResolution resolution, PixelConsumer consumer) {
         for(int x = 0; x < resolution.chunkWidth; x++) {
             for(int z = 0; z < resolution.chunkWidth; z++) {
@@ -115,6 +120,11 @@ public abstract class Layer implements RegistryEntry, Consumer {
         void accept(int x, int y);
     }
 
+    /**
+     * When running at lower resolutions than FULL, this utility allows to collect all data points that will be rendered
+     * into a single pixel. Meant to be used with ArrayAggregator or similar utilities, to aggregate the multiple data
+     * points into a single value.
+     */
     protected static int[] relevantData(TileResolution resolution, int x, int z, int[][] data) {
         int[] objects = new int[resolution.pixelWidth * resolution.pixelWidth];
         x *= resolution.pixelWidth;
@@ -130,6 +140,11 @@ public abstract class Layer implements RegistryEntry, Consumer {
         return objects;
     }
 
+    /**
+     * When running at lower resolutions than FULL, this utility allows to collect all data points that will be rendered
+     * into a single pixel. Meant to be used with ArrayAggregator or similar utilities, to aggregate the multiple data
+     * points into a single value.
+     */
     protected static float[] relevantData(TileResolution resolution, int x, int z, float[][] data) {
         float[] objects = new float[resolution.pixelWidth * resolution.pixelWidth];
         x *= resolution.pixelWidth;
@@ -145,9 +160,14 @@ public abstract class Layer implements RegistryEntry, Consumer {
         return objects;
     }
 
+    /**
+     * When running at lower resolutions than FULL, this utility allows to collect all data points that will be rendered
+     * into a single pixel. Meant to be used with ArrayAggregator or similar utilities, to aggregate the multiple data
+     * points into a single value.
+     */
     @SuppressWarnings("unchecked")
-    protected static <T> T[] relevantData(TileResolution resolution, int x, int z, T[][] data) {
-        Object[] objects = new Object[resolution.pixelWidth * resolution.pixelWidth];
+    protected static <T> T[] relevantData(TileResolution resolution, int x, int z, T[][] data, Class<T> cls) {
+        T[] objects = (T[]) Array.newInstance(cls, resolution.pixelWidth * resolution.pixelWidth);
         x *= resolution.pixelWidth;
         z *= resolution.pixelWidth;
         int idx = 0;
@@ -158,6 +178,6 @@ public abstract class Layer implements RegistryEntry, Consumer {
             }
         }
 
-        return (T[]) objects;
+        return objects;
     }
 }

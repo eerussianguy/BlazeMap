@@ -105,9 +105,15 @@ class ClientPipeline extends Pipeline {
                     NativeImage layerChunkTile = new NativeImage(NativeImage.Format.RGBA, resolution.chunkWidth, resolution.chunkWidth, true);
                     view.setFilter(UnsafeGenerics.stripKeys(layer.getInputIDs())); // the layer should only access declared collectors
 
+                    // Calculate chunk grid offsets. Don't let negatives pass.
+                    int xOff = chunkPos.x % resolution.pixelWidth;
+                    int zOff = chunkPos.z % resolution.pixelWidth;
+                    if(xOff < 0) xOff += resolution.pixelWidth;
+                    if(zOff < 0) zOff += resolution.pixelWidth;
+
                     // only generate updates if the renderer populates the tile
                     // this is determined by the return value of renderTile being true
-                    if(layer.renderTile(layerChunkTile, resolution, view, chunkPos.x % resolution.pixelWidth, chunkPos.z % resolution.pixelWidth)) {
+                    if(layer.renderTile(layerChunkTile, resolution, view, xOff, zOff)) {
 
                         // update this chunk of the region
                         LayerRegionTile layerRegionTile = getLayerRegionTile(layerID, regionPos, resolution, false);

@@ -1,7 +1,6 @@
 package com.eerussianguy.blazemap.api.util;
 
 public class ArrayAggregator {
-
     public static int avgColor(int[] colors) {
         int b0 = 0, b1 = 0, b2 = 0, b3 = 0;
 
@@ -37,5 +36,27 @@ public class ArrayAggregator {
             }
         }
         return max;
+    }
+
+    public static float avg(float[] values) {
+        float sum = 0;
+        for(float value : values) {
+            sum += value;
+        }
+        return sum / values.length;
+    }
+
+    public static boolean and(boolean[] values) {
+        for(boolean value : values) {
+            if(!value) return false;
+        }
+        return true;
+    }
+
+    public static boolean or(boolean[] values) {
+        for(boolean value : values) {
+            if(value) return true;
+        }
+        return false;
     }
 }
