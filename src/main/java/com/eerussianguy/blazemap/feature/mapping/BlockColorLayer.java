@@ -32,7 +32,7 @@ public class BlockColorLayer extends Layer {
             int depth = ArrayAggregator.avg(relevantData(resolution, x, z, depths));
             int color = ArrayAggregator.avgColor(relevantData(resolution, x, z, blockColors));
             float point = ((float) Math.min(depth, 30)) / 50F;
-            tile.setPixelRGBA(x, z, Colors.interpolate(color, 0, OPAQUE, 1, point));
+            tile.setPixelRGBA(x, z, Colors.interpolate(Colors.abgr(OPAQUE | color), 0, OPAQUE, 1, point));
         });
 
         return true;

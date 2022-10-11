@@ -13,12 +13,12 @@ import com.eerussianguy.blazemap.feature.maps.MinimapSize;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 
-public class BlazeMapCommands {
+public class BlazeMapCommandsClient {
     private static final EnumArgument<MinimapSize> MINIMAP_SIZE = EnumArgument.enumArgument(MinimapSize.class);
 
     public static void init() {
         final IEventBus bus = MinecraftForge.EVENT_BUS;
-        bus.addListener(BlazeMapCommands::registerClientCommands);
+        bus.addListener(BlazeMapCommandsClient::registerClientCommands);
     }
 
     public static void registerClientCommands(RegisterClientCommandsEvent event) {

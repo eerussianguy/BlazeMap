@@ -92,7 +92,7 @@ public abstract class Pipeline {
     }
 
     // TODO: figure out why void gives generic errors but null Void is OK. Does it have to be an Object?
-    private Void processMasterData(ChunkPos pos, List<MasterDatum> collectedData) {
+    protected Void processMasterData(ChunkPos pos, List<MasterDatum> collectedData) {
         if(collectedData.size() == 0) return null;
         ChunkMDCache cache = new ChunkMDCache(); // FIXME: load chunk MD cache from disk
         MapView view = MAP_VIEWS.get().setSource(cache);
@@ -125,7 +125,7 @@ public abstract class Pipeline {
 
     // =================================================================================================================
     // Pipeline execution steps
-    private List<MasterDatum> runCollectors(ChunkPos pos) {
+    protected List<MasterDatum> runCollectors(ChunkPos pos) {
         try {
             profiler.collectorLoad.hit();
             profiler.collectorTime.begin();
@@ -151,7 +151,7 @@ public abstract class Pipeline {
         }
     }
 
-    private List<MasterDatum> runTransformers(Set<Key<DataType>> diff, MapView view) {
+    protected List<MasterDatum> runTransformers(Set<Key<DataType>> diff, MapView view) {
         Transformer[] transformers = this.transformers.stream().filter(t -> !Collections.disjoint(t.getInputIDs(), diff)).toArray(Transformer[]::new);
         if(transformers.length == 0) return Collections.EMPTY_LIST;
 
@@ -170,7 +170,7 @@ public abstract class Pipeline {
         }
     }
 
-    private void runProcessors(ChunkPos chunk, Set<Key<DataType>> diff, MapView view) {
+    protected void runProcessors(ChunkPos chunk, Set<Key<DataType>> diff, MapView view) {
         Processor[] processors = this.processors.stream().filter(p -> !Collections.disjoint(p.getInputIDs(), diff)).toArray(Processor[]::new);
         if(processors.length == 0) return;
 

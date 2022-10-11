@@ -9,9 +9,9 @@ import net.minecraft.world.level.material.MaterialColor;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.BlockColorMD;
-import com.eerussianguy.blazemap.api.pipeline.Collector;
+import com.eerussianguy.blazemap.api.pipeline.ClientOnlyCollector;
 
-public class BlockColorCollector extends Collector<BlockColorMD> {
+public class BlockColorCollector extends ClientOnlyCollector<BlockColorMD> {
 
     public BlockColorCollector() {
         super(

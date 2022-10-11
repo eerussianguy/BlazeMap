@@ -64,7 +64,7 @@ public class BlazeMap {
             BlazeMapFeaturesClient.initMapping();
             BlazeMapFeaturesClient.initMaps();
             BlazeMapFeaturesClient.initWaypoints();
-            BlazeMapCommands.init();
+            BlazeMapCommandsClient.init();
         }
     }
 }

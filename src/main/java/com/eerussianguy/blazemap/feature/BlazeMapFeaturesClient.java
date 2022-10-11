@@ -29,10 +29,10 @@ public class BlazeMapFeaturesClient {
         BlazeMapAPI.LAYERS.register(new TerrainHeightLayer());
         BlazeMapAPI.LAYERS.register(new WaterLevelLayer());
         BlazeMapAPI.LAYERS.register(new TerrainIsolinesLayer());
-//        BlazeMapAPI.LAYERS.register(new BlockColorLayer());
+        BlazeMapAPI.LAYERS.register(new BlockColorLayer());
         BlazeMapAPI.LAYERS.register(new NetherLayer());
 
-//        BlazeMapAPI.MAPTYPES.register(new AerialViewMapType());
+        BlazeMapAPI.MAPTYPES.register(new AerialViewMapType());
         BlazeMapAPI.MAPTYPES.register(new TopographyMapType());
         BlazeMapAPI.MAPTYPES.register(new NetherMapType());
     }

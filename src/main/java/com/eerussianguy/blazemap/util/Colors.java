@@ -33,7 +33,14 @@ public class Colors {
     }
 
     public static int abgr(Color color) {
-        return 0xFF000000 | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
+        return color.getAlpha() << 24 | color.getBlue() << 16 | color.getGreen() << 8 | color.getRed();
+    }
+
+    public static int abgr(int color) {
+        int r = color & 0xFF0000;
+        int b = color & 0x0000FF;
+        color &= 0xFF00FF00;
+        return color | (b << 16) | (r >> 16);
     }
 
     public static int randomBrightColor() {

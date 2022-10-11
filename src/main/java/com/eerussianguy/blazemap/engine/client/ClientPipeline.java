@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -16,8 +17,7 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry.Key;
 import com.eerussianguy.blazemap.api.maps.*;
-import com.eerussianguy.blazemap.api.pipeline.DataType;
-import com.eerussianguy.blazemap.api.pipeline.PipelineType;
+import com.eerussianguy.blazemap.api.pipeline.*;
 import com.eerussianguy.blazemap.api.util.RegionPos;
 import com.eerussianguy.blazemap.engine.*;
 import com.eerussianguy.blazemap.engine.async.AsyncChain;
@@ -51,15 +51,10 @@ class ClientPipeline extends Pipeline {
     private final PriorityLock lock = new PriorityLock();
     private boolean active;
 
-    @SuppressWarnings("unchecked")
     public ClientPipeline(AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, StorageAccess.Internal storage, PipelineType type) {
         super(
             async, debouncer, CLIENT_PIPELINE_PROFILER, dimension, Helpers::levelOrThrow,
-            BlazeMapClientEngine.isClientSource()
-                ? BlazeMapAPI.MAPTYPES.keys().stream().map(k -> k.value().getLayers()).flatMap(Set::stream)
-                .map(k -> k.value().getInputIDs()).map(ids -> BlazeMapAPI.COLLECTORS.keys().stream().filter(k -> ids.contains(k.value().getOutputID()))
-                    .collect(Collectors.toUnmodifiableSet())).flatMap(Set::stream).filter(k -> k.value().shouldExecuteIn(dimension, type)).collect(Collectors.toUnmodifiableSet())
-                : Collections.EMPTY_SET,
+            computeCollectorSet(dimension, type),
             BlazeMapAPI.TRANSFORMERS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, type)).collect(Collectors.toUnmodifiableSet()),
             BlazeMapAPI.PROCESSORS.keys().stream().filter(k -> k.value().shouldExecuteIn(dimension, type)).collect(Collectors.toUnmodifiableSet())
         );
@@ -79,6 +74,28 @@ class ClientPipeline extends Pipeline {
             region.save();
             TILE_TIME_PROFILER.end();
         }), 2500, 30000);
+    }
+
+    private static Set<Key<Collector<MasterDatum>>> computeCollectorSet(ResourceKey<Level> dimension, PipelineType type) {
+        Stream<Key<Collector<MasterDatum>>> collectors = BlazeMapAPI.MAPTYPES.keys().stream().map(k -> k.value().getLayers()).flatMap(Set::stream)
+            .map(k -> k.value().getInputIDs()).map(ids -> BlazeMapAPI.COLLECTORS.keys().stream().filter(k -> ids.contains(k.value().getOutputID()))
+                .collect(Collectors.toUnmodifiableSet())).flatMap(Set::stream).filter(k -> k.value().shouldExecuteIn(dimension, type));
+
+        if(!BlazeMapClientEngine.isClientSource()) {
+            collectors = collectors.filter(k -> k.value() instanceof ClientOnlyCollector);
+        }
+
+        return collectors.collect(Collectors.toUnmodifiableSet());
+    }
+
+    @Override
+    public void insertMasterData(ChunkPos pos, List<MasterDatum> data) {
+        async.startOnGameThread($ -> {
+            if(level.get().getChunkSource().hasChunk(pos.x, pos.z)){
+                data.addAll(runCollectors(pos));
+            }
+            return data;
+        }).thenOnDataThread(d -> processMasterData(pos, d)).start();
     }
 
     // Redraw tiles based on MD changes
