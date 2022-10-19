@@ -138,7 +138,12 @@ public class BlazeMapClientEngine {
     }
 
     public static void onChunkChanged(ChunkPos pos, String source) {
-        if(isServerSource) return;
+        if(isServerSource) {
+            if(activePipeline != null) {
+                activePipeline.setHot();
+            }
+            return;
+        }
         if(activePipeline == null) {
             BlazeMap.LOGGER.warn("Ignoring chunk update for {}, pipeline: {}, isServerSource: {}, brand: {}", pos, activePipeline.getClass().getSimpleName() + "@" + activePipeline.hashCode(), isServerSource, source);
             return;

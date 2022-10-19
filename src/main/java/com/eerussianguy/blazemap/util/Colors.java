@@ -44,7 +44,7 @@ public class Colors {
     }
 
     public static int randomBrightColor() {
-        float hue = ((float) System.nanoTime() % 360) / 360F;
+        float hue = ((float) (System.nanoTime() / 1000) % 360) / 360F;
         return Color.HSBtoRGB(hue, 1, 1);
     }
 

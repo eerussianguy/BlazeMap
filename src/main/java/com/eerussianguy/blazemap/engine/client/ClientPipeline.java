@@ -49,7 +49,7 @@ class ClientPipeline extends Pipeline {
     private final Map<TileResolution, Map<Key<Layer>, LoadingCache<RegionPos, LayerRegionTile>>> tiles = new EnumMap<>(TileResolution.class);
     private final DebouncingDomain<LayerRegionTile> dirtyTiles;
     private final PriorityLock lock = new PriorityLock();
-    private boolean active;
+    private boolean active, cold;
 
     public ClientPipeline(AsyncChain.Root async, DebouncingThread debouncer, ResourceKey<Level> dimension, StorageAccess.Internal storage, PipelineType type) {
         super(
@@ -88,14 +88,33 @@ class ClientPipeline extends Pipeline {
         return collectors.collect(Collectors.toUnmodifiableSet());
     }
 
+    public void setHot() {
+        cold = false;
+    }
+
     @Override
     public void insertMasterData(ChunkPos pos, List<MasterDatum> data) {
-        async.startOnGameThread($ -> {
-            if(level.get().getChunkSource().hasChunk(pos.x, pos.z)){
-                data.addAll(runCollectors(pos));
-            }
-            return data;
-        }).thenOnDataThread(d -> processMasterData(pos, d)).start();
+        if(cold) {
+            async
+                .startWithDelay((int) (500 + ((System.nanoTime() / 1000) % 1000)))
+                .thenOnGameThread($ -> {
+                    if(level.get().getChunkSource().hasChunk(pos.x, pos.z)) {
+                        data.addAll(runCollectors(pos));
+                    }
+                    return data;
+                })
+                .thenOnDataThread(d -> processMasterData(pos, d)).start();
+        }
+        else {
+            async
+                .startOnGameThread($ -> {
+                    if(level.get().getChunkSource().hasChunk(pos.x, pos.z)) {
+                        data.addAll(runCollectors(pos));
+                    }
+                    return data;
+                })
+                .thenOnDataThread(d -> processMasterData(pos, d)).start();
+        }
     }
 
     // Redraw tiles based on MD changes
@@ -157,13 +176,13 @@ class ClientPipeline extends Pipeline {
     }
 
     private LayerRegionTile getLayerRegionTile(Key<Layer> layer, RegionPos region, TileResolution resolution, boolean priority) {
+        if(priority) lock.lockPriority();
+        else lock.lock();
         try {
-            if(priority) lock.lockPriority();
-            else lock.lock();
             return tiles
                 .computeIfAbsent(resolution, $ -> new HashMap<>())
                 .computeIfAbsent(layer, $ -> CacheBuilder.newBuilder()
-                    .maximumSize(1000)
+                    .maximumSize(256 * 1024 / resolution.regionSizeKb)
                     .expireAfterAccess(resolution.cacheTime, TimeUnit.SECONDS)
                     .removalListener(lrt -> ((LayerRegionTile) lrt.getValue()).destroy())
                     .build(new CacheLoader<>() {
@@ -207,6 +226,7 @@ class ClientPipeline extends Pipeline {
 
     public ClientPipeline activate() {
         active = true;
+        cold = true;
         return this;
     }
 

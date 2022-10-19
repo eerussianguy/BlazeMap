@@ -21,7 +21,7 @@ import com.eerussianguy.blazemap.util.Helpers;
 import com.eerussianguy.blazemap.util.RenderHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 
-public class WaypointCreatorGui extends BlazeGui {
+public class WaypointEditorGui extends BlazeGui {
     private static IMarkerStorage<Waypoint> waypointStorage;
 
     public static void onDimensionChanged(DimensionChangedEvent event) {
@@ -33,7 +33,7 @@ public class WaypointCreatorGui extends BlazeGui {
     }
 
     public static void open(Waypoint waypoint) {
-        Minecraft.getInstance().setScreen(new WaypointCreatorGui(waypoint));
+        Minecraft.getInstance().setScreen(new WaypointEditorGui(waypoint));
     }
 
     private Button save;
@@ -49,7 +49,7 @@ public class WaypointCreatorGui extends BlazeGui {
     private int color;
     private float hue360, s, b;
 
-    protected WaypointCreatorGui(Waypoint waypoint) {
+    protected WaypointEditorGui(Waypoint waypoint) {
         super(Helpers.translate("blazemap.gui.waypoint_editor.title"), 212, 202);
         this.waypoint = waypoint;
 
@@ -137,9 +137,9 @@ public class WaypointCreatorGui extends BlazeGui {
         EditBox fz = addRenderableWidget(new EditBox(Minecraft.getInstance().font, left + 98, top + 40, 40, 12, this.title));
 
         addRenderableWidget(new SelectionList<>(left + 12, top + 55, 126, 112, 18, this::renderIcon))
-            .setResponder(this::onSelect)
             .setItems(BlazeMapReferences.Icons.ALL_WAYPOINTS)
-            .setSelected(icon);
+            .setSelected(icon)
+            .setResponder(this::onSelect);
 
         addRenderableWidget(new Button(left + 12, top + 170, 126, 20, Helpers.translate("blazemap.gui.waypoint_editor.random"), b -> randomColor()));
         save = addRenderableWidget(new Button(left + 150, top + 170, 50, 20, Helpers.translate("blazemap.gui.waypoint_editor.save"), b -> createWaypoint()));

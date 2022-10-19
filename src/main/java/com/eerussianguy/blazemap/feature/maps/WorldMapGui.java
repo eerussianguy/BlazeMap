@@ -67,9 +67,6 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         dimension = Minecraft.getInstance().level.dimension();
         mapTypes = BlazeMapAPI.MAPTYPES.keys().stream().map(BlazeRegistry.Key::value).filter(m -> m.shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableList());
         layersBegin = 50 + (mapTypes.size() * 20);
-        if(mapRenderer.getZoom() < 0.2){ // FIXME: this is a workaround for a known deadlock issue elsewhere.
-            synchronizer.setZoom(Math.max(0.25, MIN_ZOOM));
-        }
         zoom = mapRenderer.getZoom();
 
         mapRenderer.setSearchHost(active -> {

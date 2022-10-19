@@ -67,6 +67,6 @@ public class WaypointManagerGui extends BlazeGui {
     private void onEdit(Button b) {
         Waypoint waypoint = list.getSelected();
         onClose();
-        WaypointCreatorGui.open(waypoint);
+        WaypointEditorGui.open(waypoint);
     }
 }

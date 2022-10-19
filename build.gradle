@@ -13,7 +13,7 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven-publish'
 
-version = '0.5.0-alpha8'
+version = '0.5.0-alpha9'
 group = 'com.eerussianguy.blazemap' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "BlazeMap-${minecraft_version}"
 
@@ -74,8 +74,8 @@ dependencies {
     compileOnly fg.deobf("_:rubidium:0.5.3a")
 
 //    implementation fg.deobf("_:Patchouli:1.18.2-71.1")
-//    implementation fg.deobf("_:TerraFirmaCraft:Forge-1.18.2-2.1.6-beta")
-//    implementation fg.deobf("_:Cartography:1.18.2-0.4.0-alpha2a")
+//    implementation fg.deobf("_:TerraFirmaCraft:Forge-1.18.2-2.1.11-beta")
+//    implementation fg.deobf("_:Cartography:1.18.2-0.4.0-alpha3")
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..

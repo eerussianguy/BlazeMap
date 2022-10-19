@@ -61,29 +61,33 @@ public class RenderHelper {
     }
 
     public static void drawFrame(VertexConsumer vertices, PoseStack stack, int width, int height, int border) {
+        drawFrame(vertices, stack, width, height, border, Colors.NO_TINT);
+    }
+
+    public static void drawFrame(VertexConsumer vertices, PoseStack stack, int width, int height, int border, int color) {
         stack.pushPose();
 
-        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0F, 0.25F, 0F, 0.25F);
+        drawQuad(vertices, stack.last().pose(), border, border, color, 0F, 0.25F, 0F, 0.25F);
         stack.translate(border, 0, 0);
-        drawQuad(vertices, stack.last().pose(), width - (border * 2), border, Colors.NO_TINT, 0.25F, 0.75F, 0F, 0.25F);
+        drawQuad(vertices, stack.last().pose(), width - (border * 2), border, color, 0.25F, 0.75F, 0F, 0.25F);
         stack.translate(width - (border * 2), 0, 0);
-        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0.75F, 1F, 0F, 0.25F);
+        drawQuad(vertices, stack.last().pose(), border, border, color, 0.75F, 1F, 0F, 0.25F);
 
         stack.translate(-width + border, border, 0);
 
-        drawQuad(vertices, stack.last().pose(), border, height - (border * 2), Colors.NO_TINT, 0F, 0.25F, 0.25F, 0.75F);
+        drawQuad(vertices, stack.last().pose(), border, height - (border * 2), color, 0F, 0.25F, 0.25F, 0.75F);
         stack.translate(border, 0, 0);
-        drawQuad(vertices, stack.last().pose(), width - (border * 2), height - (border * 2), Colors.NO_TINT, 0.25F, 0.75F, 0.25F, 0.75F);
+        drawQuad(vertices, stack.last().pose(), width - (border * 2), height - (border * 2), color, 0.25F, 0.75F, 0.25F, 0.75F);
         stack.translate(width - (border * 2), 0, 0);
-        drawQuad(vertices, stack.last().pose(), border, height - (border * 2), Colors.NO_TINT, 0.75F, 1F, 0.25F, 0.75F);
+        drawQuad(vertices, stack.last().pose(), border, height - (border * 2), color, 0.75F, 1F, 0.25F, 0.75F);
 
         stack.translate(-width + border, height - (border * 2), 0);
 
-        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0F, 0.25F, 0.75F, 1F);
+        drawQuad(vertices, stack.last().pose(), border, border, color, 0F, 0.25F, 0.75F, 1F);
         stack.translate(border, 0, 0);
-        drawQuad(vertices, stack.last().pose(), width - (border * 2), border, Colors.NO_TINT, 0.25F, 0.75F, 0.75F, 1F);
+        drawQuad(vertices, stack.last().pose(), width - (border * 2), border, color, 0.25F, 0.75F, 0.75F, 1F);
         stack.translate(width - (border * 2), 0, 0);
-        drawQuad(vertices, stack.last().pose(), border, border, Colors.NO_TINT, 0.75F, 1F, 0.75F, 1F);
+        drawQuad(vertices, stack.last().pose(), border, border, color, 0.75F, 1F, 0.75F, 1F);
 
         stack.popPose();
     }

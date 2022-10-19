@@ -33,13 +33,12 @@ public class LayerRegionTile {
         this.file = storage.getMipmap(layer.location, region + ".png", resolution);
         this.buffer = storage.getMipmap(layer.location, region + ".buffer", resolution);
         this.resolution = resolution;
-        image = new NativeImage(NativeImage.Format.RGBA, resolution.regionWidth, resolution.regionWidth, true);
     }
 
     public void tryLoad() {
         if(file.exists()) {
+            lock.lockPriority();
             try {
-                lock.lockPriority();
                 image = NativeImage.read(Files.newInputStream(file.toPath()));
                 isEmpty = false;
             }
@@ -61,8 +60,8 @@ public class LayerRegionTile {
         if(isEmpty || !isDirty) return;
 
         // Save image into buffer
+        lock.lock();
         try {
-            lock.lock();
             image.writeToFile(buffer);
             isDirty = false;
         }
@@ -90,9 +89,15 @@ public class LayerRegionTile {
     public void updateTile(NativeImage tile, ChunkPos chunk) {
         int xOffset = (chunk.getRegionLocalX() << 4) / resolution.pixelWidth;
         int zOffset = (chunk.getRegionLocalZ() << 4) / resolution.pixelWidth;
+        boolean wasEmpty = isEmpty;
 
+        lock.lock();
         try {
-            lock.lock();
+            if(isEmpty) {
+                image = new NativeImage(NativeImage.Format.RGBA, resolution.regionWidth, resolution.regionWidth, true);
+                isEmpty = false;
+            }
+
             for(int x = 0; x < resolution.chunkWidth; x++) {
                 for(int z = 0; z < resolution.chunkWidth; z++) {
                     int old = image.getPixelRGBA(xOffset + x, zOffset + z);
@@ -103,10 +108,14 @@ public class LayerRegionTile {
                     }
                 }
             }
-            isEmpty = false;
+
         }
         finally {
             lock.unlock();
+        }
+
+        if(wasEmpty && !isEmpty) {
+            onFill();
         }
     }
 
@@ -116,8 +125,8 @@ public class LayerRegionTile {
 
     public void consume(Consumer<NativeImage> consumer) {
         if(isEmpty) return;
+        lock.lockPriority();
         try {
-            lock.lockPriority();
             consumer.accept(image);
         }
         finally {
@@ -134,21 +143,37 @@ public class LayerRegionTile {
         }
     }
 
-    public void destroy() {
-        lock.lockPriority();
-        if(destroyed) return;
-        save();
+    private void onFill() {
         synchronized(MUTEX) {
-            instances--;
-            if(!isEmpty) {
-                loaded -= resolution.regionSizeKb;
+            loaded += resolution.regionSizeKb;
+        }
+    }
+
+    public void destroy() {
+        if(!destroyed) {
+            synchronized(MUTEX) {
+                instances--;
+                if(!isEmpty) {
+                    loaded -= resolution.regionSizeKb;
+                }
             }
         }
-        image = null;
-        isDirty = false;
-        isEmpty = true;
-        destroyed = true;
-        lock.unlock();
+        else return;
+
+        lock.lockPriority();
+        try {
+            save();
+            if(image != null) {
+                image.close();
+                image = null;
+            }
+            isDirty = false;
+            isEmpty = true;
+            destroyed = true;
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     public static int getInstances() {

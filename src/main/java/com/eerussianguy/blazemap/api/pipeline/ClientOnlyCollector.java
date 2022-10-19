@@ -20,7 +20,7 @@ public abstract class ClientOnlyCollector<T extends MasterDatum> extends Collect
         return shouldExecuteIn(dimension) && pipeline.isClient;
     }
 
-    protected boolean shouldExecuteIn(ResourceKey<Level> dimension){
+    protected boolean shouldExecuteIn(ResourceKey<Level> dimension) {
         return true;
     }
 }

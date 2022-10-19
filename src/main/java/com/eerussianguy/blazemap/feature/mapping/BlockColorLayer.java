@@ -25,7 +25,10 @@ public class BlockColorLayer extends Layer {
 
     @Override
     public boolean renderTile(NativeImage tile, TileResolution resolution, IDataSource data, int xGridOffset, int zGridOffset) {
-        int[][] blockColors = ((BlockColorMD) data.get(BlazeMapReferences.MasterData.BLOCK_COLOR)).colors;
+        BlockColorMD blocks = (BlockColorMD) data.get(BlazeMapReferences.MasterData.BLOCK_COLOR);
+        if(blocks == null) return false;
+
+        int[][] blockColors = blocks.colors;
         int[][] depths = ((WaterLevelMD) data.get(BlazeMapReferences.MasterData.WATER_LEVEL)).level;
 
         foreachPixel(resolution, (x, z) -> {
