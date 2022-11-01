@@ -1,32 +1,31 @@
 package com.eerussianguy.blazemap.api.builtin;
 
-import net.minecraft.nbt.CompoundTag;
+import com.eerussianguy.blazemap.api.BlazeRegistry;
+import com.eerussianguy.blazemap.api.pipeline.DataType;
+import com.eerussianguy.blazemap.api.pipeline.MasterDatum;
 
-import com.eerussianguy.blazemap.api.mapping.MasterDatum;
-
-public class TerrainHeightMD implements MasterDatum {
-    public final int minY, maxY, height, sea, minX, minZ;
+public class TerrainHeightMD extends MasterDatum {
+    private final BlazeRegistry.Key<DataType<MasterDatum>> id;
+    public final int minY, maxY, height, sea;
     public final int[][] heightmap;
 
-    public TerrainHeightMD(int minY, int maxY, int height, int sea, int minX, int minZ, int[][] heightmap) {
+    public TerrainHeightMD(BlazeRegistry.Key<DataType<MasterDatum>> id, int minY, int maxY, int height, int sea, int[][] heightmap) {
+        this.id = id;
         this.minY = minY;
         this.maxY = maxY;
         this.height = height;
         this.sea = sea;
 
-        this.minX = minX;
-        this.minZ = minZ;
-
         this.heightmap = heightmap;
     }
 
     @Override
-    public CompoundTag serialize() {
-        return null;
+    public BlazeRegistry.Key<DataType<MasterDatum>> getID() {
+        return id;
     }
 
     @Override
-    public MasterDatum deserialize(CompoundTag nbt) {
-        return null;
+    public boolean equals(Object other) {
+        return false;
     }
 }

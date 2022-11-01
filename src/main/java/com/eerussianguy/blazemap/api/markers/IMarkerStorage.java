@@ -6,7 +6,7 @@ import java.util.Collections;
 import net.minecraft.resources.ResourceLocation;
 
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.maps.Layer;
 
 public interface IMarkerStorage<T extends Marker<T>> {
     Collection<T> getAll();

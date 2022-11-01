@@ -7,12 +7,15 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
 public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
 
     public TerrainHeightCollector() {
-        super(BlazeMapReferences.Collectors.TERRAIN_HEIGHT);
+        super(
+            BlazeMapReferences.Collectors.TERRAIN_HEIGHT,
+            BlazeMapReferences.MasterData.TERRAIN_HEIGHT
+        );
     }
 
     @Override
@@ -24,7 +27,7 @@ public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
             for(int z = 0; z < 16; z++) {
                 int height = level.getHeight(Heightmap.Types.MOTION_BLOCKING, minX + x, minZ + z);
                 boolean foundLeaves = false;
-                while(isLeaves(level, minX + x, height - 1, minZ + z)) {
+                while(isLeavesOrReplaceable(level, minX + x, height - 1, minZ + z)) {
                     height--;
                     if(height <= level.getMinBuildHeight()) break;
                     foundLeaves = true;
@@ -37,7 +40,7 @@ public class TerrainHeightCollector extends Collector<TerrainHeightMD> {
             }
         }
 
-        return new TerrainHeightMD(level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
+        return new TerrainHeightMD(BlazeMapReferences.MasterData.TERRAIN_HEIGHT, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), heightmap);
     }
 
     protected static boolean isSkippableAfterLeaves(Level level, int x, int y, int z) {

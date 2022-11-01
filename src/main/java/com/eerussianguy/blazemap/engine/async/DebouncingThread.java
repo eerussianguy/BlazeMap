@@ -17,7 +17,7 @@ public class DebouncingThread {
         BlazeMap.LOGGER.info("Starting {} Debouncer Thread", name);
     }
 
-    public void add(DebouncingDomain<?> domain) {
+    void add(DebouncingDomain<?> domain) {
         synchronized(domains) {
             if(!domains.contains(domain)) {
                 domains.add(domain);

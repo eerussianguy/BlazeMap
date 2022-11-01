@@ -1,7 +1,7 @@
 package com.eerussianguy.blazemap.feature.mapping;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
-import com.eerussianguy.blazemap.api.mapping.MapType;
+import com.eerussianguy.blazemap.api.maps.MapType;
 import com.eerussianguy.blazemap.util.Helpers;
 
 public class AerialViewMapType extends MapType {

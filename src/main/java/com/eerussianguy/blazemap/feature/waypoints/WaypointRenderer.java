@@ -93,7 +93,7 @@ public class WaypointRenderer {
         stack.scale(scale, scale, scale);
         stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
         stack.translate(0f, 0f, -20f);
-        String name = w.getLabel();
+        String name = w.getName();
         if(name != null) {
             stack.pushPose();
             stack.translate(-mc.font.width(name), (-60 + (height / 2)), 0);

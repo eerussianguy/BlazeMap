@@ -1,16 +1,18 @@
 package com.eerussianguy.blazemap.engine.async;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-public final class AsyncChain<I, O> {
+public class AsyncChain<I, O> {
+    private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor();
 
     public static class Root {
-        private final AsyncDataCruncher asyncDataCruncher;
         private final IThreadQueue gameThreadQueue;
         private final IThreadQueue dataThreadQueue;
 
         public Root(AsyncDataCruncher asyncDataCruncher, IThreadQueue gameThreadQueue) {
-            this.asyncDataCruncher = asyncDataCruncher;
             this.dataThreadQueue = asyncDataCruncher::submit;
             this.gameThreadQueue = gameThreadQueue;
         }
@@ -23,6 +25,21 @@ public final class AsyncChain<I, O> {
             return new AsyncChain<>(null, fn, dataThreadQueue, this);
         }
 
+        public AsyncChain<Void, Void> startWithDelay(int ms) {
+            return new AsyncChain<>(null, null, null, this) {
+                @Override
+                protected void execute(Void input) {
+                    if(ms == 0) {
+                        next.execute(null);
+                    }
+                    else {
+                        SCHEDULER.schedule(() -> next.execute(null), ms, TimeUnit.MILLISECONDS);
+                    }
+
+                }
+            };
+        }
+
         public void runOnGameThread(Runnable r) {
             gameThreadQueue.submit(r);
         }
@@ -30,43 +47,13 @@ public final class AsyncChain<I, O> {
         public void runOnDataThread(Runnable r) {
             dataThreadQueue.submit(r);
         }
-
-        @SuppressWarnings("BusyWait") // this is blocking on purpose
-        public void runOnGameThreadBlocking(Runnable task) {
-            asyncDataCruncher.assertIsOnDataCruncherThread();
-            Thread thread = Thread.currentThread();
-            Pointer<Boolean> control = new Pointer<>(Boolean.FALSE);
-            Pointer<Throwable> error = new Pointer<>();
-            gameThreadQueue.submit(() -> {
-                try {
-                    task.run();
-                }
-                catch(Throwable t) {
-                    error.value = t;
-                }
-                control.value = Boolean.TRUE;
-                thread.interrupt();
-            });
-            while(control.value != Boolean.TRUE) {
-                try {Thread.sleep(50);}
-                catch(InterruptedException ignored) {}
-            }
-            if(error.value != null)
-                throw new RuntimeException("Error executing task on game thread: " + error.value.getMessage(), error.value);
-        }
-
-        public <T> T getOnGameThreadBlocking(Function<Void, T> fn) {
-            Pointer<T> pointer = new Pointer<>();
-            runOnGameThreadBlocking(() -> pointer.value = fn.apply(null));
-            return pointer.value;
-        }
     }
 
     private final Root initiator;
     private final AsyncChain<?, ?> root;
     private final Function<I, O> fn;
     private final IThreadQueue threadQueue;
-    private AsyncChain<O, ?> next;
+    protected AsyncChain<O, ?> next;
     private boolean closed = false;
 
     private AsyncChain(AsyncChain<?, ?> parent, Function<I, O> fn, IThreadQueue threadQueue, Root initiator) {
@@ -94,7 +81,25 @@ public final class AsyncChain<I, O> {
         return next;
     }
 
-    private void execute(I input) {
+    private AsyncChain<O, O> thenDelay(int ms) {
+        if(closed) throw new IllegalStateException("AsyncChain is already closed");
+        closed = true;
+        AsyncChain<O, O> next = new AsyncChain<>(this, null, null, initiator) {
+            @Override
+            protected void execute(O input) {
+                if(ms == 0) {
+                    next.execute(input);
+                }
+                else {
+                    SCHEDULER.schedule(() -> next.execute(input), ms, TimeUnit.MILLISECONDS);
+                }
+            }
+        };
+        this.next = next;
+        return next;
+    }
+
+    protected void execute(I input) {
         threadQueue.submit(() -> {
             if(next != null) {
                 next.execute(fn.apply(input));

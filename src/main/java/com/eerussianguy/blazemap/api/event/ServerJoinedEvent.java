@@ -31,9 +31,15 @@ public class ServerJoinedEvent extends Event {
      */
     private IStorageFactory<IMarkerStorage<Waypoint>> waypointStorageFactory;
 
-    public ServerJoinedEvent(String serverID, IStorageAccess storage) {
+    /**
+     * If the server we connected to has Blaze Map present
+     */
+    public final boolean serverHasBlazeMap;
+
+    public ServerJoinedEvent(String serverID, IStorageAccess storage, boolean serverHasBlazeMap) {
         this.serverID = serverID;
         this.serverStorage = storage;
+        this.serverHasBlazeMap = serverHasBlazeMap;
         this.waypointStorageFactory = (i, o, e) -> new IMarkerStorage.Dummy<>() {};
     }
 

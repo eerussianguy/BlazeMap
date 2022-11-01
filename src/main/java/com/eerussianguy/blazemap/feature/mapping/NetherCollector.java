@@ -5,11 +5,14 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
-import com.eerussianguy.blazemap.api.mapping.Collector;
+import com.eerussianguy.blazemap.api.pipeline.Collector;
 
 public class NetherCollector extends Collector<TerrainHeightMD> {
     public NetherCollector() {
-        super(BlazeMapReferences.Collectors.NETHER);
+        super(
+            BlazeMapReferences.Collectors.NETHER,
+            BlazeMapReferences.MasterData.NETHER
+        );
     }
 
     @Override
@@ -33,7 +36,7 @@ public class NetherCollector extends Collector<TerrainHeightMD> {
             }
         }
 
-        return new TerrainHeightMD(level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), minX, minZ, heightmap);
+        return new TerrainHeightMD(BlazeMapReferences.MasterData.NETHER, level.getMinBuildHeight(), level.getMaxBuildHeight(), level.getHeight(), level.getSeaLevel(), heightmap);
     }
 
     private boolean isNotAir(Level level, int x, int y, int z) {

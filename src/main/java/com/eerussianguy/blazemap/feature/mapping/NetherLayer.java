@@ -4,7 +4,9 @@ import java.awt.*;
 
 import com.eerussianguy.blazemap.api.BlazeMapReferences;
 import com.eerussianguy.blazemap.api.builtin.TerrainHeightMD;
-import com.eerussianguy.blazemap.api.mapping.Layer;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.TileResolution;
+import com.eerussianguy.blazemap.api.util.ArrayAggregator;
 import com.eerussianguy.blazemap.api.util.IDataSource;
 import com.eerussianguy.blazemap.util.Colors;
 import com.eerussianguy.blazemap.util.Helpers;
@@ -16,7 +18,7 @@ public class NetherLayer extends Layer {
             BlazeMapReferences.Layers.NETHER,
             Helpers.translate("blazemap.nether_terrain"),
 
-            BlazeMapReferences.Collectors.NETHER
+            BlazeMapReferences.MasterData.NETHER
         );
     }
 
@@ -42,34 +44,33 @@ public class NetherLayer extends Layer {
 
 
     @Override
-    public boolean renderTile(NativeImage tile, IDataSource data) {
-        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.Collectors.NETHER);
+    public boolean renderTile(NativeImage tile, TileResolution resolution, IDataSource data, int xGridOffset, int zGridOffset) {
+        TerrainHeightMD terrain = (TerrainHeightMD) data.get(BlazeMapReferences.MasterData.NETHER);
         float down = -1.0F / ((float) terrain.sea - terrain.minY);
         float up = 1.0F / ((float) terrain.maxY - terrain.sea);
-        for(int x = 0; x < 16; x++) {
-            next_pixel:
-            for(int z = 0; z < 16; z++) {
-                int h = terrain.heightmap[x][z];
-                int height = h - terrain.sea;
-                int depth = terrain.sea - h;
-                float point = h == terrain.sea ? 0 : h < terrain.sea ? down * (depth) : up * (height);
-                Gradient top = Gradient.CEILING;
-                for(Gradient bottom : Gradient.VALUES) {
-                    float epsilon = bottom.keypoint - point;
-                    if(epsilon < 0.005F && epsilon > -0.005F) {
-                        tile.setPixelRGBA(x, z, bottom.color);
-                        continue next_pixel;
-                    }
-                    if(point > bottom.keypoint) {
-                        tile.setPixelRGBA(x, z, Colors.interpolate(bottom.color, bottom.keypoint, top.color, top.keypoint, point));
-                        break;
-                    }
-                    else {
-                        top = bottom;
-                    }
+
+        foreachPixel(resolution, (x, z) -> {
+            int h = ArrayAggregator.avg(relevantData(resolution, x, z, terrain.heightmap));
+            int height = h - terrain.sea;
+            int depth = terrain.sea - h;
+            float point = h == terrain.sea ? 0 : h < terrain.sea ? down * (depth) : up * (height);
+            Gradient top = Gradient.CEILING;
+            for(Gradient bottom : Gradient.VALUES) {
+                float epsilon = bottom.keypoint - point;
+                if(epsilon < 0.005F && epsilon > -0.005F) {
+                    tile.setPixelRGBA(x, z, bottom.color);
+                    return;
+                }
+                if(point > bottom.keypoint) {
+                    tile.setPixelRGBA(x, z, Colors.interpolate(bottom.color, bottom.keypoint, top.color, top.keypoint, point));
+                    break;
+                }
+                else {
+                    top = bottom;
                 }
             }
-        }
+        });
+
         return true;
     }
 }

@@ -80,7 +80,7 @@ public class WaypointStore implements IMarkerStorage<Waypoint> {
                     output.writeResourceLocation(waypoint.getID());
                     output.writeDimensionKey(waypoint.getDimension());
                     output.writeBlockPos(waypoint.getPosition());
-                    output.writeUTF(waypoint.getLabel());
+                    output.writeUTF(waypoint.getName());
                     output.writeResourceLocation(waypoint.getIcon());
                     output.writeInt(waypoint.getColor());
                     output.writeFloat(waypoint.getRotation());

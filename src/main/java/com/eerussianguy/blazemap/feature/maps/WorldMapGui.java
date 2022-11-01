@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,11 +20,11 @@ import net.minecraft.world.level.Level;
 import com.eerussianguy.blazemap.BlazeMapConfig;
 import com.eerussianguy.blazemap.api.BlazeMapAPI;
 import com.eerussianguy.blazemap.api.BlazeRegistry;
-import com.eerussianguy.blazemap.api.mapping.Layer;
-import com.eerussianguy.blazemap.api.mapping.MapType;
-import com.eerussianguy.blazemap.api.util.IScreenSkipsMinimap;
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
-import com.eerussianguy.blazemap.feature.BlazeMapFeatures;
+import com.eerussianguy.blazemap.api.maps.IScreenSkipsMinimap;
+import com.eerussianguy.blazemap.api.maps.Layer;
+import com.eerussianguy.blazemap.api.maps.MapType;
+import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
+import com.eerussianguy.blazemap.feature.BlazeMapFeaturesClient;
 import com.eerussianguy.blazemap.feature.ProfilingRenderer;
 import com.eerussianguy.blazemap.gui.Image;
 import com.eerussianguy.blazemap.util.Colors;
@@ -37,7 +38,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private static final TextComponent EMPTY = new TextComponent("");
     private static final ResourceLocation ICON = Helpers.identifier("textures/mod_icon.png");
     private static final ResourceLocation NAME = Helpers.identifier("textures/mod_name.png");
-    public static final double MIN_ZOOM = 0.25, MAX_ZOOM = 16;
+    public static final double MIN_ZOOM = 0.125, MAX_ZOOM = 8;
     private static final Profiler.TimeProfiler renderTime = new Profiler.TimeProfilerSync(10);
     private static final Profiler.TimeProfiler uploadTime = new Profiler.TimeProfilerSync(10);
     private static boolean showWidgets = true, renderDebug = false;
@@ -57,6 +58,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     private final List<MapType> mapTypes;
     private final int layersBegin;
     private Widget legend;
+    private EditBox search;
 
     public WorldMapGui() {
         super(EMPTY);
@@ -65,6 +67,13 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
         dimension = Minecraft.getInstance().level.dimension();
         mapTypes = BlazeMapAPI.MAPTYPES.keys().stream().map(BlazeRegistry.Key::value).filter(m -> m.shouldRenderInDimension(dimension)).collect(Collectors.toUnmodifiableList());
         layersBegin = 50 + (mapTypes.size() * 20);
+        zoom = mapRenderer.getZoom();
+
+        mapRenderer.setSearchHost(active -> {
+            if(search != null) {
+                search.visible = active;
+            }
+        });
     }
 
     @Override
@@ -85,6 +94,7 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
     @Override
     public void setMapType(MapType map) {
         synchronizer.setMapType(map);
+        search.setValue("");
         updateLegend();
     }
 
@@ -122,6 +132,10 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
                 addRenderableWidget(lb);
             }
         }
+
+        search = addRenderableWidget(new EditBox(getMinecraft().font, (width - 120) / 2, height - 15, 120, 12, EMPTY));
+        search.setResponder(mapRenderer::setSearch);
+        mapRenderer.pingSearchHost();
 
         updateLegend();
     }
@@ -205,21 +219,21 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
         font.draw(stack, "Atlas Time Profiling:", 0, 0, -1);
         var buffers = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
-        ProfilingRenderer.drawTimeProfiler(renderTime, 12, "Render Atlas", font, stack.last().pose(), buffers);
-        ProfilingRenderer.drawTimeProfiler(uploadTime, 24, "Upload Atlas", font, stack.last().pose(), buffers);
+        ProfilingRenderer.drawTimeProfiler(renderTime, 12, "Render", font, stack.last().pose(), buffers);
+        ProfilingRenderer.drawTimeProfiler(uploadTime, 24, "Upload", font, stack.last().pose(), buffers);
         buffers.endBatch();
 
         MapRenderer.DebugInfo debug = mapRenderer.debug;
         int y = 30;
         font.draw(stack, String.format("Renderer Size: %d x %d", debug.rw, debug.rh), 0, y += 12, -1);
-        font.draw(stack, String.format("Renderer Zoom: %.3f", debug.zoom), 0, y += 12, -1);
+        font.draw(stack, String.format("Renderer Zoom: %sx", debug.zoom), 0, y += 12, -1);
         font.draw(stack, String.format("Atlas Size: %d x %d", debug.mw, debug.mh), 0, y += 12, -1);
-        font.draw(stack, String.format("Atlas Frustrum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y += 12, -1);
+        font.draw(stack, String.format("Atlas Frustum: [%d , %d] to [%d , %d]", debug.bx, debug.bz, debug.ex, debug.ez), 0, y += 12, -1);
 
         font.draw(stack, String.format("Region Matrix: %d x %d", debug.ox, debug.oz), 0, y += 18, -1);
         font.draw(stack, String.format("Active Layers: %d", debug.layers), 0, y += 12, -1);
         font.draw(stack, String.format("Stitching: %s", debug.stitching), 0, y += 12, 0xFF0088FF);
-        font.draw(stack, String.format("Parallel Pool: %d", BlazeMapEngine.cruncher().poolSize()), 0, y += 12, 0xFFFFFF00);
+        font.draw(stack, String.format("Parallel Pool: %d", BlazeMapClientEngine.cruncher().poolSize()), 0, y += 12, 0xFFFFFF00);
 
         font.draw(stack, String.format("Addon Labels: %d", debug.labels), 0, y += 18, -1);
         font.draw(stack, String.format("Player Waypoints: %d", debug.waypoints), 0, y += 12, -1);
@@ -234,11 +248,6 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
 
     @Override
     public boolean keyPressed(int key, int x, int y) {
-        if(key == BlazeMapFeatures.KEY_MAPS.getKey().getValue()) {
-            this.onClose();
-            return true;
-        }
-
         if(key == GLFW.GLFW_KEY_F1) {
             showWidgets = !showWidgets;
             return true;
@@ -249,23 +258,30 @@ public class WorldMapGui extends Screen implements IScreenSkipsMinimap, IMapHost
             return true;
         }
 
-        int dx = 0;
-        int dz = 0;
-        if(key == GLFW.GLFW_KEY_W) {
-            dz -= 16;
-        }
-        if(key == GLFW.GLFW_KEY_S) {
-            dz += 16;
-        }
-        if(key == GLFW.GLFW_KEY_D) {
-            dx += 16;
-        }
-        if(key == GLFW.GLFW_KEY_A) {
-            dx -= 16;
-        }
-        if(dx != 0 || dz != 0) {
-            mapRenderer.moveCenter(dx, dz);
-            return true;
+        if(!search.isFocused()) {
+            if(key == BlazeMapFeaturesClient.KEY_MAPS.getKey().getValue()) {
+                this.onClose();
+                return true;
+            }
+
+            int dx = 0;
+            int dz = 0;
+            if(key == GLFW.GLFW_KEY_W) {
+                dz -= 16;
+            }
+            if(key == GLFW.GLFW_KEY_S) {
+                dz += 16;
+            }
+            if(key == GLFW.GLFW_KEY_D) {
+                dx += 16;
+            }
+            if(key == GLFW.GLFW_KEY_A) {
+                dx -= 16;
+            }
+            if(dx != 0 || dz != 0) {
+                mapRenderer.moveCenter(dx, dz);
+                return true;
+            }
         }
         return super.keyPressed(key, x, y);
     }

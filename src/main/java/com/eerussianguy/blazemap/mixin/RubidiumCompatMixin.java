@@ -1,6 +1,6 @@
 package com.eerussianguy.blazemap.mixin;
 
-import com.eerussianguy.blazemap.engine.BlazeMapEngine;
+import com.eerussianguy.blazemap.engine.client.BlazeMapClientEngine;
 import me.jellysquid.mods.sodium.client.render.chunk.ChunkRenderList;
 import me.jellysquid.mods.sodium.client.render.chunk.RenderSection;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +15,6 @@ public class RubidiumCompatMixin {
 
     @Inject(method = "add", at = @At("HEAD"))
     void onAdd(RenderSection render, CallbackInfo ci) {
-        BlazeMapEngine.onChunkChanged(render.getChunkPos().chunk(), "Rubidium Chunk Hook");
+        BlazeMapClientEngine.onChunkChanged(render.getChunkPos().chunk(), "Rubidium Chunk Hook");
     }
 }
